@@ -1,125 +1,115 @@
-// src/components/Navbar.jsx
-import React, {useState} from "react";
-import {Search, ShoppingCart, User, MapPin, ChevronDown, Bell} from "lucide-react";
+import React, { useState } from "react";
+import { Search, ShoppingCart, User, MapPin, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import logo from "../assets/icons/logo.svg";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
+import LoginModal from "../pages/Login";
+import RegisterModal from "../pages/Register";
 
 export default function Navbar() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [cartCount, setCartCount] = useState(0);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
 
-    const navigation = [
-        {name: 'Find Doctors', href: '/doctors'},
-        {name: 'Hospitals', href: '/hospitals'},
-        {name: 'Medicines', href: '/medicines'},
-        {name: 'Lab Tests', href: '/lab-tests'},
-        {name: 'Health Plans', href: '/health-plans'}
-    ];
+    const openLoginModal = () => {
+        setShowLoginModal(true);
+        setShowRegisterModal(false);
+    };
 
-    const userMenuItems = [
-        {name: 'My Profile', href: '/profile'},
-        {name: 'My Appointments', href: '/appointments'},
-        {name: 'Medical Records', href: '/records'},
-        {name: 'Prescriptions', href: '/prescriptions'},
-        {name: 'Settings', href: '/settings'}
-    ];
+    const openRegisterModal = () => {
+        setShowRegisterModal(true);
+        setShowLoginModal(false);
+    };
 
     return (
         <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 shadow-md">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="flex items-center justify-between py-4">
+            <div className="mx-auto px-4 max-w-7xl">
+                <div className="flex justify-between items-center py-5">
 
-                    {/* LEFT - Logo */}
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                        <img src={logo} alt="ShopSpot Logo" className="h-12 w-12"/>
-                        <span className="text-white font-bold text-4xl">ShopSpot Online</span>
-                    </div>
+                    {/* LEFT - Logo (redirect to /) */}
+                    <Link to="/" className="flex flex-shrink-0 items-center space-x-2">
+                        <img src={logo} alt="ShopSpot Logo" className="w-10 h-10" />
+                        <span className="font-semibold text-white text-sm sm:text-base">
+                            ShopSpot Online
+                        </span>
+                    </Link>
 
                     {/* CENTER - Search Bar */}
-                    <div className="hidden md:flex flex-1 justify-center px-6">
-                        <div className="relative w-full max-w-2xl">
+                    <div className="hidden md:flex flex-1 justify-center px-4">
+                        <div className="relative w-full max-w-xl">
                             <input
                                 type="text"
                                 placeholder="Search products..."
-                                className="w-full px-5 py-3 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-white text-gray-700 text-lg"
+                                className="px-4 py-2 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white w-full text-gray-700 text-sm"
                             />
                             <button
-                                className="absolute right-0 top-0 bottom-0 bg-green-500 hover:bg-green-600 px-5 rounded-r-full flex items-center justify-center transition-colors">
-                                <Search className="text-white" size={25}/>
+                                className="top-0 right-0 bottom-0 absolute flex justify-center items-center bg-green-500 hover:bg-green-600 px-4 rounded-r-full transition-colors">
+                                <Search className="text-white" size={20} />
                             </button>
                         </div>
                     </div>
 
-                    {/* RIGHT - Buttons */}
-                    <div className="flex items-center space-x-4 flex-shrink-0">
+                    {/* RIGHT - Items */}
+                    <div className="flex flex-shrink-0 items-center space-x-3">
 
                         {/* Google Play */}
                         <img
                             src={playStoreButton}
                             alt="Google Play"
-                            className="h-12 w-auto cursor-pointer"
+                            className="w-auto h-10 cursor-pointer"
                         />
 
                         {/* Location */}
-                        <div
-                            className="hidden lg:flex items-center space-x-1 text-gray-600 hover:text-blue-600 cursor-pointer">
-                            <MapPin className="h-4 w-4"/>
-                            <span className="text-sm">Dhaka</span>
-                            <ChevronDown className="h-4 w-4"/>
+                        <div className="hidden lg:flex items-center space-x-1 text-white hover:text-gray-200 text-sm cursor-pointer">
+                            <MapPin className="w-4 h-4" />
+                            <span>Dhaka</span>
+                            <ChevronDown className="w-3 h-3" />
                         </div>
 
                         {/* Cart */}
                         <div className="relative cursor-pointer">
-                            <ShoppingCart className="text-white hover:text-gray-200" size={30}/>
-                            <span
-                                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
+                            <ShoppingCart className="text-white hover:text-gray-200" size={22} />
+                            <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-4 h-4 font-bold text-[10px] text-white">
+                                {cartCount}
+                            </span>
                         </div>
 
-                        {/*/!* User Menu *!/*/}
-                        {/*<div className="relative">*/}
-                        {/*    <button*/}
-                        {/*        className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 focus:outline-none"*/}
-                        {/*    >*/}
-                        {/*        <div*/}
-                        {/*            className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">*/}
-                        {/*            <User className="h-4 w-4 text-white"/>*/}
-                        {/*        </div>*/}
-                        {/*        <div className="hidden sm:block text-left">*/}
-                        {/*            <p className="text-sm font-medium">John Doe</p>*/}
-                        {/*            <p className="text-xs text-gray-500">Patient</p>*/}
-                        {/*        </div>*/}
-                        {/*        <ChevronDown className="h-4 w-4 hidden sm:block"/>*/}
-                        {/*    </button>*/}
-
-                            {/* Sign In */}
-                            <button
-                                className="flex items-center bg-white bg-opacity-20 rounded-full px-4 py-2 hover:bg-opacity-30 transition-all">
-                                <User className="text-white mr-2" size={25}/>
-                                <span className="text-white font-medium">Sign In</span>
-                            </button>
-
-                            {/* Sign Up */}
-                            <button
-                                className="flex items-center bg-white bg-opacity-20 rounded-full px-4 py-2 hover:bg-opacity-30 transition-all">
-                                <User className="text-white mr-2" size={25}/>
-                                <span className="text-white font-medium">Sign Up</span>
-                            </button>
-
-                        {/* Notifications */}
+                        {/* Sign In */}
                         <button
-                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors duration-200 relative">
-                            <Bell className="h-5 w-5"/>
-                            <span
-                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                2
-              </span>
+                            onClick={openLoginModal}
+                            className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
+                        >
+                            <User className="mr-1 text-white" size={18} />
+                            <span className="font-medium text-white">Sign In</span>
                         </button>
 
-                        </div>
+                        {/* Sign Up */}
+                        <button
+                            onClick={openRegisterModal}
+                            className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
+                        >
+                            <User className="mr-1 text-white" size={18} />
+                            <span className="font-medium text-white">Sign Up</span>
+                        </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Modals */}
+            {showLoginModal && (
+                <LoginModal
+                    isOpen={showLoginModal}
+                    onClose={() => setShowLoginModal(false)}
+                    onSwitchToRegister={openRegisterModal}
+                />
+            )}
+            {showRegisterModal && (
+                <RegisterModal
+                    isOpen={showRegisterModal}
+                    onClose={() => setShowRegisterModal(false)}
+                    onSwitchToLogin={openLoginModal}
+                />
+            )}
         </nav>
     );
 }
