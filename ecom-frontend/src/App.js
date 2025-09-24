@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from "./pages/Hero"
 import CategorySidebar from "./pages/CategorySidebar";
-import Login from './pages/Login';
-import Register from './pages/Register';
+import AuthPage from "./pages/auth/AuthPage";
 
 function App() {
     return (
@@ -13,8 +11,7 @@ function App() {
             <div className="App">
                 <Navbar />
                 <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+                    <Route path="/login" element={<AuthPage />} />
                     <Route path="/" element={
                         <>
                             <div className="flex w-full px-6 py-10 gap-6">

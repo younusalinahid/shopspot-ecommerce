@@ -68,3 +68,26 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
 }
+
+.bg-size-200 {
+    background-size: 200% 200%;
+}
+.bg-pos-0 {
+    background-position: 0% 50%;
+}
+.bg-pos-100 {
+    background-position: 100% 50%;
+}
+.bg-gradient-to-r {
+    transition: background-position 0.5s ease;
+}
+
+/* Floating animation for fun icons */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
