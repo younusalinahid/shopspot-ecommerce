@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import logo from "../assets/icons/logo.svg";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import LoginModal from "../pages/Login";
-import RegisterModal from "../pages/Register";
 
 export default function Navbar() {
     const [cartCount, setCartCount] = useState(0);
@@ -29,7 +28,7 @@ export default function Navbar() {
                     {/* LEFT - Logo (redirect to /) */}
                     <Link to="/" className="flex flex-shrink-0 items-center space-x-2">
                         <img src={logo} alt="ShopSpot Logo" className="w-10 h-10" />
-                        <span className="font-semibold text-white text-sm sm:text-base">
+                        <span className="text-white font-bold text-sm sm:text-base">
                             ShopSpot Online
                         </span>
                     </Link>
@@ -59,16 +58,16 @@ export default function Navbar() {
                             className="w-auto h-10 cursor-pointer"
                         />
 
-                        {/* Location */}
-                        <div className="hidden lg:flex items-center space-x-1 text-white hover:text-gray-200 text-sm cursor-pointer">
-                            <MapPin className="w-4 h-4" />
-                            <span>Dhaka</span>
-                            <ChevronDown className="w-3 h-3" />
-                        </div>
+                        {/*/!* Location *!/*/}
+                        {/*<div className="hidden lg:flex items-center space-x-1 text-white hover:text-gray-200 text-sm cursor-pointer">*/}
+                        {/*    <MapPin className="w-4 h-4" />*/}
+                        {/*    <span>Dhaka</span>*/}
+                        {/*    <ChevronDown className="w-3 h-3" />*/}
+                        {/*</div>*/}
 
                         {/* Cart */}
                         <div className="relative cursor-pointer">
-                            <ShoppingCart className="text-white hover:text-gray-200" size={22} />
+                            <ShoppingCart className="text-white hover:text-gray-200" size={35} />
                             <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-4 h-4 font-bold text-[10px] text-white">
                                 {cartCount}
                             </span>
@@ -79,18 +78,10 @@ export default function Navbar() {
                             onClick={openLoginModal}
                             className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
                         >
-                            <User className="mr-1 text-white" size={18} />
-                            <span className="font-medium text-white">Sign In</span>
+                            <User className="mr-1 text-white" size={35} />
+                            <span className="text-white font-bold">Sign In</span>
                         </button>
 
-                        {/* Sign Up */}
-                        <button
-                            onClick={openRegisterModal}
-                            className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
-                        >
-                            <User className="mr-1 text-white" size={18} />
-                            <span className="font-medium text-white">Sign Up</span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -101,13 +92,6 @@ export default function Navbar() {
                     isOpen={showLoginModal}
                     onClose={() => setShowLoginModal(false)}
                     onSwitchToRegister={openRegisterModal}
-                />
-            )}
-            {showRegisterModal && (
-                <RegisterModal
-                    isOpen={showRegisterModal}
-                    onClose={() => setShowRegisterModal(false)}
-                    onSwitchToLogin={openLoginModal}
                 />
             )}
         </nav>
