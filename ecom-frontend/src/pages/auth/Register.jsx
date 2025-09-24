@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {Link} from "react-router-dom";
 import "../../App.css";
 
-const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
+const Register = ({isOpen, onClose, onSwitchToLogin}) => {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -12,7 +12,7 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Register with:", { fullName, email, password, confirmPassword });
+        console.log("Register with:", {fullName, email, password, confirmPassword});
     };
 
     return (
@@ -100,16 +100,6 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                             />
                         </div>
 
-                        {/* Remember + Forgot */}
-                        <div className="flex justify-between items-center">
-                            <button
-                                type="button"
-                                className="text-sm font-medium text-pink-500 hover:text-cyan-500 transition-colors"
-                            >
-                                Forgot your password?
-                            </button>
-                        </div>
-
                         {/* Sign In Button */}
                         <button
                             type="submit"
@@ -122,12 +112,12 @@ const Register = ({ isOpen, onClose, onSwitchToLogin }) => {
                         <div>
                             <p className="text-gray-600 text-sm text-center">
                                 Already have an account?{" "}
-                                <button
+                                <span
                                     onClick={onSwitchToLogin}
-                                    className="font-semibold text-cyan-600 hover:text-blue-600 transition-colors"
+                                    className="cursor-pointer font-semibold text-cyan-600 hover:text-blue-600 transition-colors"
                                 >
-                                    Login
-                                </button>
+    Login
+</span>
                             </p>
                         </div>
 
