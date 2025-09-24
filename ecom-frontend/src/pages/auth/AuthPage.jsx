@@ -2,31 +2,27 @@ import React, { useState } from "react";
 import Login from "./Login";
 import Register from "./Register";
 
-const AuthPage = () => {
-    const [isLoginOpen, setLoginOpen] = useState(false);
-    const [isRegisterOpen, setRegisterOpen] = useState(false);
+const AuthPage = ({ isLoginOpen = true, onClose }) => {
+    const [isLogin, setIsLogin] = useState(isLoginOpen);
+
+    const openLogin = () => setIsLogin(true);
+    const openRegister = () => setIsLogin(false);
 
     return (
         <>
-            {/* Login Modal */}
-            <Login
-                isOpen={isLoginOpen}
-                onClose={() => setLoginOpen(false)}
-                onSwitchToRegister={() => {
-                    setLoginOpen(false);
-                    setRegisterOpen(true);
-                }}
-            />
-
-            {/* Register Modal */}
-            <Register
-                isOpen={isRegisterOpen}
-                onClose={() => setRegisterOpen(false)}
-                onSwitchToLogin={() => {
-                    setRegisterOpen(false);
-                    setLoginOpen(true);
-                }}
-            />
+            {isLogin ? (
+                <Login
+                    isOpen={true}
+                    onClose={onClose}
+                    onSwitchToRegister={openRegister}
+                />
+            ) : (
+                <Register
+                    isOpen={true}
+                    onClose={onClose}
+                    onSwitchToLogin={openLogin}
+                />
+            )}
         </>
     );
 };

@@ -3,22 +3,11 @@ import { Search, ShoppingCart, User, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "../assets/icons/logo.svg";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
-import LoginModal from "../pages/Login";
+import AuthPage from "../pages/auth/AuthPage";
 
 export default function Navbar() {
     const [cartCount, setCartCount] = useState(0);
-    const [showLoginModal, setShowLoginModal] = useState(false);
-    const [showRegisterModal, setShowRegisterModal] = useState(false);
-
-    const openLoginModal = () => {
-        setShowLoginModal(true);
-        setShowRegisterModal(false);
-    };
-
-    const openRegisterModal = () => {
-        setShowRegisterModal(true);
-        setShowLoginModal(false);
-    };
+    const [showAuthPage, setShowAuthPage] = useState(false);
 
     return (
         <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 shadow-md">
@@ -28,7 +17,7 @@ export default function Navbar() {
                     {/* LEFT - Logo (redirect to /) */}
                     <Link to="/" className="flex flex-shrink-0 items-center space-x-2">
                         <img src={logo} alt="ShopSpot Logo" className="w-10 h-10" />
-                        <span className="text-white font-bold text-sm sm:text-base">
+                        <span className="text-white font-bold text-sm sm:text-xl">
                             ShopSpot Online
                         </span>
                     </Link>
@@ -58,13 +47,6 @@ export default function Navbar() {
                             className="w-auto h-10 cursor-pointer"
                         />
 
-                        {/*/!* Location *!/*/}
-                        {/*<div className="hidden lg:flex items-center space-x-1 text-white hover:text-gray-200 text-sm cursor-pointer">*/}
-                        {/*    <MapPin className="w-4 h-4" />*/}
-                        {/*    <span>Dhaka</span>*/}
-                        {/*    <ChevronDown className="w-3 h-3" />*/}
-                        {/*</div>*/}
-
                         {/* Cart */}
                         <div className="relative cursor-pointer">
                             <ShoppingCart className="text-white hover:text-gray-200" size={35} />
@@ -75,23 +57,21 @@ export default function Navbar() {
 
                         {/* Sign In */}
                         <button
-                            onClick={openLoginModal}
+                            onClick={() => setShowAuthPage(true)}
                             className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
                         >
                             <User className="mr-1 text-white" size={35} />
                             <span className="text-white font-bold">Sign In</span>
                         </button>
-
                     </div>
                 </div>
             </div>
 
-            {/* Modals */}
-            {showLoginModal && (
-                <LoginModal
-                    isOpen={showLoginModal}
-                    onClose={() => setShowLoginModal(false)}
-                    onSwitchToRegister={openRegisterModal}
+            {/* AuthPage Modal */}
+            {showAuthPage && (
+                <AuthPage
+                    isLoginOpen={true}
+                    onClose={() => setShowAuthPage(false)}
                 />
             )}
         </nav>
