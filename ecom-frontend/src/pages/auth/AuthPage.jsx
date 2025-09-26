@@ -4,7 +4,6 @@ import Register from "./Register";
 
 const AuthPage = ({ isLoginOpen = true, onClose }) => {
     const [isLogin, setIsLogin] = useState(isLoginOpen);
-
     const openLogin = () => setIsLogin(true);
     const openRegister = () => setIsLogin(false);
 
