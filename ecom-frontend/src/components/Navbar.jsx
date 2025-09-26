@@ -6,7 +6,7 @@ import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 
 export default function Navbar() {
-    const [cartCount, setCartCount] = useState(0);
+    const [cartCount] = useState(0);
     const [showAuthPage, setShowAuthPage] = useState(false);
 
     return (
