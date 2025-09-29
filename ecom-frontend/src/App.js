@@ -1,9 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from "./pages/Home";
-import CategorySidebar from "./pages/CategorySidebar";
+import Home from "./pages/user/Home";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserDashboard from "./pages/user/UserDashboard";
 import AuthPage from "./pages/auth/AuthPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
     return (
@@ -11,22 +13,31 @@ function App() {
             <div className="App">
                 <Navbar />
                 <Routes>
+                    {/* Login/Register page */}
                     <Route path="/login" element={<AuthPage />} />
-                    <Route path="/" element={
-                        <>
-                            <div className="flex w-full px-6 py-10 gap-6">
-                                {/* Sidebar fixed width */}
-                                {/*<div className="w-64">*/}
-                                {/*    <CategorySidebar />*/}
-                                {/*</div>*/}
 
-                                {/* Hero auto width */}
-                                <div className="flex-1">
-                                    <Home />
-                                </div>
-                            </div>
-                        </>
-                    } />
+                    {/* Home page */}
+                    <Route path="/" element={<Home />} />
+
+                    {/* Admin Dashboard */}
+                    <Route
+                        path="/admin-dashboard"
+                        element={
+                            <ProtectedRoute role="ADMIN">
+                                <AdminDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* User Dashboard */}
+                    <Route
+                        path="/user-dashboard"
+                        element={
+                            <ProtectedRoute role="USER">
+                                <UserDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Routes>
             </div>
         </Router>

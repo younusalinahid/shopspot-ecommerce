@@ -1,15 +1,30 @@
 import React, { useState } from "react";
-import {Link} from "react-router-dom";
+import {useNavigate, Link} from "react-router-dom";
+import { Role } from "../../dto/type/Role";
+import { login as loginApi } from "../../api/auth-api";
 import "../../App.css";
+
 const Login = ({isOpen, onClose, onSwitchToRegister}) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
+    const navigate = useNavigate();
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        try {
+            const user = await loginApi(email, password);
+            localStorage.setItem("user", JSON.stringify(user));
+
+            if (user.role === Role.ADMIN) navigate("/admin-dashboard");
+            else navigate("/");
+
+            onClose();
+        } catch (err) {
+            alert(err.message || "Invalid email or password");
+        }
         console.log("Login with:", {email, password, rememberMe});
     };
 
