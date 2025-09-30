@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search, ShoppingCart, User, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "../assets/icons/logo.svg";
+import logo from "../assets/icons/img.png";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 

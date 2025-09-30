@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {ChevronRight, Star, Smartphone, ArrowRight} from 'lucide-react';
+import {Star, ArrowRight} from 'lucide-react';
 import CategorySidebar from './CategorySidebar';
 import {fetchCategory} from "../../api/category-api-service";
 import Footer from "../../components/Footer";
