@@ -1,14 +1,14 @@
 import {useEffect, useState} from 'react';
 import {Star, ArrowRight} from 'lucide-react';
 import CategorySidebar from './CategorySidebar';
-import {fetchCategory} from "../../api/category-api-service";
+import {getAllCategories} from "../../api/category-api-service";
 import Footer from "../../components/Footer";
 
 const Home = () => {
     const [categories, setCategories] = useState([])
 
     useEffect(() => {
-        fetchCategory()
+        getAllCategories()
             .then(data => {
                 const mappedCategories = data.map(cat => ({
                     id: cat.id,

@@ -32,7 +32,7 @@ export default function Navbar() {
                             />
                             <button
                                 className="top-0 right-0 bottom-0 absolute flex justify-center items-center bg-green-500 hover:bg-green-600 px-4 rounded-r-full transition-colors">
-                                <Search className="text-white" size={20} />
+                                <Search className="text-white" size={35} />
                             </button>
                         </div>
                     </div>

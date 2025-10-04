@@ -4,7 +4,7 @@ export default function Sidebar({ menuItems, activeTab, setActiveTab, isSidebarO
     return (
         <div className={`${isSidebarOpen ? 'w-64' : 'w-0'} bg-gray-900 text-white transition-all duration-300 overflow-hidden`}>
             <div className="p-6">
-                <h1 className="text-2xl font-bold">ShopSport Online</h1>
+                <h1 className="text-2xl font-bold">ShopSpot Online</h1>
                 <p className="text-gray-400 text-sm">Admin Panel</p>
             </div>
             <nav className="mt-6">

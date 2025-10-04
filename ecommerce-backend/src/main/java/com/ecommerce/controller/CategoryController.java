@@ -13,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
+@CrossOrigin(origins = "http://localhost:3000")
 public class CategoryController {
     private final CategoryService categoryService;
     private final SubCategoryService subCategoryService;
@@ -28,20 +29,17 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getAllCategoriesWithSub());
     }
 
-    // Public - Anyone can view single category
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategory(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
-    // Admin Only - Create category
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Category> createCategory(@RequestBody Category category) {
         return ResponseEntity.ok(categoryService.addCategory(category));
     }
 
-    // Admin Only - Create subcategory
     @PostMapping("/{categoryId}/subcategories")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubCategory> createSubCategory(

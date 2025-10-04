@@ -1,11 +1,16 @@
 package com.ecommerce.service;
 
+import com.ecommerce.config.JwtService;
 import com.ecommerce.dto.RegisterRequest;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.model.User;
 import com.ecommerce.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -14,11 +19,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public User register(RegisterRequest request) {
@@ -44,6 +51,23 @@ public class AuthService {
         }
 
         return user;
+    }
+
+    public String adminLogin(String email, String password) {
+        // Fixed credentials
+        if (!email.equals("admin@gmail.com") || !password.equals("123456")) {
+            throw new IllegalArgumentException("Invalid credentials");
+        }
+
+        // Create Spring Security UserDetails object for token
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username(email)
+                .password(password) // password not important here
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
+                .build();
+
+        // Generate JWT token
+        return jwtService.generateToken(userDetails);
     }
 }
 
