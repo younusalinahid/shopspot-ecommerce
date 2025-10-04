@@ -9,6 +9,8 @@ import com.ecommerce.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -31,6 +33,17 @@ public class AuthController {
         }
     }
 
+
+//    @PostMapping("/login")
+//    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+//        try {
+//            User user = authService.login(request.getEmail(), request.getPassword());
+//            return ResponseEntity.ok(userMapper.toDTO(user));
+//        } catch (IllegalArgumentException ex) {
+//            return ResponseEntity.badRequest()
+//                    .body(new ApiResponse(false, ex.getMessage()));
+//        }
+//    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {

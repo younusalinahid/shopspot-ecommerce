@@ -1,5 +1,5 @@
 import React from 'react';
-import { getStatusColor } from '../dashboardData'
+import { getStatusColor } from '../../pages/admin/dashboardData'
 
 export default function RecentOrdersTable({ orders }) {
     return (

@@ -34,19 +34,14 @@ public class AdminDataLoader implements CommandLineRunner {
 
         if (!userRepository.existsByEmail(adminEmail)) {
             User admin = new User();
-            admin.setFullName("Admin User");
+            admin.setFullName("Admin");
             admin.setEmail(adminEmail);
-            admin.setPassword(passwordEncoder.encode("123456"));
+            admin.setPassword(passwordEncoder.encode("123"));
             admin.setRole(Role.ADMIN);
             admin.setActive(true);
             admin.setCreatedAt(Instant.now());
 
             userRepository.save(admin);
-
-            log.info("✅ Admin user created successfully!");
-            log.info("📧 Email: {}", adminEmail);
-            log.info("🔑 Password: Admin@123");
-            log.info("⚠️  Please change the password after first login!");
         } else {
             log.info("ℹ️  Admin user already exists");
         }

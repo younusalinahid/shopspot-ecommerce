@@ -42,8 +42,24 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Auth endpoints - publicly accessible
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()  // ✅ All GET requests public
+
+                        // Categories - GET requests publicly accessible
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+
+                        // Categories - POST, PUT, DELETE require authentication (admin only)
+                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+
+                        // Products - GET requests publicly accessible
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+
+                        // OPTIONS for CORS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
