@@ -1,4 +1,4 @@
-package com.ecommerce.config;
+package com.ecommerce;
 
 import com.ecommerce.model.User;
 import com.ecommerce.model.type.Role;
@@ -34,14 +34,13 @@ public class AdminDataLoader implements CommandLineRunner {
 
         if (!userRepository.existsByEmail(adminEmail)) {
             User admin = new User();
-            admin.setFullName("Admin");
+            admin.setFullName("Admin User");
             admin.setEmail(adminEmail);
             admin.setPassword(passwordEncoder.encode("123"));
             admin.setRole(Role.ADMIN);
-            admin.setActive(true);
-            admin.setCreatedAt(Instant.now());
 
             userRepository.save(admin);
+            log.info("✅ Admin user created successfully");
         } else {
             log.info("ℹ️  Admin user already exists");
         }

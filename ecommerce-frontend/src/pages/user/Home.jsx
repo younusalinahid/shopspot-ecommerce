@@ -26,11 +26,6 @@ const Home = () => {
             .catch(err => console.error(err));
     }, []);
 
-    // useEffect(() => {
-    //     fetchCategory()
-    //         .then(data => setCategories(data))
-    //         .catch(err => console.error(err));
-    // }, []);
 
     return (
         <div>

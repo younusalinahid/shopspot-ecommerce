@@ -2,17 +2,8 @@ package com.ecommerce.model;
 
 import com.ecommerce.model.type.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.Instant;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "users")
 public class User {
@@ -32,15 +23,12 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role; // ADMIN or USER
+    private Role role;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
+    @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
-    private Instant updatedAt;
 
-    // getters and setters
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -56,12 +44,5 @@ public class User {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-
     public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }
