@@ -1,86 +1,53 @@
 package com.ecommerce.config;
 
+import com.ecommerce.config.CustomUserDetailsService;
+import com.ecommerce.config.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.lang.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        String header = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+            username = jwtTokenUtil.getUsernameFromToken(token);
         }
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            if (jwtTokenUtil.validateToken(token)) {
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         filterChain.doFilter(request, response);
-    }
-
-    private boolean isPublicEndpoint(String requestPath, String method) {
-        // Allow all auth endpoints
-        if (requestPath.startsWith("/api/auth/")) {
-            return true;
-        }
-
-        // Allow GET requests to categories and products
-        if (method.equals("GET")) {
-            if (requestPath.startsWith("/api/categories") ||
-                    requestPath.startsWith("/api/products")) {
-                return true;
-            }
-        }
-
-        // Allow OPTIONS for CORS
-        if (method.equals("OPTIONS")) {
-            return true;
-        }
-
-        return false;
     }
 }

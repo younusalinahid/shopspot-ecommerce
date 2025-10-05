@@ -1,35 +1,22 @@
+// src/api/auth-api.jsx
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api/auth";
 
+// Decode JWT token to extract role
 const decodeTokenRole = (token) => {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
 
-        // Method 1: Check for authorities array (Spring Security default)
-        if (payload.authorities && Array.isArray(payload.authorities)) {
-            const roleAuth = payload.authorities.find(auth =>
-                auth.authority?.startsWith('ROLE_') ||
-                typeof auth === 'string' && auth.startsWith('ROLE_')
-            );
-            if (roleAuth) {
-                const authority = typeof roleAuth === 'string' ? roleAuth : roleAuth.authority;
-                return authority.replace('ROLE_', '');
-            }
+        // Check for roles array in JWT
+        if (payload.roles && Array.isArray(payload.roles)) {
+            const role = payload.roles[0];
+            return role.replace('ROLE_', '');
         }
 
-        // Method 2: Check for role field
+        // Fallback to role field
         if (payload.role) {
             return payload.role;
-        }
-
-        // Method 3: Check Spring Security's scope claim
-        if (payload.scope) {
-            const scopes = Array.isArray(payload.scope) ? payload.scope : payload.scope.split(' ');
-            const roleScope = scopes.find(s => s.startsWith('ROLE_'));
-            if (roleScope) {
-                return roleScope.replace('ROLE_', '');
-            }
         }
 
         return "USER"; // Default fallback
@@ -39,73 +26,89 @@ const decodeTokenRole = (token) => {
     }
 };
 
-// Login - role will come from backend JWT token
+// Login - Returns full user object
 export const login = async (email, password) => {
     try {
         const response = await axios.post(`${API_URL}/login`, { email, password });
-        const { token, role: backendRole, fullName } = response.data;
+        const { token, role, fullName } = response.data;
 
-        // Store token
-        localStorage.setItem("jwtToken", token);
-        localStorage.setItem("userEmail", email);
-
-        // Priority: Use role from response, then decode from token
-        const role = backendRole || decodeTokenRole(token) || "USER";
-        localStorage.setItem("role", role);
-
-        // Store full name if available
-        if (fullName) {
-            localStorage.setItem("fullName", fullName);
+        if (!token) {
+            throw new Error("No token received from server");
         }
 
-        return { token, email, role, fullName };
+        // Store all data in localStorage
+        localStorage.setItem("jwtToken", token);
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("fullName", fullName || email.split('@')[0]);
+        localStorage.setItem("role", role || decodeTokenRole(token));
+
+        return {
+            token,
+            email,
+            role: role || decodeTokenRole(token),
+            fullName: fullName || email.split('@')[0]
+        };
     } catch (error) {
-        throw error.response?.data || { message: "Login failed" };
+        console.error("Login error:", error);
+        throw error.response?.data || { message: error.message || "Login failed" };
     }
 };
 
-// User Register
-export const register = async (fullName, email, password, role = "USER") => {
+// Register - Returns full user object
+export const register = async (fullName, email, password) => {
     try {
         const response = await axios.post(`${API_URL}/register`, {
             fullName,
             email,
             password,
-            role // Include role in registration
+            confirmPassword: password // Backend expects this
         });
 
-        const { token, role: backendRole } = response.data;
+        const { token, role } = response.data;
 
-        // Store token and user info
-        if (token) {
-            localStorage.setItem("jwtToken", token);
-            localStorage.setItem("userEmail", email);
-            localStorage.setItem("fullName", fullName);
-
-            const userRole = backendRole || decodeTokenRole(token) || "USER";
-            localStorage.setItem("role", userRole);
+        if (!token) {
+            throw new Error("No token received from server");
         }
 
-        return response.data;
+        // Store all data in localStorage
+        localStorage.setItem("jwtToken", token);
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("fullName", fullName);
+        localStorage.setItem("role", role || decodeTokenRole(token));
+
+        return {
+            token,
+            email,
+            role: role || decodeTokenRole(token),
+            fullName
+        };
     } catch (error) {
-        throw error.response?.data || { message: "Registration failed" };
+        console.error("Registration error:", error);
+
+        // Handle specific error messages from backend
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        }
+
+        throw new Error(error.message || "Registration failed");
     }
 };
 
-// Logout
+// Logout - Clear all stored data
 export const logout = () => {
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("role");
     localStorage.removeItem("fullName");
+    localStorage.removeItem("user");
 };
 
-// Check if user is authenticated
+// Check if user is authenticated with token expiry check
 export const isAuthenticated = () => {
     const token = localStorage.getItem("jwtToken");
     if (!token) return false;
 
-    // Optional: Check if token is expired
+    // Check if token is expired
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const exp = payload.exp * 1000; // Convert to milliseconds
@@ -115,7 +118,7 @@ export const isAuthenticated = () => {
     }
 };
 
-// Get current user
+// Get current user from localStorage
 export const getCurrentUser = () => {
     const email = localStorage.getItem("userEmail");
     const fullName = localStorage.getItem("fullName");
@@ -137,7 +140,7 @@ export const getToken = () => {
     return localStorage.getItem("jwtToken");
 };
 
-// Get user role
+// Get user role (IMPORTANT for ProtectedRoute)
 export const getUserRole = () => {
     return localStorage.getItem("role");
 };
@@ -173,8 +176,9 @@ export const getUserFromToken = () => {
     }
 };
 
-// Axios interceptor to add token to requests
+// Setup Axios interceptors (MUST call this in App.js)
 export const setupAxiosInterceptors = () => {
+    // Request interceptor - Add token to all requests automatically
     axios.interceptors.request.use(
         (config) => {
             const token = getToken();
@@ -188,15 +192,39 @@ export const setupAxiosInterceptors = () => {
         }
     );
 
-    // Response interceptor to handle 401 errors
+    // Response interceptor - Handle 401 errors automatically
     axios.interceptors.response.use(
         (response) => response,
         (error) => {
             if (error.response?.status === 401) {
+                // Token expired or invalid
                 logout();
-                window.location.href = '/login';
+                window.location.href = '/';
+                alert("Session expired. Please login again.");
             }
             return Promise.reject(error);
         }
     );
+};
+
+export const axiosWithAuth = axios.create({
+    baseURL: "http://localhost:8080",
+    headers: {
+        Authorization: `Bearer ${getToken()}`,
+    },
+});
+
+// Export everything
+export default {
+    login,
+    register,
+    logout,
+    isAuthenticated,
+    getCurrentUser,
+    getToken,
+    getUserRole,
+    isAdmin,
+    hasRole,
+    getUserFromToken,
+    setupAxiosInterceptors
 };

@@ -6,22 +6,20 @@ export const ProtectedRoute = ({ children, role }) => {
     const isLoggedIn = isAuthenticated();
     const userRole = getUserRole();
 
-    // If not logged in, redirect to appropriate login page
+    console.log('ProtectedRoute Check:', { isLoggedIn, userRole, requiredRole: role });
+
+    // If not logged in, redirect to home
     if (!isLoggedIn) {
-        if (role === 'ADMIN') {
-            return <Navigate to="/admin-login" replace />;
-        }
-        return <Navigate to="/login" replace />;
+        console.log('Not authenticated, redirecting to home');
+        return <Navigate to="/" replace />;
     }
 
     // If logged in but role doesn't match, redirect to home
     if (role && userRole !== role) {
-        // If user tries to access admin panel without ADMIN role
-        if (role === 'ADMIN') {
-            return <Navigate to="/" replace />;
-        }
+        console.log('Role mismatch, redirecting to home');
         return <Navigate to="/" replace />;
     }
 
+    // All checks passed, render children
     return children;
 };

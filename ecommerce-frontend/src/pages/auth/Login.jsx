@@ -1,31 +1,49 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {useNavigate, Link} from "react-router-dom";
-import { Role } from "../../dto/type/Role";
-import { login as loginApi } from "../../api/auth-api";
+import {Role} from "../../dto/type/Role";
+import {login as loginApi} from "../../api/auth-api";
 import "../../App.css";
 
 const Login = ({isOpen, onClose, onSwitchToRegister}) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     if (!isOpen) return null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
+        setLoading(true);
+
         try {
             const user = await loginApi(email, password);
+
+            // Store user info
             localStorage.setItem("user", JSON.stringify(user));
 
-            if (user.role === Role.ADMIN) navigate("/admin-dashboard");
-            else navigate("/");
+            // Success message
+            console.log("Login successful:", user);
 
+            // Close modal first
             onClose();
+
+            // Navigate based on role using window.location for full reload
+            if (user.role === Role.ADMIN) {
+                window.location.href = "/admin-dashboard";
+            } else {
+                window.location.href = "/";
+            }
+
         } catch (err) {
-            alert(err.message || "Invalid email or password");
+            console.error("Login error:", err);
+            setError(err.message || "Invalid email or password");
+        } finally {
+            setLoading(false);
         }
-        console.log("Login with:", {email, password, rememberMe});
     };
 
     return (
@@ -49,7 +67,15 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
                         <h2 className="mb-2 font-extrabold text-transparent text-3xl bg-clip-text bg-gradient-to-r from-pink-500 via-cyan-500 to-blue-600 animate-float">
                             Sign in to your account
                         </h2>
+                        <p className="text-gray-600 text-sm">Welcome back to ShopSpot!</p>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-red-600 text-sm">{error}</p>
+                        </div>
+                    )}
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -65,6 +91,7 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
                                 className="block px-3 py-2 border border-cyan-300 focus:border-pink-500 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-400 w-full transition-all input-animation shadow-sm hover:shadow-lg"
                                 placeholder="Enter your email"
                                 required
+                                disabled={loading}
                             />
                         </div>
 
@@ -80,6 +107,7 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
                                 className="block px-3 py-2 border border-cyan-300 focus:border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-full transition-all input-animation shadow-sm hover:shadow-lg"
                                 placeholder="Enter your password"
                                 required
+                                disabled={loading}
                             />
                         </div>
 
@@ -111,9 +139,10 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
                         {/* Sign In Button */}
                         <button
                             type="submit"
-                            className="bg-gradient-to-r from-pink-500 via-cyan-500 to-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 w-full font-semibold text-white transform transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-2xl"
+                            disabled={loading}
+                            className="bg-gradient-to-r from-pink-500 via-cyan-500 to-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 w-full font-semibold text-white transform transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-2xl"
                         >
-                            🚀 Sign in
+                            {loading ? "Signing in..." : "🚀 Sign in"}
                         </button>
 
                         <div>

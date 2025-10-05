@@ -30,8 +30,7 @@ export default function Navbar() {
                                 placeholder="Search products..."
                                 className="px-4 py-2 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white w-full text-gray-700 text-sm"
                             />
-                            <button
-                                className="top-0 right-0 bottom-0 absolute flex justify-center items-center bg-green-500 hover:bg-green-600 px-4 rounded-r-full transition-colors">
+                            <button className="top-0 right-0 bottom-0 absolute flex justify-center items-center bg-green-500 hover:bg-green-600 px-4 rounded-r-full transition-colors">
                                 <Search className="text-white" size={35} />
                             </button>
                         </div>
