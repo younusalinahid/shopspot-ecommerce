@@ -1,12 +1,18 @@
 import {ChevronRight, ChevronDown} from "lucide-react";
 import {useState} from 'react';
+import {useNavigate} from "react-router-dom";
 
 export default function CategorySidebar({ categories = [] }) {
     const [openIndex, setOpenIndex] = useState(null);
+    const navigate = useNavigate();
 
     const toggleCategory = (index) => {
         setOpenIndex(openIndex === index ? null : index);
     };
+
+    const handleSubCategoryClick = (subCategoryId) => {
+        navigate(`/subcategory/${subCategoryId}`)
+    }
 
     return (
         <div className="hidden lg:block w-72">
@@ -37,6 +43,7 @@ export default function CategorySidebar({ categories = [] }) {
                                 {category.subCategories?.map((sub, subIndex) => (
                                     <div
                                         key={subIndex}
+                                        onClick={() => handleSubCategoryClick(sub.id)}
                                         className={`px-3 py-2 rounded-lg shadow-sm cursor-pointer text-sm font-medium transition-all duration-200 ${sub.color}`}
                                     >
                                         {sub.name}

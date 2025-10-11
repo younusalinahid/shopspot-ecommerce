@@ -40,7 +40,7 @@ public class ProductController {
     public ResponseEntity<ProductDTO> createProduct(
             @RequestParam("name") String name,
             @RequestParam("description") String description,
-            @RequestParam("price") double price,
+            @RequestParam("price") int price,
             @RequestParam("subCategoryId") Long subCategoryId,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
@@ -58,7 +58,7 @@ public class ProductController {
             @PathVariable Long id,
             @RequestParam("name") String name,
             @RequestParam("description") String description,
-            @RequestParam("price") double price,
+            @RequestParam("price") int price,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
 

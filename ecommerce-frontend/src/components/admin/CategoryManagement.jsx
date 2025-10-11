@@ -1,13 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {toast} from "react-toastify";
 import {Plus, Edit2, Trash2, X, FolderOpen, ChevronDown, ChevronRight} from 'lucide-react';
-import {
-    getAllCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    createSubCategory
-} from '../../api/category-api-service';
+import { categoryApi } from '../../api/category-api-service'
 
 export default function CategoryManagement() {
     const [categories, setCategories] = useState([]);
@@ -33,7 +27,7 @@ export default function CategoryManagement() {
     const loadCategories = async () => {
         setLoading(true);
         try {
-            const data = await getAllCategories();
+            const data = await categoryApi.getAllCategories();
             console.log('Categories loaded:', data);
             setCategories(data);
         } catch (error) {
@@ -57,7 +51,7 @@ export default function CategoryManagement() {
             };
 
             console.log('Creating category:', categoryData);
-            await createCategory(categoryData);
+            await categoryApi.createCategory(categoryData);
             await loadCategories();
             setShowModal(false);
             resetForm();
@@ -81,7 +75,7 @@ export default function CategoryManagement() {
             };
 
             console.log('Updating category:', categoryData);
-            await updateCategory(selectedCategory.id, categoryData);
+            await categoryApi.updateCategory(selectedCategory.id, categoryData);
             await loadCategories();
             setShowModal(false);
             setEditMode(false);
@@ -96,7 +90,7 @@ export default function CategoryManagement() {
     const handleDeleteCategory = async (id) => {
         if (window.confirm('Are you sure you want to delete this category?')) {
             try {
-                await deleteCategory(id);
+                await categoryApi.deleteCategory(id);
                 await loadCategories();
                 toast('Category deleted successfully');
             } catch (error) {
@@ -118,7 +112,7 @@ export default function CategoryManagement() {
             };
 
             console.log('Creating subcategory:', subCategoryData);
-            await createSubCategory(subCategoryForm.categoryId, subCategoryData);
+            await categoryApi.createSubCategory(subCategoryForm.categoryId, subCategoryData);
             await loadCategories();
             setShowSubCategoryModal(false);
             setSubCategoryForm({name: '', categoryId: null});

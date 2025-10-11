@@ -9,14 +9,14 @@ public class ProductDTO {
     private Long id;
     private String name;
     private String description;
-    private double price;
+    private int price;
     private boolean active;
     private Instant createdAt;
     private String imageData;
 
     public ProductDTO() {}
 
-    public ProductDTO(Long id, String name, String description, double price, boolean active,
+    public ProductDTO(Long id, String name, String description, int price, boolean active,
                       Instant createdAt, byte[] imageData) {
         this.id = id;
         this.name = name;

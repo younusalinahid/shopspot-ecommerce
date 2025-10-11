@@ -4,7 +4,6 @@ import { getToken } from "./auth-api";
 
 const API_URL = "http://localhost:8080/api/banners";
 
-// Helper function to get headers with token
 const getAuthHeaders = () => {
     const token = getToken();
     console.log('Token for request:', token ? 'Present' : 'Missing');
