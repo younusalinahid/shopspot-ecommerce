@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import { setupAxiosInterceptors } from './api/auth-api';
 import Navbar from './components/Navbar';
-import Home from "./pages/user/Home";
+import Home from "./components/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserDashboard from "./pages/user/UserDashboard";
+import UserDashboard from "./components/user/UserDashboard";
 import AuthPage from "./pages/auth/AuthPage";
 import {ProtectedRoute} from "./components/ProtectedRoute";
 

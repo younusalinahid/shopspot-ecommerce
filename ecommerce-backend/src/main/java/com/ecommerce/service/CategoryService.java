@@ -39,12 +39,18 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    public Category updateCategory(Long id, Category categoryDtl) {
+    public Category updateCategory(Long id, Category categoryDetails) {
         return categoryRepository.findById(id).map(category -> {
-            category.setName(categoryDtl.getName());
+            category.setName(categoryDetails.getName());
+
+            if (categoryDetails.getIcon() != null) {
+                category.setIcon(categoryDetails.getIcon());
+            }
+
             return categoryRepository.save(category);
         }).orElse(null);
     }
+
 
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);

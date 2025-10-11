@@ -1,11 +1,16 @@
 import {useEffect, useState} from 'react';
-import {Star, ArrowRight} from 'lucide-react';
-import CategorySidebar from './CategorySidebar';
-import {getAllCategories} from "../../api/category-api-service";
-import Footer from "../../components/Footer";
+import {Star, ArrowRight, ChevronLeft, ChevronRight} from 'lucide-react';
+import CategorySidebar from './user/CategorySidebar';
+import {getAllCategories} from "../api/category-api-service";
+import {getAllBanners} from "../api/banner-api-service";
+import Footer from "../components/Footer";
+import Banner from "./user/Banner";
 
 const Home = () => {
     const [categories, setCategories] = useState([])
+    const [banners, setBanners] = useState([])
+    const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+    const [isLoadingBanners, setIsLoadingBanners] = useState(true)
 
     useEffect(() => {
         getAllCategories()
@@ -24,8 +29,22 @@ const Home = () => {
                 setCategories(mappedCategories);
             })
             .catch(err => console.error(err));
-    }, []);
 
+        // Load banners
+        getAllBanners()
+            .then(data => {
+                // Filter only active banners and sort by orderIndex
+                const activeBanners = data
+                    .filter(banner => banner.active)
+                    .sort((a, b) => a.orderIndex - b.orderIndex);
+                setBanners(activeBanners);
+                setIsLoadingBanners(false);
+            })
+            .catch(err => {
+                console.error('Error loading banners:', err);
+                setIsLoadingBanners(false);
+            });
+    }, []);
 
     return (
         <div>
@@ -39,37 +58,8 @@ const Home = () => {
                 <div className="flex-1 flex flex-col">
                     {/* Main Content */}
                     <div className="flex-grow bg-gray-50 overflow-y-auto">
-                        {/* Hero Banner */}
-                        <div
-                            className="bg-gradient-to-r from-cyan-100 to-cyan-200 mx-4 my-6 rounded-2xl overflow-hidden">
-                            <div className="flex justify-between items-center p-8">
-                                <div className="flex-1 space-y-4">
-                                    <h2 className="font-bold text-cyan-800 text-3xl">Embrace Your Heritage</h2>
-                                    <h3 className="font-bold text-gray-700 text-2xl">Wear Tradition with Style</h3>
-
-                                    <div className="flex items-center space-x-6 text-white">
-                                        <div className="bg-cyan-500 px-4 py-2 rounded-lg">
-                                            <span className="font-semibold">Flat $5 Cashback</span>
-                                        </div>
-                                        <div className="bg-cyan-500 px-4 py-2 rounded-lg">
-                                            <span className="font-semibold">Up to 20% Off</span>
-                                        </div>
-                                        <div className="bg-cyan-500 px-4 py-2 rounded-lg">
-                                            <span className="font-semibold">Free Delivery</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex-shrink-0">
-                                    <div
-                                        className="relative flex justify-center items-center bg-cyan-300 rounded-2xl w-64 h-48 overflow-hidden">
-                                        <div
-                                            className="absolute inset-0 bg-gradient-to-br from-cyan-200 to-cyan-400"></div>
-                                        <div className="relative text-6xl">👘</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {/* Hero Banner Section */}
+                        <Banner />
 
                         {/* Product Categories Section */}
                         <div className="relative px-6 py-8">

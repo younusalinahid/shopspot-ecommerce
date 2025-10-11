@@ -22,16 +22,12 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
         try {
             const user = await loginApi(email, password);
 
-            // Store user info
             localStorage.setItem("user", JSON.stringify(user));
 
-            // Success message
             console.log("Login successful:", user);
 
-            // Close modal first
             onClose();
 
-            // Navigate based on role using window.location for full reload
             if (user.role === Role.ADMIN) {
                 window.location.href = "/admin-dashboard";
             } else {
