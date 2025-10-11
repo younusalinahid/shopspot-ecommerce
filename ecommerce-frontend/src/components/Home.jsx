@@ -1,39 +1,23 @@
 import {useEffect, useState} from 'react';
-import {Star, ArrowRight, ChevronLeft, ChevronRight} from 'lucide-react';
+import {Star, ArrowRight} from 'lucide-react';
 import CategorySidebar from './user/CategorySidebar';
-import {getAllCategories} from "../api/category-api-service";
 import {getAllBanners} from "../api/banner-api-service";
 import Footer from "../components/Footer";
 import Banner from "./user/Banner";
+import {useCategories} from "../hooks/useCategory";
+import ProductCard from "./user/product-card";
+import {useProducts} from "../hooks/useProducts";
 
 const Home = () => {
-    const [categories, setCategories] = useState([])
+    const {categories, loading: categoriesLoading, error: categoriesError} = useCategories();
+    const { products: featuredProducts, loading: productsLoading, error: productsError } = useProducts(8);
     const [banners, setBanners] = useState([])
-    const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
     const [isLoadingBanners, setIsLoadingBanners] = useState(true)
 
     useEffect(() => {
-        getAllCategories()
-            .then(data => {
-                const mappedCategories = data.map(cat => ({
-                    id: cat.id,
-                    name: cat.name,
-                    icon: cat.icon,
-                    color: "bg-blue-100 text-blue-600",
-                    subCategories: cat.subCategories.map(sub => ({
-                        id: sub.id,
-                        name: sub.name,
-                        color: "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                    }))
-                }));
-                setCategories(mappedCategories);
-            })
-            .catch(err => console.error(err));
-
         // Load banners
         getAllBanners()
             .then(data => {
-                // Filter only active banners and sort by orderIndex
                 const activeBanners = data
                     .filter(banner => banner.active)
                     .sort((a, b) => a.orderIndex - b.orderIndex);
@@ -59,7 +43,7 @@ const Home = () => {
                     {/* Main Content */}
                     <div className="flex-grow bg-gray-50 overflow-y-auto">
                         {/* Hero Banner Section */}
-                        <Banner />
+                        <Banner/>
 
                         {/* Product Categories Section */}
                         <div className="relative px-6 py-8">
@@ -121,44 +105,26 @@ const Home = () => {
                         {/* Featured Products */}
                         <div className="px-6 py-8">
                             <h2 className="mb-6 font-bold text-gray-900 text-2xl">Featured Products</h2>
-                            <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-                                    <div key={item}
-                                         className="group bg-white shadow-sm hover:shadow-lg rounded-xl overflow-hidden transition-all duration-300">
-                                        <div className="relative bg-gray-100 aspect-square overflow-hidden">
-                                            <div
-                                                className="absolute inset-0 flex justify-center items-center bg-gradient-to-br from-blue-100 to-green-100">
-                                                <span className="text-4xl">👔</span>
-                                            </div>
-                                            <div
-                                                className="top-3 right-3 absolute bg-red-500 px-2 py-1 rounded-full text-white text-xs">
-                                                20% OFF
-                                            </div>
-                                        </div>
-                                        <div className="p-4">
-                                            <h3 className="mb-2 font-semibold text-gray-800 group-hover:text-cyan-600 transition-colors">
-                                                Product 500mg
-                                            </h3>
-                                            <div className="flex items-center space-x-1 mb-2">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} className="fill-current w-3 h-3 text-yellow-400"/>
-                                                ))}
-                                                <span className="ml-1 text-gray-500 text-xs">(4.5)</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="space-x-2">
-                                                    <span className="font-bold text-gray-900 text-lg">45 TK</span>
-                                                    <span className="text-gray-500 text-sm line-through">60 TK</span>
-                                                </div>
-                                                <button
-                                                    className="bg-cyan-500 hover:bg-cyan-600 px-4 py-2 rounded-lg text-white text-sm transition-colors">
-                                                    Add to Cart
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+
+                            {productsLoading ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div
+                                        className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+                                </div>
+                            ) : productsError ? (
+                                <div className="text-center py-12 text-red-500">
+                                    Error loading products: {productsError}
+                                </div>
+                            ) : (
+                                <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                                    {featuredProducts.map((product) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            product={product}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* More content to test scrolling */}
@@ -200,7 +166,7 @@ const Home = () => {
                 </div>
             </div>
             {/* Footer */}
-            <Footer />
+            <Footer/>
         </div>
     );
 };

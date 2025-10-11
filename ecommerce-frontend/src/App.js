@@ -7,6 +7,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserDashboard from "./components/user/UserDashboard";
 import AuthPage from "./pages/auth/AuthPage";
 import {ProtectedRoute} from "./components/ProtectedRoute";
+import ProductList from "./components/user/product-list";
 
 function App() {
     useEffect(() => {
@@ -23,6 +24,13 @@ function App() {
                     <>
                         <Navbar />
                         <Home />
+                    </>
+                }/>
+
+                <Route path="/subcategory/:subCategoryId" element={
+                    <>
+                        <Navbar />
+                        <ProductList />
                     </>
                 }/>
 

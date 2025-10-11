@@ -20,7 +20,7 @@ public class Product {
 
     private String name;
     private String description;
-    private double price;
+    private int price;
     private boolean active = true;
 
     @Lob
