@@ -1,11 +1,16 @@
 package com.ecommerce.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubCategory {
@@ -20,27 +25,7 @@ public class SubCategory {
     @JsonBackReference
     private Category category;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
+    @OneToMany(mappedBy = "subCategory")
+    @JsonManagedReference
+    private List<Product> products;
 }

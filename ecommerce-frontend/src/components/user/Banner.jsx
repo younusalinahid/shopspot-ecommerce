@@ -59,7 +59,7 @@ const Banner = () => {
         return (
             <div className="relative mx-4 my-6 rounded-2xl overflow-hidden group">
                 {/* Banner Images */}
-                <div className="relative h-64 md:h-80 lg:h-96">
+                <div className="relative h-64 md:h-80 lg:h-70">
                     {banners.map((banner, index) => (
                         <div
                             key={banner.id}
@@ -72,21 +72,23 @@ const Banner = () => {
                                     <img
                                         src={getImageSrc(banner.imageData)}
                                         alt={banner.title}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain bg-gray-200"
                                         onError={(e) => {
                                             e.target.src = 'https://via.placeholder.com/1200x400?text=Banner+Image';
                                         }}
                                     />
                                 </a>
                             ) : (
-                                <img
-                                    src={getImageSrc(banner.imageData)}
-                                    alt={banner.title}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/1200x400?text=Banner+Image';
-                                    }}
-                                />
+                                <div className="relative w-full aspect-[3/1] overflow-hidden rounded-2xl">
+                                    <img
+                                        src={getImageSrc(banner.imageData)}
+                                        alt={banner.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/1200x400?text=Banner+Image';
+                                        }}
+                                    />
+                                </div>
                             )}
 
                             {/* Banner Title Overlay */}

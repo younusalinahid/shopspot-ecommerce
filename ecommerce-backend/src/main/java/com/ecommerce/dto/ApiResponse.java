@@ -1,5 +1,10 @@
 package com.ecommerce.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class ApiResponse {
     private boolean success;
     private String message;
@@ -10,10 +15,4 @@ public class ApiResponse {
         this.success = success;
         this.message = message;
     }
-
-    // getters & setters
-    public boolean isSuccess() { return success; }
-    public void setSuccess(boolean success) { this.success = success; }
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
 }
