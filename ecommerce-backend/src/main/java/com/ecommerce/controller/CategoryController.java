@@ -1,6 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.CategoryDTO;
+import com.ecommerce.dto.SubCategoryDTO;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.SubCategory;
 import com.ecommerce.service.CategoryService;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "http://localhost:3000")
 public class CategoryController {
+
     private final CategoryService categoryService;
     private final SubCategoryService subCategoryService;
 
@@ -24,42 +26,36 @@ public class CategoryController {
         this.subCategoryService = subCategoryService;
     }
 
-    // Public endpoint - No authentication needed
     @GetMapping
     public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategoriesWithSub());
+        return ResponseEntity.ok(categoryService.getAllCategoriesWithSubDTO());
     }
 
-    // Public endpoint - No authentication needed
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.getCategoryById(id));
+    public ResponseEntity<CategoryDTO> getCategory(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.getCategoryWithSubDTOById(id));
     }
 
-    // Admin only endpoint
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Category> createCategory(@RequestBody Category category) {
         return ResponseEntity.ok(categoryService.addCategory(category));
     }
 
-    // Admin only endpoint
     @PostMapping("/{categoryId}/subcategories")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SubCategory> createSubCategory(
+    public ResponseEntity<SubCategoryDTO> createSubCategory(
             @PathVariable Long categoryId,
             @RequestBody SubCategory subCategory) {
-        return ResponseEntity.ok(subCategoryService.createSubCategory(categoryId, subCategory));
+        return ResponseEntity.ok(subCategoryService.createSubCategoryDTO(categoryId, subCategory));
     }
 
-    // Admin only endpoint
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category category) {
         return ResponseEntity.ok(categoryService.updateCategory(id, category));
     }
 
-    // Admin only endpoint
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {

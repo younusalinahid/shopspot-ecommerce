@@ -9,6 +9,7 @@ import java.util.List;
 
 
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Category {
@@ -19,39 +20,7 @@ public class Category {
     private String name;
     private String icon;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "category")
     @JsonManagedReference
-    private List<SubCategory> subCategories = new ArrayList<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<SubCategory> getSubCategories() {
-        return subCategories;
-    }
-
-    public void setSubCategories(List<SubCategory> subCategories) {
-        this.subCategories = subCategories;
-    }
-
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
+    private List<SubCategory> subCategories;
 }

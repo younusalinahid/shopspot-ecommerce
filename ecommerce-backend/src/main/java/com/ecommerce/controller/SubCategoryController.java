@@ -1,7 +1,11 @@
 package com.ecommerce.controller;
 
-import com.ecommerce.model.Category;
-import com.ecommerce.service.CategoryService;
+import com.ecommerce.dto.SubCategoryDTO;
+import com.ecommerce.dto.SubCategoryWithProductsDto;
+import com.ecommerce.model.SubCategory;
+import com.ecommerce.service.SubCategoryService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,34 +14,35 @@ import java.util.List;
 @RequestMapping("/api/subCategories")
 @CrossOrigin(origins = "http://localhost:3000")
 public class SubCategoryController {
-    private final CategoryService categoryService;
 
-    public SubCategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
+    private final SubCategoryService subCategoryService;
+
+    public SubCategoryController(SubCategoryService subCategoryService) {
+        this.subCategoryService = subCategoryService;
     }
 
     @GetMapping
-    public List<Category> getCategories() {
-        return categoryService.getAllCategories();
+    public ResponseEntity<List<SubCategoryDTO>> getAllSubCategories() {
+        return ResponseEntity.ok(subCategoryService.getAllSubCategoryDTOs());
     }
 
     @GetMapping("/{id}")
-    public Category getCategory(@PathVariable Long id) {
-        return categoryService.getCategoryById(id);
-    }
-
-    @PostMapping
-    public Category createCategory(@RequestBody Category category) {
-        return categoryService.addCategory(category);
+    public ResponseEntity<SubCategoryWithProductsDto> getSubCategory(@PathVariable Long id) {
+        return ResponseEntity.ok(subCategoryService.getSubCategoryWithProductsById(id));
     }
 
     @PutMapping("/{id}")
-    public Category updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        return categoryService.updateCategory(id, category);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SubCategoryDTO> updateSubCategory(
+            @PathVariable Long id,
+            @RequestBody SubCategory subCategory) {
+        return ResponseEntity.ok(subCategoryService.updateSubCategoryDTO(id, subCategory));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteSubCategory(@PathVariable Long id) {
+        subCategoryService.deleteSubCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

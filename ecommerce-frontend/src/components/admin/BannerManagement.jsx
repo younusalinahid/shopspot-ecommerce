@@ -23,13 +23,20 @@ export default function BannerManagement() {
         role: 'USER'
     });
 
+    useEffect(() => {
+        loadBanners();
+    }, []);
+
     const loadBanners = async () => {
         setLoading(true);
         try {
             const data = await getAllBanners();
+            console.log('Banners loaded:', data);
+            // Sort by orderIndex
             const sortedData = data.sort((a, b) => a.orderIndex - b.orderIndex);
             setBanners(sortedData);
         } catch (error) {
+            console.error('Error loading banners:', error);
             alert('Failed to load banners: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
@@ -95,6 +102,7 @@ export default function BannerManagement() {
             resetForm();
             alert('Banner updated successfully');
         } catch (error) {
+            console.error('Error updating banner:', error);
             alert('Failed to update banner: ' + (error.response?.data?.message || error.message));
         }
     };
@@ -106,6 +114,7 @@ export default function BannerManagement() {
                 await loadBanners();
                 alert('Banner deleted successfully');
             } catch (error) {
+                console.error('Error deleting banner:', error);
                 alert('Failed to delete banner');
             }
         }
