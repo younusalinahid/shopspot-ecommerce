@@ -34,7 +34,7 @@ const Home = () => {
         <div>
             <div className="min-h-screen flex">
                 {/* Fixed Sidebar */}
-                <div className="w-80 flex-shrink-0 sticky top-0 h-screen overflow-y-auto bg-white shadow-lg">
+                <div className="lg:w-80 flex-shrink-0">
                     <CategorySidebar categories={categories}/>
                 </div>
 
