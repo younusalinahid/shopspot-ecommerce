@@ -16,9 +16,10 @@ public class JwtTokenUtil {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private SecretKey key;
+    @Value("${jwt.expiration}")
+    private Long jwtExpiration;
 
-    private final long jwtExpirationMs = 24 * 60 * 60 * 1000;
+    private SecretKey key;
 
     @PostConstruct
     public void init() {
@@ -31,7 +32,7 @@ public class JwtTokenUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))  // ✅ এখানে পরিবর্তন
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
@@ -47,9 +48,17 @@ public class JwtTokenUtil {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .setAllowedClockSkewSeconds(60)  // ✅ Extra: 1 minute clock skew allow
+                    .build()
+                    .parseClaimsJws(token);
             return true;
+        } catch (ExpiredJwtException e) {
+            System.out.println("JWT Token expired: " + e.getMessage());
+            return false;
         } catch (Exception e) {
+            System.out.println("JWT validation failed: " + e.getMessage());
             return false;
         }
     }

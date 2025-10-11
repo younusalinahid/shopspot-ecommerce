@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {toast} from "react-toastify";
 import {Plus, Edit2, Trash2, X, FolderOpen, ChevronDown, ChevronRight} from 'lucide-react';
 import {
     getAllCategories,
@@ -18,11 +19,10 @@ export default function CategoryManagement() {
     const [expandedCategories, setExpandedCategories] = useState({});
     const [formData, setFormData] = useState({
         name: '',
-        description: ''
+        icon: ''
     });
     const [subCategoryForm, setSubCategoryForm] = useState({
         name: '',
-        description: '',
         categoryId: null
     });
 
@@ -34,9 +34,11 @@ export default function CategoryManagement() {
         setLoading(true);
         try {
             const data = await getAllCategories();
+            console.log('Categories loaded:', data);
             setCategories(data);
         } catch (error) {
-            alert('Failed to load categories');
+            console.error('Error loading categories:', error);
+            toast('Failed to load categories: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
@@ -44,36 +46,50 @@ export default function CategoryManagement() {
 
     const handleCreateCategory = async () => {
         if (!formData.name.trim()) {
-            alert('Category name is required');
+            toast('Category name is required');
             return;
         }
 
         try {
-            await createCategory(formData);
+            const categoryData = {
+                name: formData.name,
+                icon: formData.icon || '📦'
+            };
+
+            console.log('Creating category:', categoryData);
+            await createCategory(categoryData);
             await loadCategories();
             setShowModal(false);
             resetForm();
-            alert('Category created successfully');
+            toast.success('Category created successfully');
         } catch (error) {
-            alert('Failed to create category');
+            console.error('Error creating category:', error);
+            toast('Failed to create category: ' + (error.response?.data?.message || error.message));
         }
     };
 
     const handleUpdateCategory = async () => {
         if (!formData.name.trim()) {
-            alert('Category name is required');
+            toast('Category name is required');
             return;
         }
 
         try {
-            await updateCategory(selectedCategory.id, formData);
+            const categoryData = {
+                name: formData.name,
+                icon: formData.icon || '📦'
+            };
+
+            console.log('Updating category:', categoryData);
+            await updateCategory(selectedCategory.id, categoryData);
             await loadCategories();
             setShowModal(false);
             setEditMode(false);
             resetForm();
-            alert('Category updated successfully');
+            toast.success('Category updated successfully');
         } catch (error) {
-            alert('Failed to update category');
+            console.error('Error updating category:', error);
+            toast('Failed to update category: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -82,30 +98,34 @@ export default function CategoryManagement() {
             try {
                 await deleteCategory(id);
                 await loadCategories();
-                alert('Category deleted successfully');
+                toast('Category deleted successfully');
             } catch (error) {
-                alert('Failed to delete category');
+                console.error('Error deleting category:', error);
+                toast('Failed to delete category: ' + (error.response?.data?.message || error.message));
             }
         }
     };
 
     const handleCreateSubCategory = async () => {
         if (!subCategoryForm.name.trim()) {
-            alert('Subcategory name is required');
+            toast('Subcategory name is required');
             return;
         }
 
         try {
-            await createSubCategory(subCategoryForm.categoryId, {
-                name: subCategoryForm.name,
-                description: subCategoryForm.description
-            });
+            const subCategoryData = {
+                name: subCategoryForm.name
+            };
+
+            console.log('Creating subcategory:', subCategoryData);
+            await createSubCategory(subCategoryForm.categoryId, subCategoryData);
             await loadCategories();
             setShowSubCategoryModal(false);
-            setSubCategoryForm({name: '', description: '', categoryId: null});
-            alert('Subcategory created successfully');
+            setSubCategoryForm({name: '', categoryId: null});
+            toast('Subcategory created successfully');
         } catch (error) {
-            alert('Failed to create subcategory');
+            console.error('Error creating subcategory:', error);
+            toast('Failed to create subcategory: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -113,19 +133,19 @@ export default function CategoryManagement() {
         setSelectedCategory(category);
         setFormData({
             name: category.name,
-            description: category.description || ''
+            icon: category.icon || ''
         });
         setEditMode(true);
         setShowModal(true);
     };
 
     const openSubCategoryModal = (categoryId) => {
-        setSubCategoryForm({name: '', description: '', categoryId});
+        setSubCategoryForm({name: '', categoryId});
         setShowSubCategoryModal(true);
     };
 
     const resetForm = () => {
-        setFormData({name: '', description: ''});
+        setFormData({name: '', icon: ''});
         setSelectedCategory(null);
         setEditMode(false);
     };
@@ -161,8 +181,7 @@ export default function CategoryManagement() {
                 {/* Loading State */}
                 {loading ? (
                     <div className="text-center py-12">
-                        <div
-                            className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
                 ) : (
                     <div className="grid gap-4">
@@ -183,10 +202,14 @@ export default function CategoryManagement() {
                                                     <ChevronRight className="w-5 h-5"/>
                                                 )}
                                             </button>
-                                            <FolderOpen className="w-8 h-8 text-blue-600"/>
+
+                                            {/* Icon Display */}
+                                            <div className="text-3xl">
+                                                {category.icon || '📦'}
+                                            </div>
+
                                             <div>
                                                 <h3 className="text-lg font-semibold text-gray-800">{category.name}</h3>
-                                                <p className="text-sm text-gray-500">{category.description}</p>
                                                 <span className="text-xs text-gray-400 mt-1 inline-block">
                                                     {category.subCategories?.length || 0} subcategories
                                                 </span>
@@ -220,12 +243,11 @@ export default function CategoryManagement() {
                                     <div className="border-t border-gray-200 bg-gray-50 p-6">
                                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {category.subCategories.map((sub) => (
-                                                <div key={sub.id}
-                                                     className="bg-white p-4 rounded-lg border border-gray-200">
+                                                <div key={sub.id} className="bg-white p-4 rounded-lg border border-gray-200">
                                                     <div className="flex items-start justify-between">
-                                                        <div>
+                                                        <div className="flex-1">
                                                             <h4 className="font-medium text-gray-800">{sub.name}</h4>
-                                                            <p className="text-sm text-gray-500 mt-1">{sub.description}</p>
+                                                            <span className="text-xs text-gray-400">ID: {sub.id}</span>
                                                         </div>
                                                         <button
                                                             onClick={() => alert('SubCategory delete coming soon')}
@@ -282,21 +304,25 @@ export default function CategoryManagement() {
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Enter category name"
+                                        placeholder="e.g. Women's Wear, Men's Wear"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Description
+                                        Icon (Emoji)
                                     </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                    <input
+                                        type="text"
+                                        value={formData.icon}
+                                        onChange={(e) => setFormData({...formData, icon: e.target.value})}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        rows="3"
-                                        placeholder="Enter category description"
+                                        placeholder="e.g. 👗, 👔, 👟 (optional)"
+                                        maxLength="2"
                                     />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Use emoji as icon (e.g. 👗 👔 👟 👜 💄)
+                                    </p>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
@@ -330,7 +356,7 @@ export default function CategoryManagement() {
                                 <button
                                     onClick={() => {
                                         setShowSubCategoryModal(false);
-                                        setSubCategoryForm({name: '', description: '', categoryId: null});
+                                        setSubCategoryForm({name: '', categoryId: null});
                                     }}
                                     className="text-gray-400 hover:text-gray-600"
                                 >
@@ -348,23 +374,7 @@ export default function CategoryManagement() {
                                         value={subCategoryForm.name}
                                         onChange={(e) => setSubCategoryForm({...subCategoryForm, name: e.target.value})}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Enter subcategory name"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={subCategoryForm.description}
-                                        onChange={(e) => setSubCategoryForm({
-                                            ...subCategoryForm,
-                                            description: e.target.value
-                                        })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        rows="3"
-                                        placeholder="Enter subcategory description"
+                                        placeholder="e.g. T-Shirts, Jeans, Dresses"
                                     />
                                 </div>
 
@@ -372,7 +382,7 @@ export default function CategoryManagement() {
                                     <button
                                         onClick={() => {
                                             setShowSubCategoryModal(false);
-                                            setSubCategoryForm({name: '', description: '', categoryId: null});
+                                            setSubCategoryForm({name: '', categoryId: null});
                                         }}
                                         className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                     >

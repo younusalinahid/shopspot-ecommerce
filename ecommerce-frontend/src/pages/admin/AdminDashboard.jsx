@@ -5,7 +5,8 @@ import StatsCards from '../../components/admin/StatsCards';
 import SalesChart from '../../components/admin/SalesChart';
 import CategoryChart from '../../components/admin/CategoryChart';
 import RecentOrdersTable from '../../components/admin/RecentOrdersTable';
-import CategoryManagement from '../../components/admin/AdminCategory';
+import CategoryManagement from '../../components/admin/CategoryManagement';
+import BannerManagement from '../../components/admin/BannerManagement';
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, BarChart3, FolderTree, ImageIcon, DollarSign } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -69,19 +70,11 @@ export default function AdminDashboard() {
                     </div>
                 );
 
+            case 'banners':
+                return <BannerManagement />;
+
             case 'categories':
                 return <CategoryManagement />;
-
-            case 'banners':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Banners Management</h2>
-                        <p className="text-gray-500">Manage your website banners and promotional images here.</p>
-                        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                            <p className="text-blue-700">Banners section coming soon...</p>
-                        </div>
-                    </div>
-                );
 
             case 'products':
                 return (

@@ -38,23 +38,18 @@ const Register = ({isOpen, onClose, onSwitchToLogin}) => {
         setLoading(true);
 
         try {
-            // Register API call
             const response = await registerApi(fullName, email, password, confirmPassword);
 
-            // Store user data
             localStorage.setItem("user", JSON.stringify({
                 email: response.email,
                 fullName: response.fullName,
                 role: response.role
             }));
 
-            // Success message
             alert("Registration successful! Welcome to ShopSpot");
 
-            // Close modal and navigate
             onClose();
 
-            // Navigate based on role
             if (response.role === Role.ADMIN) {
                 navigate("/admin-dashboard");
             } else {
