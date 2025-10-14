@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 public class ProductMapper {
 
     public ProductDTO convertToDTO(Product product) {
-        SubCategory sub = product.getSubCategory();
         return new ProductDTO(
                 product.getId(),
                 product.getName(),
@@ -19,5 +18,20 @@ public class ProductMapper {
                 product.getCreatedAt(),
                 product.getImageData()
         );
+    }
+
+
+    public Product convertToEntity(ProductDTO dto) {
+
+        Product product = new Product();
+        product.setId(dto.getId());
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setActive(dto.isActive());
+        product.setCreatedAt(dto.getCreatedAt());
+        product.setImageData(dto.getImageData().getBytes());
+
+        return product;
     }
 }

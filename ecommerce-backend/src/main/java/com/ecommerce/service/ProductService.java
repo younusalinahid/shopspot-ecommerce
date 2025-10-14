@@ -1,7 +1,9 @@
 package com.ecommerce.service;
 
+import com.ecommerce.dto.CategoryDTO;
 import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.mapper.ProductMapper;
+import com.ecommerce.model.Category;
 import com.ecommerce.model.Product;
 import com.ecommerce.model.SubCategory;
 import com.ecommerce.repository.ProductRepository;
@@ -12,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +52,11 @@ public class ProductService {
                 .stream()
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public ProductDTO getProductById(Long productId) {
+        Optional<Product> productOptional = productRepository.findById(productId);
+        return productOptional.map(productMapper::convertToDTO).orElse(null);
     }
 
     public List<ProductDTO> getProductsBySubCategory(Long subCategoryId) {
