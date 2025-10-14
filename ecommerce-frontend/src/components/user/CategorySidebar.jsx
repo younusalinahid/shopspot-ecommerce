@@ -5,7 +5,16 @@ import { useNavigate } from "react-router-dom";
 export default function CategorySidebar({ categories = [] }) {
     const [openIndex, setOpenIndex] = useState(null);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const toggleCategory = (index) => {
         setOpenIndex(openIndex === index ? null : index);
@@ -35,7 +44,7 @@ export default function CategorySidebar({ categories = [] }) {
             {/* Animated Backdrop */}
             {isMobileOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                    className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fadeIn"
                     onClick={closeMobileMenu}
                 />
             )}
@@ -47,18 +56,19 @@ export default function CategorySidebar({ categories = [] }) {
                 fixed lg:sticky top-0 left-0 
                 w-80 lg:w-72 
                 h-screen 
-                bg-gradient-to-b from-white/95 to-white/90 backdrop-blur-xl
+                bg-gradient-to-b from-white/90 to-white/70 backdrop-blur-xl
                 border-r border-white/20
                 z-40 
                 transition-all duration-500 ease-out
-                overflow-y-auto
+                overflow-hidden
+                ${isScrolled ? 'lg:bg-white/95 lg:backdrop-blur-lg' : ''}
             `}>
                 {/* Background Decorative Elements */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-200/30 rounded-full -translate-y-16 translate-x-16 blur-2xl"></div>
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-200/20 rounded-full -translate-x-20 translate-y-20 blur-2xl"></div>
 
                 <div className="relative z-10 p-6 h-full flex flex-col">
-                    {/* Mobile Header */}
+                    {/* Mobile Header with Glass Effect */}
                     <div className="lg:hidden flex justify-between items-center mb-8 pb-4 border-b border-white/30">
                         <div>
                             <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
@@ -83,9 +93,9 @@ export default function CategorySidebar({ categories = [] }) {
                     </div>
 
                     {/* Categories List */}
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
                         {categories.map((category, index) => (
-                            <div key={index} className="group">
+                            <div key={index} className="mb-3 group">
                                 <button
                                     onClick={() => toggleCategory(index)}
                                     className="w-full flex items-center space-x-4 px-4 py-4 rounded-2xl hover:bg-white/60 backdrop-blur-sm border border-transparent hover:border-white/50 transition-all duration-300 hover:shadow-lg group-hover:scale-[1.02]"
@@ -114,7 +124,7 @@ export default function CategorySidebar({ categories = [] }) {
 
                                 {/* Animated Subcategories */}
                                 {openIndex === index && (
-                                    <div className="ml-16 mt-2 space-y-2 animate-slideDown">
+                                    <div className="ml-16 mt-3 space-y-2 animate-slideDown">
                                         {category.subCategories?.map((sub, subIndex) => (
                                             <div
                                                 key={subIndex}
@@ -136,13 +146,51 @@ export default function CategorySidebar({ categories = [] }) {
                     </div>
 
                     {/* Footer */}
-                    <div className="pt-6 border-t border-white/30 mt-4">
+                    <div className="pt-6 border-t border-white/30">
                         <div className="text-center text-xs text-gray-500">
                             <p>Browse {categories.reduce((acc, cat) => acc + (cat.subCategories?.length || 0), 0)}+ products</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Custom CSS for animations and scrollbar */}
+            <style jsx>{`
+              @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+              @keyframes slideDown {
+                from {
+                  opacity: 0;
+                  transform: translateY(-10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+              .animate-fadeIn {
+                animation: fadeIn 0.3s ease-out;
+              }
+              .animate-slideDown {
+                animation: slideDown 0.3s ease-out;
+              }
+              .custom-scrollbar::-webkit-scrollbar {
+                width: 4px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(6, 182, 212, 0.3);
+                border-radius: 10px;
+              }
+              .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: rgba(6, 182, 212, 0.5);
+              }
+            `}</style>
         </>
     );
 }
