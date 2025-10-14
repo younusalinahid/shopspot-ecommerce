@@ -32,4 +32,14 @@ export const productService = {
             throw error;
         }
     },
+
+    getProductById: async (productId) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/${productId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching product:', error);
+            throw error;
+        }
+    }
 };

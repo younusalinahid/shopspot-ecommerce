@@ -8,6 +8,7 @@ import UserDashboard from "./components/user/UserDashboard";
 import AuthPage from "./pages/auth/AuthPage";
 import {ProtectedRoute} from "./components/ProtectedRoute";
 import ProductList from "./components/user/product-list";
+import ProductDetails from "./pages/ProductDetails";
 
 function App() {
     useEffect(() => {
@@ -31,6 +32,13 @@ function App() {
                     <>
                         <Navbar />
                         <ProductList />
+                    </>
+                }/>
+
+                <Route path="/product/:productId" element={
+                    <>
+                        <Navbar />
+                        <ProductDetails />
                     </>
                 }/>
 
