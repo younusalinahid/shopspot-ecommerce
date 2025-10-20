@@ -1,5 +1,8 @@
-package com.ecommerce.auth;
+package com.ecommerce.controller;
 
+import com.ecommerce.auth.AuthResponse;
+import com.ecommerce.auth.LoginRequest;
+import com.ecommerce.auth.RegisterRequest;
 import com.ecommerce.model.User;
 import com.ecommerce.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +16,13 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public User register(@RequestBody RegisterRequest request) {
-        return userService.register(request);
+    public AuthResponse register(@RequestBody RegisterRequest request) {
+        User user = userService.register(request);
+        String token = userService.generateToken(user.getEmail());
+
+        return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole());
     }
+
 
 //    @PostMapping("/login")
 //    public AuthResponse login(@RequestBody LoginRequest request) {
@@ -25,7 +32,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
-        User user = userService.loginUser(request); // return User object instead of just token
+        User user = userService.loginUser(request);
         String token = userService.generateToken(user.getEmail());
 
         return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole());

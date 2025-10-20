@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Star, ArrowRight} from 'lucide-react';
 import CategorySidebar from './user/CategorySidebar';
-import {getAllBanners} from "../api/banner-api-service";
+import {getActiveBanners} from "../api/banner-api-service";
 import Footer from "../components/Footer";
 import Banner from "./user/Banner";
 import {useCategories} from "../hooks/useCategory";
@@ -15,8 +15,7 @@ const Home = () => {
     const [isLoadingBanners, setIsLoadingBanners] = useState(true)
 
     useEffect(() => {
-        // Load banners
-        getAllBanners()
+        getActiveBanners()
             .then(data => {
                 const activeBanners = data
                     .filter(banner => banner.active)
