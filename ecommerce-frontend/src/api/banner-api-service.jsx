@@ -1,4 +1,3 @@
-// src/api/banner-api-service.jsx
 import axios from "axios";
 import { getToken } from "./auth-api";
 
@@ -15,7 +14,6 @@ const getAuthHeaders = () => {
     };
 };
 
-// Get active banners (PUBLIC - No Auth Required)
 export const getActiveBanners = async () => {
     try {
         const response = await axios.get(API_URL);
@@ -26,13 +24,12 @@ export const getActiveBanners = async () => {
     }
 };
 
-// Get all banners (ADMIN ONLY - Requires Auth)
 export const getAllBanners = async () => {
     try {
         console.log('Fetching all banners...');
         console.log('Headers:', getAuthHeaders());
 
-        const response = await axios.get(`${API_URL}/allBanners`, {
+        const response = await axios.get(`${API_URL}`, {
             headers: getAuthHeaders()
         });
         return response.data;
@@ -43,7 +40,6 @@ export const getAllBanners = async () => {
     }
 };
 
-// Create new banner (ADMIN ONLY - Requires Auth)
 export const createBanner = async (bannerData) => {
     try {
         console.log('Creating banner with data:', bannerData);
@@ -64,7 +60,6 @@ export const createBanner = async (bannerData) => {
     }
 };
 
-// Create banner with file upload (ADMIN ONLY - Requires Auth)
 export const createBannerWithFile = async (formData) => {
     try {
         const token = getToken();
@@ -87,7 +82,6 @@ export const createBannerWithFile = async (formData) => {
     }
 };
 
-// Update existing banner (ADMIN ONLY - Requires Auth)
 export const updateBanner = async (id, bannerData) => {
     try {
         console.log('Updating banner:', id, bannerData);
@@ -104,7 +98,6 @@ export const updateBanner = async (id, bannerData) => {
     }
 };
 
-// Delete banner (ADMIN ONLY - Requires Auth)
 export const deleteBanner = async (id) => {
     try {
         console.log('Deleting banner:', id);

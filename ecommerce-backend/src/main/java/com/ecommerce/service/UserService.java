@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -57,7 +58,6 @@ public class UserService {
 
     public User loginUser(LoginRequest request) {
         Optional<User> optionalUser = userRepository.findByEmail(request.getEmail());
-        System.out.println("");
         if (optionalUser.isEmpty()) {
             throw new RuntimeException("Invalid email or password");
         }
@@ -67,13 +67,30 @@ public class UserService {
             throw new RuntimeException("Invalid email or password");
         }
 
-        String token = jwtTokenUtil.generateToken(user.getEmail());
-
-        return user; // return full User object (email, fullName, role)
+        return user;
     }
 
-    // Example: generateToken method
     public String generateToken(String email) {
         return jwtTokenUtil.generateToken(email);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User updateUser(Long id, User updatedUser) {
+        User user = getUserById(id);
+        user.setFullName(updatedUser.getFullName());
+        user.setEmail(updatedUser.getEmail());
+        return userRepository.save(user);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
     }
 }
