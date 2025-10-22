@@ -4,7 +4,7 @@ import {Role} from "../../dto/type/Role";
 import {login as loginApi} from "../../api/auth-api";
 import "../../App.css";
 
-const Login = ({isOpen, onClose, onSwitchToRegister}) => {
+const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -25,6 +25,10 @@ const Login = ({isOpen, onClose, onSwitchToRegister}) => {
             localStorage.setItem("user", JSON.stringify(user));
 
             console.log("Login successful:", user);
+
+            if (onLoginSuccess) {
+                onLoginSuccess();
+            }
 
             onClose();
 
