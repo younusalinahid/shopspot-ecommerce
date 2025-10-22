@@ -23,13 +23,6 @@ public class AuthController {
         return new AuthResponse(token, user.getEmail(), user.getFullName(), user.getRole());
     }
 
-
-//    @PostMapping("/login")
-//    public AuthResponse login(@RequestBody LoginRequest request) {
-//        String token = userService.login(request);
-//        return new AuthResponse(token);
-//    }
-
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
         User user = userService.loginUser(request);

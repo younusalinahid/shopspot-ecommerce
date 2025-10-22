@@ -4,7 +4,7 @@ import {register as registerApi} from "../../api/auth-api";
 import {Role} from "../../dto/type/Role";
 import "../../App.css";
 
-const Register = ({isOpen, onClose, onSwitchToLogin}) => {
+const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -46,15 +46,9 @@ const Register = ({isOpen, onClose, onSwitchToLogin}) => {
                 role: response.role
             }));
 
-            alert("Registration successful! Welcome to ShopSpot");
+            if (onRegisterSuccess) onRegisterSuccess();
 
             onClose();
-
-            if (response.role === Role.ADMIN) {
-                navigate("/admin-dashboard");
-            } else {
-                navigate("/");
-            }
 
         } catch (err) {
             console.error("Registration error:", err);

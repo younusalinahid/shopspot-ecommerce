@@ -1,15 +1,36 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import { Search, ShoppingCart, User, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "../assets/icons/img.png";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 import { useTheme } from "../context/ThemeContext";
+import UserMenu from "./user/UserMenu";
 
 export default function Navbar() {
     const [cartCount] = useState(0);
     const [showAuthPage, setShowAuthPage] = useState(false);
-    const { isDark, toggleTheme } = useTheme(); // Use the theme context
+    const { isDark, toggleTheme } = useTheme();
+
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        const user = localStorage.getItem("user");
+        return user !== null;
+    });
+
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const user = localStorage.getItem("user");
+            setIsLoggedIn(user !== null);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        handleStorageChange();
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
     return (
         <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-md transition-colors duration-300">
@@ -56,14 +77,18 @@ export default function Navbar() {
                             </span>
                         </div>
 
-                        {/* Sign In */}
-                        <button
-                            onClick={() => setShowAuthPage(true)}
-                            className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
-                        >
-                            <User className="mr-1 text-white" size={35} />
-                            <span className="text-white font-bold">Sign In</span>
-                        </button>
+                        {/* Conditional Render: UserMenu OR Sign In Button */}
+                        {isLoggedIn ? (
+                            <UserMenu />
+                        ) : (
+                            <button
+                                onClick={() => setShowAuthPage(true)}
+                                className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
+                            >
+                                <User className="mr-1 text-white" size={35} />
+                                <span className="text-white font-bold">Sign In</span>
+                            </button>
+                        )}
 
                         {/* Theme Toggle Button */}
                         <button
@@ -86,6 +111,7 @@ export default function Navbar() {
                 <AuthPage
                     isLoginOpen={true}
                     onClose={() => setShowAuthPage(false)}
+                    onLoginSuccess={() => setIsLoggedIn(true)}
                 />
             )}
         </nav>
