@@ -3,8 +3,9 @@ import {useNavigate, Link} from "react-router-dom";
 import {Role} from "../../dto/type/Role";
 import {login as loginApi} from "../../api/auth-api";
 import "../../App.css";
+import {toast} from "react-toastify";
 
-const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
+const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -14,36 +15,57 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
 
     if (!isOpen) return null;
 
+    const handleRememberMe = (checked) => {
+        setRememberMe(checked);
+        if (checked) {
+            toast.info("Login details will be remembered");
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
         setLoading(true);
+
+        if (!email.trim() || !password.trim()) {
+            setError("Please fill in all fields");
+            toast.warning("Please fill in all fields");
+            setLoading(false);
+            return;
+        }
 
         try {
             const user = await loginApi(email, password);
 
             localStorage.setItem("user", JSON.stringify(user));
 
-            console.log("Login successful:", user);
+            toast.success(`Welcome back, ${user.fullName}!`);
 
-            if (onLoginSuccess) {
-                onLoginSuccess();
-            }
-
+            if (onLoginSuccess) onLoginSuccess();
             onClose();
 
             if (user.role === Role.ADMIN) {
-                window.location.href = "/admin-dashboard";
+                navigate("/admin-dashboard");
             } else {
-                window.location.href = "/";
+                navigate("/");
             }
 
         } catch (err) {
-            console.error("Login error:", err);
-            setError(err.message || "Invalid email or password");
+            const errorMessage = err.message || "Invalid email or password";
+            setError(errorMessage);
+
+            toast.error("Invalid email or password!");
         } finally {
             setLoading(false);
         }
+    };
+
+
+    const handleForgotPassword = () => {
+        toast.info("Forgot password feature coming soon!");
+    };
+
+    const handleSocialLogin = (provider) => {
+        toast.info(`${provider} login coming soon!`);
     };
 
     return (
@@ -57,6 +79,7 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                 <button
                     onClick={onClose}
                     className="top-4 right-4 z-10 absolute font-bold text-gray-500 hover:text-red-500 text-2xl transition-transform transform hover:rotate-90"
+                    disabled={loading}
                 >
                     ×
                 </button>
@@ -118,8 +141,9 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                                     type="checkbox"
                                     id="remember-me"
                                     checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    onChange={(e) => handleRememberMe(e.target.checked)}
                                     className="border-gray-300 rounded focus:ring-cyan-500 w-4 h-4 text-cyan-600"
+                                    disabled={loading}
                                 />
                                 <label
                                     htmlFor="remember-me"
@@ -130,7 +154,9 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                             </div>
                             <button
                                 type="button"
+                                onClick={handleForgotPassword}
                                 className="text-sm font-medium text-pink-500 hover:text-cyan-500 transition-colors"
+                                disabled={loading}
                             >
                                 Forgot your password?
                             </button>
@@ -142,17 +168,32 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                             disabled={loading}
                             className="bg-gradient-to-r from-pink-500 via-cyan-500 to-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 w-full font-semibold text-white transform transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-2xl"
                         >
-                            {loading ? "Signing in..." : "🚀 Sign in"}
+                            {loading ? (
+                                <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor"
+                                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Signing in...
+                                </span>
+                            ) : (
+                                "🚀 Sign in"
+                            )}
                         </button>
 
                         <div>
                             <p className="text-gray-600 text-sm text-center">
                                 If you have no account{" "}
                                 <span
-                                    onClick={onSwitchToRegister}
-                                    className="cursor-pointer font-semibold text-cyan-600 hover:text-blue-600 transition-colors"
+                                    onClick={loading ? undefined : onSwitchToRegister}
+                                    className={`cursor-pointer font-semi-bold transition-colors ${
+                                        loading ? "text-gray-400 cursor-not-allowed" : "text-cyan-600 hover:text-blue-600"
+                                    }`}
                                 >
-                                 create a new account
+                                    create a new account
                                 </span>
                             </p>
                         </div>
@@ -163,9 +204,9 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                                 <div className="border-gray-300 border-t w-full"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">
-                  or continue with
-                </span>
+                                <span className="bg-white px-2 text-gray-500">
+                                    or continue with
+                                </span>
                             </div>
                         </div>
 
@@ -173,7 +214,9 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                         <div className="gap-4 grid grid-cols-2">
                             <button
                                 type="button"
-                                className="flex justify-center items-center hover:bg-gray-100 hover:scale-105 hover:rotate-1 px-4 py-2 border border-gray-300 rounded-lg transition-all duration-300 ease-in-out shadow-md"
+                                onClick={() => handleSocialLogin("Google")}
+                                disabled={loading}
+                                className="flex justify-center items-center hover:bg-gray-100 hover:scale-105 hover:rotate-1 px-4 py-2 border border-gray-300 rounded-lg transition-all duration-300 ease-in-out shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <img
                                     src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -184,7 +227,9 @@ const Login = ({ isOpen, onClose, onSwitchToRegister, onLoginSuccess }) => {
                             </button>
                             <button
                                 type="button"
-                                className="flex justify-center items-center hover:bg-gray-100 hover:scale-105 hover:-rotate-1 px-4 py-2 border border-gray-300 rounded-lg transition-all duration-300 ease-in-out shadow-md"
+                                onClick={() => handleSocialLogin("Facebook")}
+                                disabled={loading}
+                                className="flex justify-center items-center hover:bg-gray-100 hover:scale-105 hover:-rotate-1 px-4 py-2 border border-gray-300 rounded-lg transition-all duration-300 ease-in-out shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <img
                                     src="https://www.svgrepo.com/show/475647/facebook-color.svg"
