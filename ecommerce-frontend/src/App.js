@@ -10,6 +10,9 @@ import {ProtectedRoute} from "./components/ProtectedRoute";
 import ProductList from "./components/user/product-list";
 import ProductDetails from "./pages/ProductDetails";
 import {ThemeProvider} from "./context/ThemeContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 function App() {
     useEffect(() => {
@@ -67,6 +70,16 @@ function App() {
                         }
                     />
                 </Routes>
+
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    pauseOnHover
+                    theme="colored"
+                />
             </Router>
         </ThemeProvider>
     );

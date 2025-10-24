@@ -1,6 +1,7 @@
 import React, {useState, useRef, useEffect} from "react";
 import {User, LogOut, Settings, ShoppingBag} from "lucide-react";
 import {Link} from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function UserMenu() {
     const [isOpen, setIsOpen] = useState(false);
@@ -32,6 +33,7 @@ export default function UserMenu() {
         window.dispatchEvent(new Event("storage"));
 
         setIsOpen(false);
+        toast.info("Logged out successfully!");
     };
 
     return (
