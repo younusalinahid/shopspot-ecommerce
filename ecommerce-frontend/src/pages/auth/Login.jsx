@@ -22,9 +22,12 @@ const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
         }
     };
 
+    // Login.jsx - handleSubmit function ONLY (line 40-60 replace koro)
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError("");
 
         if (!email.trim() || !password.trim()) {
             setError("Please fill in all fields");
@@ -34,31 +37,47 @@ const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
         }
 
         try {
-            const user = await loginApi(email, password);
+            // ✅ Response object paocho, not direct user
+            const response = await loginApi(email, password);
 
+            // ✅ Check if login was successful
+            if (!response.success) {
+                throw new Error(response.error || "Login failed");
+            }
+
+            // ✅ Extract user from response
+            const { user, token } = response;
+
+            // ✅ Save to localStorage
             localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("token", token);
 
-            toast.success(`Welcome back, ${user.fullName}!`);
+            // ✅ Dispatch event for Navbar
+            window.dispatchEvent(new Event('userLoggedIn'));
 
+            // ✅ Show welcome message with fullName
+            toast.success(`Welcome back, ${user.fullName || user.email}!`);
+
+            // ✅ Callback
             if (onLoginSuccess) onLoginSuccess();
             onClose();
 
-            if (user.role === Role.ADMIN) {
+            // ✅ Navigate based on role
+            if (user.role === Role.ADMIN || user.role === "ADMIN") {
                 navigate("/admin-dashboard");
             } else {
                 navigate("/");
             }
 
         } catch (err) {
+            console.error("Login error:", err);
             const errorMessage = err.message || "Invalid email or password";
             setError(errorMessage);
-
             toast.error("Invalid email or password!");
         } finally {
             setLoading(false);
         }
     };
-
 
     const handleForgotPassword = () => {
         toast.info("Forgot password feature coming soon!");

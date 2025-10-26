@@ -1,119 +1,74 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Search, ShoppingCart, User, Moon, Sun } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/icons/img.png";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 import { useTheme } from "../context/ThemeContext";
 import UserMenu from "./user/UserMenu";
+import { toast } from "react-toastify";
 
 export default function Navbar() {
-    const [cartCount] = useState(0);
+    const [cartCount, setCartCount] = useState(0);
     const [showAuthPage, setShowAuthPage] = useState(false);
     const { isDark, toggleTheme } = useTheme();
+    const navigate = useNavigate();
 
-    const [isLoggedIn, setIsLoggedIn] = useState(() => {
-        const user = localStorage.getItem("user");
-        return user !== null;
-    });
+    const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("user"));
 
     useEffect(() => {
-        const handleStorageChange = () => {
-            const user = localStorage.getItem("user");
-            setIsLoggedIn(user !== null);
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-
+        const handleStorageChange = () => setIsLoggedIn(!!localStorage.getItem("user"));
+        window.addEventListener("storage", handleStorageChange);
         handleStorageChange();
-
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
+        return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
+
+    const handleCartClick = () => {
+        if (isLoggedIn) navigate("/cart");
+        else toast.warning("Please log in to view your cart!", { position: "top-center" });
+    };
 
     return (
         <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-md transition-colors duration-300">
             <div className="mx-auto px-4 max-w-7xl">
                 <div className="flex justify-between items-center py-5">
 
-                    {/* LEFT - Logo */}
                     <Link to="/" className="flex flex-shrink-0 items-center space-x-2">
                         <img src={logo} alt="ShopSpot Logo" className="w-10 h-10" />
-                        <span className="text-white font-bold text-sm sm:text-xl">
-                            ShopSpot Online
-                        </span>
+                        <span className="text-white font-bold text-sm sm:text-xl">ShopSpot Online</span>
                     </Link>
 
-                    {/* CENTER - Search Bar */}
                     <div className="hidden md:flex flex-1 justify-center px-4">
                         <div className="relative w-full max-w-xl">
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                className="px-4 py-2 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white w-full text-gray-700 dark:text-gray-200 dark:bg-gray-700 text-sm transition-colors duration-300"
-                            />
+                            <input type="text" placeholder="Search products..." className="px-4 py-2 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white w-full text-gray-700 dark:text-gray-200 dark:bg-gray-700 text-sm transition-colors duration-300"/>
                             <button className="top-0 right-0 bottom-0 absolute flex justify-center items-center bg-green-500 hover:bg-green-600 px-4 rounded-r-full transition-colors">
-                                <Search className="text-white" size={35} />
+                                <Search className="text-white" size={35}/>
                             </button>
                         </div>
                     </div>
 
-                    {/* RIGHT - Items */}
                     <div className="flex flex-shrink-0 items-center space-x-3">
-
-                        {/* Google Play */}
-                        <img
-                            src={playStoreButton}
-                            alt="Google Play"
-                            className="w-auto h-10 cursor-pointer"
-                        />
-
-                        {/* Cart */}
-                        <div className="relative cursor-pointer">
-                            <ShoppingCart className="text-white hover:text-gray-200" size={35} />
-                            <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-4 h-4 font-bold text-[10px] text-white">
-                                {cartCount}
-                            </span>
+                        <img src={playStoreButton} alt="Google Play" className="w-auto h-10 cursor-pointer"/>
+                        <div className="relative cursor-pointer" onClick={handleCartClick}>
+                            <ShoppingCart className="text-white hover:text-gray-200" size={35}/>
+                            <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-4 h-4 font-bold text-[10px] text-white">{cartCount}</span>
                         </div>
 
-                        {/* Conditional Render: UserMenu OR Sign In Button */}
-                        {isLoggedIn ? (
-                            <UserMenu />
-                        ) : (
-                            <button
-                                onClick={() => setShowAuthPage(true)}
-                                className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
-                            >
-                                <User className="mr-1 text-white" size={35} />
+                        {isLoggedIn ? <UserMenu /> : (
+                            <button onClick={() => setShowAuthPage(true)} className="flex items-center bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all">
+                                <User className="mr-1 text-white" size={35}/>
                                 <span className="text-white font-bold">Sign In</span>
                             </button>
                         )}
 
-                        {/* Theme Toggle Button */}
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
-                            aria-label="Toggle theme"
-                        >
-                            {isDark ? (
-                                <Sun className="text-yellow-400" size={24} />
-                            ) : (
-                                <Moon className="text-white" size={24} />
-                            )}
+                        <button onClick={toggleTheme} className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all" aria-label="Toggle theme">
+                            {isDark ? <Sun className="text-yellow-400" size={24}/> : <Moon className="text-white" size={24}/>}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* AuthPage Modal */}
-            {showAuthPage && (
-                <AuthPage
-                    isLoginOpen={true}
-                    onClose={() => setShowAuthPage(false)}
-                    onLoginSuccess={() => setIsLoggedIn(true)}
-                />
-            )}
+            {showAuthPage && <AuthPage isLoginOpen={true} onClose={() => setShowAuthPage(false)} onLoginSuccess={() => setIsLoggedIn(true)} />}
         </nav>
     );
 }

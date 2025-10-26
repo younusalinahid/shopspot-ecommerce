@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios from 'axios';
 
-const API_URL = "http://localhost:8080/api/auth";
+const API_BASE_URL = 'http://localhost:8080/api/auth';
 
 const decodeTokenRole = (token) => {
     try {
@@ -22,91 +22,202 @@ const decodeTokenRole = (token) => {
     }
 };
 
-export const login = async (email, password) => {
-    try {
-        const response = await axios.post(`${API_URL}/login`, { email, password });
-        const { token, role, fullName } = response.data;
-
-        if (!token) {
-            throw new Error("No token received from server");
-        }
-
-        localStorage.setItem("jwtToken", token);
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("fullName", fullName || email.split('@')[0]);
-        localStorage.setItem("role", role || decodeTokenRole(token));
-
-        return {
-            token,
-            email,
-            role: role || decodeTokenRole(token),
-            fullName: fullName || email.split('@')[0]
-        };
-    } catch (error) {
-        console.error("Login error:", error);
-        throw error.response?.data || { message: error.message || "Login failed" };
-    }
-};
-
+// Register new user
 export const register = async (fullName, email, password) => {
     try {
-        const response = await axios.post(`${API_URL}/register`, {
+        const response = await axios.post(`${API_BASE_URL}/register`, {
             fullName,
             email,
             password,
-            confirmPassword: password // Backend expects this
+            confirmPassword: password
         });
 
-        const { token, role } = response.data;
+        // ✅ Backend returns: { accessToken, refreshToken, role, userId, email, fullName }
+        const { accessToken, refreshToken, role, userId, email: userEmail, fullName: userName } = response.data;
+
+        if (!accessToken) {
+            throw new Error("No token received from server");
+        }
+
+        // Build user object
+        const user = {
+            id: userId,
+            email: userEmail || email,
+            fullName: userName || fullName,
+            role: role || decodeTokenRole(accessToken)
+        };
+
+        // Save everything to localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", accessToken);
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("fullName", user.fullName);
+        localStorage.setItem("role", user.role);
+
+        // Dispatch login event
+        window.dispatchEvent(new Event('userLoggedIn'));
+
+        return {
+            success: true,
+            token: accessToken,
+            user
+        };
+    } catch (error) {
+        console.error("Registration error:", error);
+        return {
+            success: false,
+            error: error.response?.data?.message || error.message || "Registration failed"
+        };
+    }
+};
+
+// Login user
+export const login = async (email, password) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/login`, {
+            email,
+            password
+        });
+
+        // ✅ Backend returns: { token, email, fullName, role, userId }
+        const { token, email: userEmail, fullName, role, userId } = response.data;
 
         if (!token) {
             throw new Error("No token received from server");
         }
 
+        // Build user object
+        const user = {
+            id: userId,
+            email: userEmail || email,
+            fullName: fullName,
+            role: role || decodeTokenRole(token)
+        };
+
+        // Save to localStorage
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", token);
+        localStorage.setItem("accessToken", token);
         localStorage.setItem("jwtToken", token);
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("fullName", fullName);
-        localStorage.setItem("role", role || decodeTokenRole(token));
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("fullName", user.fullName);
+        localStorage.setItem("role", user.role);
+
+        // Dispatch login event
+        window.dispatchEvent(new Event('userLoggedIn'));
 
         return {
+            success: true,
             token,
-            email,
-            role: role || decodeTokenRole(token),
-            fullName
+            user
         };
     } catch (error) {
-        console.error("Registration error:", error);
-
-        if (error.response?.data?.message) {
-            throw new Error(error.response.data.message);
-        }
-
-        throw new Error(error.message || "Registration failed");
+        console.error("Login error:", error);
+        return {
+            success: false,
+            error: error.response?.data?.message || error.message || "Login failed"
+        };
     }
 };
 
-export const logout = () => {
-    localStorage.removeItem("jwtToken");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("role");
-    localStorage.removeItem("fullName");
-    localStorage.removeItem("user");
+// Logout user
+export const logout = async () => {
+    try {
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (refreshToken) {
+            await axios.post(`${API_BASE_URL}/logout`, { refreshToken });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    } finally {
+        // Clear all localStorage
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("fullName");
+        localStorage.removeItem("role");
+
+        // Dispatch logout event
+        window.dispatchEvent(new Event('userLoggedOut'));
+    }
 };
 
+// Refresh access token
+export const refreshToken = async () => {
+    try {
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (!refreshToken) {
+            throw new Error('No refresh token available');
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/refresh`, {
+            refreshToken: refreshToken
+        });
+
+        const { accessToken, userId, email, fullName, role } = response.data;
+
+        // Update tokens
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('token', accessToken);
+
+        // Update user info if provided
+        if (userId) {
+            const user = {
+                id: userId,
+                email: email,
+                fullName: fullName,
+                role: role
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+
+        return {
+            success: true,
+            token: accessToken
+        };
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+        logout();
+        return {
+            success: false,
+            error: 'Session expired'
+        };
+    }
+};
+
+// Check if user is authenticated
 export const isAuthenticated = () => {
-    const token = localStorage.getItem("jwtToken");
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
     if (!token) return false;
 
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const exp = payload.exp * 1000; // Convert to milliseconds
+        const exp = payload.exp * 1000;
         return Date.now() < exp;
     } catch (e) {
         return false;
     }
 };
 
+// Get current user
 export const getCurrentUser = () => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+        try {
+            return JSON.parse(userStr);
+        } catch (e) {
+            console.error("Error parsing user:", e);
+        }
+    }
+
+    // Fallback to old method
     const email = localStorage.getItem("userEmail");
     const fullName = localStorage.getItem("fullName");
     const role = localStorage.getItem("role");
@@ -122,24 +233,30 @@ export const getCurrentUser = () => {
     return null;
 };
 
+// Get auth token
 export const getToken = () => {
-    return localStorage.getItem("jwtToken");
+    return localStorage.getItem("accessToken") || localStorage.getItem("token");
 };
 
+// Get user role
 export const getUserRole = () => {
-    return localStorage.getItem("role");
+    const user = getCurrentUser();
+    return user?.role || localStorage.getItem("role");
 };
 
+// Check if admin
 export const isAdmin = () => {
     const role = getUserRole();
     return role === "ADMIN";
 };
 
+// Check if user has specific role
 export const hasRole = (requiredRole) => {
     const role = getUserRole();
     return role === requiredRole;
 };
 
+// Get user from token
 export const getUserFromToken = () => {
     const token = getToken();
     if (!token) return null;
@@ -158,66 +275,16 @@ export const getUserFromToken = () => {
     }
 };
 
-export const setupAxiosInterceptors = () => {
-    axios.interceptors.request.use(
-        (config) => {
-            const token = getToken();
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-        },
-        (error) => {
-            return Promise.reject(error);
-        }
-    );
-
-    axios.interceptors.response.use(
-        (response) => response,
-        (error) => {
-            if (error.response?.status === 401) {
-                // Token expired or invalid
-                logout();
-                window.location.href = '/';
-                alert("Session expired. Please login again.");
-            }
-            return Promise.reject(error);
-        }
-    );
-};
-
-export const axiosWithAuth = axios.create({
-    baseURL: "http://localhost:8080",
-    headers: {
-        Authorization: `Bearer ${getToken()}`,
-    },
-});
-
-const handleLogin = async (credentials) => {
-    const response = await axios.post('/api/auth/login', credentials);
-
-    localStorage.setItem('token', response.data.token);
-    sessionStorage.setItem('token', response.data.token);
-
-    localStorage.setItem('user', JSON.stringify({
-        email: response.data.email,
-        fullName: response.data.fullName,
-        role: response.data.role
-    }));
-
-    window.location.href = '/dashboard';
-}
-
 export default {
-    login,
     register,
+    login,
     logout,
+    refreshToken,
     isAuthenticated,
     getCurrentUser,
     getToken,
     getUserRole,
     isAdmin,
     hasRole,
-    getUserFromToken,
-    setupAxiosInterceptors
+    getUserFromToken
 };
