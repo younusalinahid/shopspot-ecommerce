@@ -2,10 +2,13 @@ import {useState, useEffect} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {Star, ShoppingCart, Heart, Share2, Truck, Shield, ArrowLeft, Plus, Minus, ZoomIn} from 'lucide-react';
 import {productService} from '../api/product-api';
+import { useCart } from '../context/CartContext';
+import { toast } from 'react-toastify';
 
 const ProductDetails = () => {
     const {productId} = useParams();
     const navigate = useNavigate();
+    const { addToCart, loading } = useCart();
     const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -14,6 +17,7 @@ const ProductDetails = () => {
     const [error, setError] = useState(null);
     const [isZoomed, setIsZoomed] = useState(false);
     const [zoomPosition, setZoomPosition] = useState({x: 0, y: 0});
+    const [addingToCart, setAddingToCart] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -35,6 +39,41 @@ const ProductDetails = () => {
         }
     }, [productId]);
 
+    const handleAddToCart = async () => {
+        if (addingToCart || !product) return;
+
+        setAddingToCart(true);
+        try {
+            const result = await addToCart(product.id, quantity);
+            if (result) {
+                toast.success('Product added to cart successfully! 🛒');
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+        } finally {
+            setAddingToCart(false);
+        }
+    };
+
+    const handleBuyNow = async () => {
+        if (addingToCart || !product) return;
+
+        setAddingToCart(true);
+        try {
+            const result = await addToCart(product.id, quantity);
+            if (result) {
+                toast.success('Product added to cart! Redirecting...');
+                setTimeout(() => {
+                    navigate('/cart');
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+        } finally {
+            setAddingToCart(false);
+        }
+    };
+
     const getImageSource = (imageData) => {
         if (!imageData) return null;
         if (imageData.startsWith('data:')) return imageData;
@@ -50,26 +89,36 @@ const ProductDetails = () => {
         setZoomPosition({x, y});
     };
 
-    const handleAddToCart = () => {
-        console.log('Added to cart:', {...product, quantity});
-    };
-
-    const handleBuyNow = () => {
-        console.log('Buy now:', {...product, quantity});
-    };
-
-    const handleShare = () => {
+    const handleShare = async () => {
         if (navigator.share) {
-            navigator.share({
-                title: product.name,
-                text: product.description,
-                url: window.location.href,
-            });
+            try {
+                await navigator.share({
+                    title: product.name,
+                    text: product.description,
+                    url: window.location.href,
+                });
+                toast.success('Product shared successfully!');
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(window.location.href);
+            toast.info('Product link copied to clipboard!');
         }
     };
 
-    const increaseQuantity = () => setQuantity(prev => prev + 1);
-    const decreaseQuantity = () => setQuantity(prev => prev > 1 ? prev - 1 : 1);
+    const increaseQuantity = () => {
+        if (product && quantity < product.stock) {
+            setQuantity(prev => prev + 1);
+        }
+    };
+
+    const decreaseQuantity = () => {
+        if (quantity > 1) {
+            setQuantity(prev => prev - 1);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -160,14 +209,6 @@ const ProductDetails = () => {
                                         className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg transition-colors duration-300">
                                         <span className="text-6xl text-gray-400 dark:text-gray-500 mb-4">📦</span>
                                         <p className="text-gray-500 dark:text-gray-400 text-lg">No Image Available</p>
-                                    </div>
-                                )}
-
-                                {/* Loading Animation */}
-                                {isLoading && (
-                                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center transition-colors duration-300">
-                                        <div
-                                            className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 dark:border-cyan-400 transition-colors duration-300"></div>
                                     </div>
                                 )}
                             </div>
@@ -340,18 +381,22 @@ const ProductDetails = () => {
                         <div className="flex space-x-4">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0}
+                                disabled={product.stock === 0 || addingToCart || loading}
                                 className="flex-1 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <ShoppingCart className="w-6 h-6"/>
-                                <span className="text-lg">Add to Cart</span>
+                                <span className="text-lg">
+                                    {addingToCart ? 'Adding...' : 'Add to Cart'}
+                                </span>
                             </button>
                             <button
                                 onClick={handleBuyNow}
-                                disabled={product.stock === 0}
+                                disabled={product.stock === 0 || addingToCart || loading}
                                 className="flex-1 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
-                                <span className="text-lg">Buy Now</span>
+                                <span className="text-lg">
+                                    {addingToCart ? 'Adding...' : 'Buy Now'}
+                                </span>
                             </button>
                         </div>
 

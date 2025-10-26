@@ -1,4 +1,3 @@
-import { axiosWithAuth } from "./auth-api";
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8080/api";
@@ -15,22 +14,22 @@ export const categoryApi = {
     },
 
     createCategory: async (category) => {
-        const response = await axiosWithAuth.post("/api/categories", category);
+        const response = await axios.post("/api/categories", category);
         return response.data;
     },
 
     updateCategory: async (id, category) => {
-        const response = await axiosWithAuth.put(`/api/categories/${id}`, category);
+        const response = await axios.put(`/api/categories/${id}`, category);
         return response.data;
     },
 
     deleteCategory: async (id) => {
-        const response = await axiosWithAuth.delete(`/api/categories/${id}`);
+        const response = await axios.delete(`/api/categories/${id}`);
         return response.data;
     },
 
     createSubCategory: async (categoryId, subCategory) => {
-        const response = await axiosWithAuth.post(`/api/categories/${categoryId}/subcategories`, subCategory);
+        const response = await axios.post(`/api/categories/${categoryId}/subcategories`, subCategory);
         return response.data;
     },
 

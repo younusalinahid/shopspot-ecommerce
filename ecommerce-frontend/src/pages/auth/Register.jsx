@@ -16,6 +16,8 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
 
     if (!isOpen) return null;
 
+    // Register.jsx - handleSubmit function (line 20-50 replace koro)
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -41,26 +43,39 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
         setLoading(true);
 
         try {
-            const response = await registerApi(fullName, email, password, confirmPassword);
+            // ✅ Call register API
+            const response = await registerApi(fullName, email, password);
 
-            localStorage.setItem("user", JSON.stringify({
-                email: response.email,
-                fullName: response.fullName,
-                role: response.role
-            }));
+            // ✅ Check success
+            if (!response.success) {
+                throw new Error(response.error || "Registration failed");
+            }
 
-            toast.success(`Welcome to ShopSpot, ${response.fullName}! 🎉`);
+            // ✅ Extract user and token
+            const { user, token } = response;
 
+            // ✅ Already saved in auth-api.js, but ensure it's correct
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("token", token);
+
+            // ✅ Dispatch event
+            window.dispatchEvent(new Event('userLoggedIn'));
+
+            // ✅ Success message
+            toast.success(`Welcome to ShopSpot, ${user.fullName}! 🎉`);
+
+            // ✅ Callback
             if (onRegisterSuccess) onRegisterSuccess();
             onClose();
 
+            // ✅ Navigate
             navigate("/");
 
         } catch (err) {
             console.error("Registration error:", err);
             const errorMessage = err.message || "Registration failed. Please try again.";
             setError(errorMessage);
-            toast.error(errorMessage); // ✅
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
