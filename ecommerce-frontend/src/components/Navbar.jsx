@@ -7,26 +7,42 @@ import AuthPage from "../pages/auth/AuthPage";
 import { useTheme } from "../context/ThemeContext";
 import UserMenu from "./user/UserMenu";
 import { toast } from "react-toastify";
+import { useCart } from "../context/CartContext";
 
 export default function Navbar() {
-    const [cartCount, setCartCount] = useState(0);
     const [showAuthPage, setShowAuthPage] = useState(false);
     const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const { cart, fetchCart } = useCart(); // fetchCart add করুন
 
     const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("user"));
 
     useEffect(() => {
-        const handleStorageChange = () => setIsLoggedIn(!!localStorage.getItem("user"));
+        const handleStorageChange = () => {
+            const loggedIn = !!localStorage.getItem("user");
+            setIsLoggedIn(loggedIn);
+
+            if (loggedIn) {
+                fetchCart();
+            }
+        };
+
         window.addEventListener("storage", handleStorageChange);
         handleStorageChange();
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
 
-    const handleCartClick = () => {
-        if (isLoggedIn) navigate("/cart");
-        else toast.warning("Please log in to view your cart!", { position: "top-center" });
+        return () => window.removeEventListener("storage", handleStorageChange);
+    }, [fetchCart]);
+
+    const handleCartClick = async () => {
+        if (isLoggedIn) {
+            await fetchCart();
+            navigate("/cart");
+        } else {
+            toast.warning("Please log in to view your cart!", );
+        }
     };
+
+    const cartCount = cart?.totalItems || 0;
 
     return (
         <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-md transition-colors duration-300">
@@ -49,9 +65,15 @@ export default function Navbar() {
 
                     <div className="flex flex-shrink-0 items-center space-x-3">
                         <img src={playStoreButton} alt="Google Play" className="w-auto h-10 cursor-pointer"/>
+
+                        {/* Cart Icon */}
                         <div className="relative cursor-pointer" onClick={handleCartClick}>
                             <ShoppingCart className="text-white hover:text-gray-200" size={35}/>
-                            <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-4 h-4 font-bold text-[10px] text-white">{cartCount}</span>
+                            {cartCount > 0 && (
+                                <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 font-bold text-xs text-white">
+                                    {cartCount}
+                                </span>
+                            )}
                         </div>
 
                         {isLoggedIn ? <UserMenu /> : (

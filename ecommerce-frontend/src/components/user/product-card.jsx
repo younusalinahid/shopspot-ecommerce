@@ -1,14 +1,35 @@
 import {Star} from 'lucide-react';
 import {useState} from 'react';
 import {Link} from "react-router-dom";
+import { useCart } from '../../context/CartContext';
+import { toast } from 'react-toastify';
 
 export default function ProductCard({product, showDiscount = false}) {
     const [imageError, setImageError] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { addToCart } = useCart();
 
-    const handleAddToCart = (e) => {
+    const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Add to cart:', product);
+
+        setLoading(true);
+
+        const result = await addToCart(product.id, 1);
+
+        if (result.success) {
+            toast.success('Product added to cart successfully!', {
+                position: "top-right",
+                autoClose: 3000
+            });
+        } else {
+            toast.error(result.error || 'Failed to add product to cart', {
+                position: "top-right",
+                autoClose: 3000
+            });
+        }
+
+        setLoading(false);
     };
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
@@ -17,7 +38,7 @@ export default function ProductCard({product, showDiscount = false}) {
         : 0;
 
     const getImageSource = () => {
-        const imageData = product.imageData || product.imageBase64 || product.imageUrl;
+        const imageData = product.imageData;
 
         if (!imageData) return null;
 
@@ -34,7 +55,6 @@ export default function ProductCard({product, showDiscount = false}) {
         <Link to={`/product/${product.id}`} className="block flex-shrink-0">
             <div
                 className="group bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg dark:hover:shadow-cyan-500/20 rounded-xl overflow-hidden transition-all duration-300">
-                {/* Product Image - Increased height */}
                 <div className="relative bg-gray-100 dark:bg-gray-700 h-80 overflow-hidden transition-colors duration-300">
                     {imageSource && !imageError ? (
                         <img
@@ -82,20 +102,21 @@ export default function ProductCard({product, showDiscount = false}) {
                     <div className="flex justify-between items-center">
                         <div className="space-x-2">
                             <span className="font-bold text-gray-900 dark:text-white text-lg transition-colors duration-300">
-                                {product.price?.toFixed(2) || '0.00'} Tk
+                                ৳{product.price?.toFixed(2) || '0.00'}
                             </span>
                             {hasDiscount && (
                                 <span className="text-gray-500 dark:text-gray-400 text-sm line-through transition-colors duration-300">
-                                    {product.originalPrice.toFixed(2)} TK
+                                    ৳{product.originalPrice?.toFixed(2)}
                                 </span>
                             )}
                         </div>
 
                         <button
                             onClick={handleAddToCart}
-                            className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 px-4 py-2 rounded-lg text-white text-sm transition-colors duration-300"
+                            disabled={loading || !product.active}
+                            className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 px-4 py-2 rounded-lg text-white text-sm transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Add to Cart
+                            {loading ? 'Adding...' : (product.active ? 'Add to Cart' : 'Out of Stock')}
                         </button>
                     </div>
                 </div>
