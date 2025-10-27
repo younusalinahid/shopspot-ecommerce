@@ -2,28 +2,31 @@ package com.ecommerce.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.Instant;
 
-@Data
+@Entity
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
 public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "cart_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id")
     private Cart cart;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "product_id")
     private Product product;
 
-    private int quantity;
-    private double price;
-    private Instant addedAt = Instant.now();
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer quantity = 1;
+
+    private String size;
+    private String color;
 }

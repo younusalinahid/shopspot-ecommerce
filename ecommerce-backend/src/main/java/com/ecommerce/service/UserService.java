@@ -18,9 +18,6 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
 //
 //    public User register(RegisterRequest request) {
 //        System.out.println("Password: " + request.getPassword());

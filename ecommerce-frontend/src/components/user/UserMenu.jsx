@@ -3,12 +3,10 @@ import { User, LogOut, Settings, ShoppingBag } from "lucide-react";
 import {Link, useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
 
-
 export default function UserMenu() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
-
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -20,7 +18,6 @@ export default function UserMenu() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // ✅ Get user from localStorage
     const user = JSON.parse(localStorage.getItem("user")) || {
         id: null,
         fullName: "User",
@@ -30,9 +27,7 @@ export default function UserMenu() {
 
     const firstName = user.fullName?.split(" ")[0] || "User";
 
-    // Handle logout
     const handleLogout = () => {
-        // Clear all auth data
         const keysToRemove = [
             "user",
             "token",
@@ -46,10 +41,7 @@ export default function UserMenu() {
 
         keysToRemove.forEach(key => localStorage.removeItem(key));
 
-        // Dispatch custom events to notify other components
         window.dispatchEvent(new Event("userLoggedOut"));
-
-        // Force storage event for same-tab update
         window.dispatchEvent(new StorageEvent('storage', {
             key: 'user',
             oldValue: 'logged-in',
@@ -58,8 +50,11 @@ export default function UserMenu() {
         }));
 
         setIsOpen(false);
-        toast.success("Logged out successfully!", { position: "top-center" });
-        navigate("/");
+        toast.success("Logged out successfully!");
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 100);
     };
 
     return (

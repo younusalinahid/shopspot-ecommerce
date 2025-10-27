@@ -22,8 +22,6 @@ const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
         }
     };
 
-    // Login.jsx - handleSubmit function ONLY (line 40-60 replace koro)
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -37,32 +35,24 @@ const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
         }
 
         try {
-            // ✅ Response object paocho, not direct user
             const response = await loginApi(email, password);
 
-            // ✅ Check if login was successful
             if (!response.success) {
                 throw new Error(response.error || "Login failed");
             }
 
-            // ✅ Extract user from response
             const { user, token } = response;
 
-            // ✅ Save to localStorage
             localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("token", token);
 
-            // ✅ Dispatch event for Navbar
             window.dispatchEvent(new Event('userLoggedIn'));
 
-            // ✅ Show welcome message with fullName
             toast.success(`Welcome back, ${user.fullName || user.email}!`);
 
-            // ✅ Callback
             if (onLoginSuccess) onLoginSuccess();
             onClose();
 
-            // ✅ Navigate based on role
             if (user.role === Role.ADMIN || user.role === "ADMIN") {
                 navigate("/admin-dashboard");
             } else {

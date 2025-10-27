@@ -1,141 +1,193 @@
 package com.ecommerce.service;
 
-import com.ecommerce.dto.*;
+import com.ecommerce.dto.AddToCartRequestDTO;
+import com.ecommerce.dto.CartDTO;
+import com.ecommerce.mapper.CartMapper;
 import com.ecommerce.model.*;
-import com.ecommerce.repository.*;
+import com.ecommerce.repository.CartItemRepository;
+import com.ecommerce.repository.CartRepository;
+import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import static com.ecommerce.mapper.CartMapper.convertToDTO;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final CartMapper cartMapper;
 
+    @Transactional(readOnly = true)
     public CartDTO getCart(Long userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    Cart newCart = new Cart();
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-                    newCart.setUser(user);
-                    return cartRepository.save(newCart);
-                });
+        log.info("Fetching cart for user ID: {}", userId);
 
-        return convertToDTO(cart);
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
+                .orElseGet(() -> createNewCart(userId));
+
+        return cartMapper.toDTO(cart);
     }
 
     public CartDTO addToCart(Long userId, AddToCartRequestDTO request) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    Cart newCart = new Cart();
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-                    newCart.setUser(user);
-                    return cartRepository.save(newCart);
-                });
 
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+        try {
+            Product product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with ID: " + request.getProductId()));
 
-        if (!product.isActive()) {
-            throw new RuntimeException("Product is not available");
+            if (!product.isActive()) {
+                throw new RuntimeException("Product is not available");
+            }
+            Cart cart = cartRepository.findByUserId(userId)
+                    .orElseGet(() -> createNewCart(userId));
+
+            Optional<CartItem> existingCartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), request.getProductId());
+
+            if (existingCartItem.isPresent()) {
+                CartItem cartItem = existingCartItem.get();
+                int newQuantity = cartItem.getQuantity() + request.getQuantity();
+                cartItem.setQuantity(newQuantity);
+                cartItemRepository.save(cartItem);
+                log.info("Updated cart item quantity to: {}", newQuantity);
+            } else {
+                CartItem newCartItem = CartItem.builder()
+                        .cart(cart)
+                        .product(product)
+                        .quantity(request.getQuantity())
+                        .size(request.getSize())
+                        .color(request.getColor())
+                        .build();
+
+                cartItemRepository.save(newCartItem);
+                log.info("Created new cart item");
+            }
+
+            Cart updatedCart = refreshCartWithItems(cart.getId());
+            updateCartTotals(updatedCart);
+            Cart savedCart = cartRepository.save(updatedCart);
+
+            log.info("Cart updated successfully - Total Items: {}, Total Price: {}",
+                    savedCart.getTotalItems(), savedCart.getTotalPrice());
+
+            return cartMapper.toDTO(savedCart);
+
+        } catch (Exception e) {
+            log.error("Error in addToCart for user {} and product {}", userId, request.getProductId(), e);
+            throw new RuntimeException("Failed to add item to cart: " + e.getMessage());
         }
-
-        CartItem cartItem = cartItemRepository
-                .findByCartIdAndProductId(cart.getId(), product.getId())
-                .orElse(null);
-
-        if (cartItem != null) {
-            cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
-        } else {
-            cartItem = new CartItem();
-            cartItem.setCart(cart);
-            cartItem.setProduct(product);
-            cartItem.setQuantity(request.getQuantity());
-            cartItem.setPrice(product.getPrice());
-            cart.getItems().add(cartItem);
-        }
-
-        cart.setUpdatedAt(Instant.now());
-
-        // Save
-        cartItemRepository.save(cartItem);
-        Cart savedCart = cartRepository.save(cart);
-
-        return convertToDTO(savedCart);
     }
 
-    // Update cart item quantity
-    public CartDTO updateCartItem(Long userId, Long cartItemId, UpdateCartItemRequestDTO request) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+    private Cart refreshCartWithItems(Long cartId) {
+        try {
+            Cart cart = cartRepository.findById(cartId)
+                    .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartId));
 
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
+            List<CartItem> cartItems = cartItemRepository.findByCartIdWithProduct(cartId);
 
-        // Verify cart item belongs to user's cart
-        if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to this user");
+            cart.getCartItems().clear();
+            cart.getCartItems().addAll(cartItems);
+
+            return cart;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to refresh cart: " + e.getMessage());
+        }
+    }
+
+    private void updateCartTotals(Cart cart) {
+        if (cart.getCartItems() == null) {
+            cart.setTotalPrice(0);
+            cart.setTotalItems(0);
+            return;
         }
 
-        if (request.getQuantity() <= 0) {
-            // Remove item if quantity is 0 or negative
-            cart.getItems().remove(cartItem);
+        int totalPrice = 0;
+        int totalItems = 0;
+
+        for (CartItem item : cart.getCartItems()) {
+            if (item.getProduct() != null) {
+                int itemTotal = item.getProduct().getPrice() * item.getQuantity();
+                totalPrice += itemTotal;
+                totalItems += item.getQuantity();
+            }
+        }
+
+        cart.setTotalPrice(totalPrice);
+        cart.setTotalItems(totalItems);
+    }
+
+    private Cart createNewCart(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        Cart cart = Cart.builder()
+                .user(user)
+                .totalPrice(0)
+                .totalItems(0)
+                .build();
+
+        cart.setCartItems(new ArrayList<>());
+
+        return cartRepository.save(cart);
+    }
+
+    public CartDTO updateCartItem(Long userId, Long cartItemId, Integer quantity) {
+
+        CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+
+        if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
         } else {
-            // Update quantity
-            cartItem.setQuantity(request.getQuantity());
+            cartItem.setQuantity(quantity);
             cartItemRepository.save(cartItem);
         }
 
-        // Update cart timestamp
-        cart.setUpdatedAt(Instant.now());
+        Cart cart = refreshCartWithItems(cartItem.getCart().getId());
+        updateCartTotals(cart);
         Cart savedCart = cartRepository.save(cart);
 
-        return convertToDTO(savedCart);
+        return cartMapper.toDTO(savedCart);
     }
 
-    // Remove item from cart
     public void removeCartItem(Long userId, Long cartItemId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
 
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
+        try {
+            CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
+                    .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
-        // Verify cart item belongs to user's cart
-        if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to this user");
+            Long cartId = cartItem.getCart().getId();
+            cartItemRepository.delete(cartItem);
+            Cart cart = refreshCartWithItems(cartId);
+            updateCartTotals(cart);
+            Cart savedCart = cartRepository.save(cart);
+
+            log.info("Cart updated after removal - Total Items: {}, Total Price: {}",
+                    savedCart.getTotalItems(), savedCart.getTotalPrice());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove cart item: " + e.getMessage());
         }
-
-        // Remove item
-        cart.getItems().remove(cartItem);
-        cartItemRepository.delete(cartItem);
-
-        // Update cart timestamp
-        cart.setUpdatedAt(Instant.now());
-        cartRepository.save(cart);
     }
 
-    // Clear entire cart
     public void clearCart(Long userId) {
+
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+                .orElseThrow(() -> new RuntimeException("Cart not found for user"));
 
-        // Delete all cart items
-        cartItemRepository.deleteAll(cart.getItems());
-        cart.getItems().clear();
-
-        // Update cart timestamp
-        cart.setUpdatedAt(Instant.now());
+        cartItemRepository.deleteAllByCartId(cart.getId());
+        cart.setTotalPrice(0);
+        cart.setTotalItems(0);
         cartRepository.save(cart);
     }
 }

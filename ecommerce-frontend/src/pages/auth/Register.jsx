@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {register as registerApi} from "../../api/auth-api";
-import {Role} from "../../dto/type/Role";
 import "../../App.css";
 import { toast } from "react-toastify";
 
@@ -16,7 +15,6 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
 
     if (!isOpen) return null;
 
-    // Register.jsx - handleSubmit function (line 20-50 replace koro)
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -43,32 +41,20 @@ const Register = ({ isOpen, onClose, onSwitchToLogin, onRegisterSuccess }) => {
         setLoading(true);
 
         try {
-            // ✅ Call register API
             const response = await registerApi(fullName, email, password);
 
-            // ✅ Check success
             if (!response.success) {
                 throw new Error(response.error || "Registration failed");
             }
-
-            // ✅ Extract user and token
             const { user, token } = response;
 
-            // ✅ Already saved in auth-api.js, but ensure it's correct
             localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("token", token);
-
-            // ✅ Dispatch event
             window.dispatchEvent(new Event('userLoggedIn'));
-
-            // ✅ Success message
             toast.success(`Welcome to ShopSpot, ${user.fullName}! 🎉`);
 
-            // ✅ Callback
             if (onRegisterSuccess) onRegisterSuccess();
             onClose();
-
-            // ✅ Navigate
             navigate("/");
 
         } catch (err) {

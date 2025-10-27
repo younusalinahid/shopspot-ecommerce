@@ -22,7 +22,6 @@ const decodeTokenRole = (token) => {
     }
 };
 
-// Register new user
 export const register = async (fullName, email, password) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/register`, {
@@ -32,14 +31,12 @@ export const register = async (fullName, email, password) => {
             confirmPassword: password
         });
 
-        // ✅ Backend returns: { accessToken, refreshToken, role, userId, email, fullName }
         const { accessToken, refreshToken, role, userId, email: userEmail, fullName: userName } = response.data;
 
         if (!accessToken) {
             throw new Error("No token received from server");
         }
 
-        // Build user object
         const user = {
             id: userId,
             email: userEmail || email,
@@ -47,7 +44,6 @@ export const register = async (fullName, email, password) => {
             role: role || decodeTokenRole(accessToken)
         };
 
-        // Save everything to localStorage
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", accessToken);
         localStorage.setItem("accessToken", accessToken);
@@ -56,7 +52,6 @@ export const register = async (fullName, email, password) => {
         localStorage.setItem("fullName", user.fullName);
         localStorage.setItem("role", user.role);
 
-        // Dispatch login event
         window.dispatchEvent(new Event('userLoggedIn'));
 
         return {
@@ -73,7 +68,6 @@ export const register = async (fullName, email, password) => {
     }
 };
 
-// Login user
 export const login = async (email, password) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/login`, {
@@ -81,14 +75,12 @@ export const login = async (email, password) => {
             password
         });
 
-        // ✅ Backend returns: { token, email, fullName, role, userId }
         const { token, email: userEmail, fullName, role, userId } = response.data;
 
         if (!token) {
             throw new Error("No token received from server");
         }
 
-        // Build user object
         const user = {
             id: userId,
             email: userEmail || email,
@@ -96,7 +88,6 @@ export const login = async (email, password) => {
             role: role || decodeTokenRole(token)
         };
 
-        // Save to localStorage
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
@@ -105,7 +96,6 @@ export const login = async (email, password) => {
         localStorage.setItem("fullName", user.fullName);
         localStorage.setItem("role", user.role);
 
-        // Dispatch login event
         window.dispatchEvent(new Event('userLoggedIn'));
 
         return {
