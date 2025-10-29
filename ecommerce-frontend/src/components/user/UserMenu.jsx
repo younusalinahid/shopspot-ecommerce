@@ -63,7 +63,7 @@ export default function UserMenu() {
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-full text-sm transition-all"
             >
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                     <User className="text-white" size={20} />
                 </div>
                 <span className="text-white font-bold hidden sm:block">{firstName}</span>
