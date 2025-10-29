@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, ShoppingCart, User, Moon, Sun, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/icons/img.png";
+import logo from "../assets/logo/logo3.png";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 import { useTheme } from "../context/ThemeContext";
@@ -50,12 +50,12 @@ export default function Navbar() {
             {/* Main Navbar */}
             <nav className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
                 <div className="w-full px-4 lg:px-8">
-                    <div className="flex justify-between items-center py-4">
+                    <div className="flex justify-between items-center">
                         {/* Left Section - Logo */}
                         <div className="flex items-center flex-shrink-0">
-                            <Link to="/" className="flex items-center space-x-3">
-                                <img src={logo} alt="ShopSpot Logo" className="w-12 h-12 lg:w-14 lg:h-14" />
-                                <span className="text-white font-bold text-xl lg:text-2xl">ShopSpot Online</span>
+                            <Link to="/" className="flex items-center space-x-1 lg:space-x-2">
+                                <img src={logo} alt="ShopSpot Logo" className="w-20 h-20 lg:w-24 lg:h-24" />
+                                <span className="text-white font-bold text-2xl lg:text-3xl -ml-10">ShopSpot Online</span>
                             </Link>
                         </div>
 
@@ -87,7 +87,7 @@ export default function Navbar() {
                                 className="relative cursor-pointer group p-2 rounded-full hover:bg-white/10 transition-colors duration-200"
                                 onClick={handleCartClick}
                             >
-                                <ShoppingCart className="text-white group-hover:scale-110 transition-transform duration-200" size={32}/>
+                                <ShoppingCart className="text-white group-hover:scale-110 transition-transform duration-200" size={40}/>
                                 {cartCount > 0 && (
                                     <span className="absolute -top-1 -right-1 flex justify-center items-center bg-red-500 rounded-full w-6 h-6 font-bold text-sm text-white shadow-lg">
                                         {cartCount}
