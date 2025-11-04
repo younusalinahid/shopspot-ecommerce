@@ -23,7 +23,6 @@ function App() {
         <ThemeProvider>
             <CartProvider>
                 <Router>
-                    {/* Navbar outside Routes so it appears on all pages */}
                     <Navbar />
 
                     <Routes>
@@ -32,16 +31,14 @@ function App() {
                         <Route path="/" element={<Home/>}/>
 
                         <Route path="/subcategory/:subCategoryId" element={<ProductList/>}/>
-
                         <Route path="/product/:productId" element={<ProductDetails/>}/>
 
-                        {/* ✅ Add Cart Route */}
                         <Route path="/cart" element={<CartPage/>}/>
                         <Route path="/checkout" element={<CheckoutPage />} />
 
                         {/* Admin Dashboard - Protected */}
                         <Route
-                            path="/admin-dashboard"
+                            path="/admin"
                             element={
                                 <ProtectedRoute role="ADMIN">
                                     <AdminDashboard/>
@@ -51,7 +48,7 @@ function App() {
 
                         {/* User Dashboard - Protected */}
                         <Route
-                            path="/user-dashboard"
+                            path="/user"
                             element={
                                 <ProtectedRoute role="USER">
                                     <UserDashboard/>

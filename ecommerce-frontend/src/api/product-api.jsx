@@ -41,5 +41,15 @@ export const productService = {
             console.error('Error fetching product:', error);
             throw error;
         }
+    },
+
+    searchProducts: async (query) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/search?query=${query}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error searching products:', error);
+            throw error;
+        }
     }
 };

@@ -54,7 +54,7 @@ const Login = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
             onClose();
 
             if (user.role === Role.ADMIN || user.role === "ADMIN") {
-                navigate("/admin-dashboard");
+                navigate("/admin");
             } else {
                 navigate("/");
             }
