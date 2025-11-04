@@ -1,6 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.ProductDTO;
+import com.ecommerce.dto.SearchResultDTO;
 import com.ecommerce.model.Product;
 import com.ecommerce.service.ProductService;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,12 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SearchResultDTO>> searchProducts(@RequestParam String query) {
+        List<SearchResultDTO> results = productService.universalSearch(query);
+        return ResponseEntity.ok(results);
     }
 
     @GetMapping("/{productId}")
