@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import CategorySidebar from '../user/CategorySidebar';
-import ProductCard from '../user/product-card';
+import ProductCard from './productCard';
 import {categoryApi} from "../../api/category-api-service";
 import Footer from "../Footer";
 import {productService} from "../../api/product-api";

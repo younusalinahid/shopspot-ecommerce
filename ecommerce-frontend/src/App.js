@@ -6,7 +6,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserDashboard from "./components/user/UserDashboard";
 import AuthPage from "./pages/auth/AuthPage";
 import {ProtectedRoute} from "./components/ProtectedRoute";
-import ProductList from "./components/user/product-list";
+import ProductList from "./components/user/productList";
 import ProductDetails from "./pages/ProductDetails";
 import CartPage from "./pages/CartPage";
 import {ThemeProvider} from "./context/ThemeContext";
