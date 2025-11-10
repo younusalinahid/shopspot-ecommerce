@@ -5,7 +5,7 @@ import {getActiveBanners} from "../api/banner-api-service";
 import Footer from "../components/Footer";
 import Banner from "./user/Banner";
 import {useCategories} from "../hooks/useCategory";
-import ProductCard from "./user/product-card";
+import ProductCard from "./user/productCard";
 import {useProducts} from "../hooks/useProducts";
 
 const Home = () => {
