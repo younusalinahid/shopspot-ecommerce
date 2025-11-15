@@ -22,11 +22,6 @@ export default function ProductCard({product, showDiscount = false}) {
                 position: "top-right",
                 autoClose: 3000
             });
-        } else {
-            toast.error(result.error || 'Failed to add product to cart', {
-                position: "top-right",
-                autoClose: 3000
-            });
         }
 
         setLoading(false);

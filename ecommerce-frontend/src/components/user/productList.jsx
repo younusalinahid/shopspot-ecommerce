@@ -35,14 +35,10 @@ const ProductList = () => {
             setLoading(true);
             setError(null);
 
-            console.log('Fetching products for subcategory:', subCategoryId);
-
             const productsData = await productService.getProductsBySubCategory(subCategoryId);
-            console.log('Products:', productsData);
             setProducts(productsData);
 
         } catch (err) {
-            console.error('Error fetching products:', err);
             setError('Failed to load products. Please try again.');
         } finally {
             setLoading(false);
