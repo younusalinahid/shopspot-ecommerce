@@ -14,6 +14,9 @@ import {CartProvider} from "./context/CartContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CheckoutPage from "./pages/CheckoutPage";
+import ProfilePage from "./pages/ProfilePage";
+import OrdersPage from "./pages/OrdersPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
     useEffect(() => {
@@ -35,6 +38,10 @@ function App() {
 
                         <Route path="/cart" element={<CartPage/>}/>
                         <Route path="/checkout" element={<CheckoutPage />} />
+
+                        <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/orders" element={<OrdersPage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
 
                         {/* Admin Dashboard - Protected */}
                         <Route
