@@ -3,6 +3,7 @@ import {useParams, useNavigate} from 'react-router-dom';
 import {Star, ShoppingCart, Heart, Share2, Truck, Shield, ArrowLeft, Plus, Minus, ZoomIn} from 'lucide-react';
 import {productService} from '../api/product-api';
 import { useCart } from '../context/CartContext';
+import { isAuthenticated, getCurrentUser} from '../api/auth-api';
 import { toast } from 'react-toastify';
 
 const ProductDetails = () => {
@@ -18,6 +19,37 @@ const ProductDetails = () => {
     const [isZoomed, setIsZoomed] = useState(false);
     const [zoomPosition, setZoomPosition] = useState({x: 0, y: 0});
     const [addingToCart, setAddingToCart] = useState(false);
+
+    const [authState, setAuthState] = useState({
+        isAuthenticated: false,
+        user: null
+    });
+
+    useEffect(() => {
+        checkAuthStatus();
+
+        // Listen for auth changes
+        const handleAuthChange = () => {
+            checkAuthStatus();
+        };
+
+        window.addEventListener('userLoggedIn', handleAuthChange);
+        window.addEventListener('userLoggedOut', handleAuthChange);
+
+        return () => {
+            window.removeEventListener('userLoggedIn', handleAuthChange);
+            window.removeEventListener('userLoggedOut', handleAuthChange);
+        };
+    }, []);
+
+    const checkAuthStatus = () => {
+        const authenticated = isAuthenticated();
+        const user = getCurrentUser();
+        setAuthState({
+            isAuthenticated: authenticated,
+            user: user
+        });
+    };
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -42,14 +74,21 @@ const ProductDetails = () => {
     const handleAddToCart = async () => {
         if (addingToCart || !product) return;
 
+        if (!authState.isAuthenticated) {
+            toast.info('Please login to add items to cart');
+            navigate('/login', { state: { from: `/product/${productId}` } });
+            return;
+        }
+
         setAddingToCart(true);
         try {
             const result = await addToCart(product.id, quantity);
             if (result) {
-                toast.success('Product added to cart successfully! 🛒');
+                toast.success('Product added to cart successfully!');
             }
         } catch (error) {
             console.error('Error adding to cart:', error);
+            toast.error('Failed to add product to cart');
         } finally {
             setAddingToCart(false);
         }
@@ -57,6 +96,13 @@ const ProductDetails = () => {
 
     const handleBuyNow = async () => {
         if (addingToCart || !product) return;
+
+        // User authentication check
+        if (!authState.isAuthenticated) {
+            toast.info('Please login to proceed with purchase');
+            navigate('/login', { state: { from: `/product/${productId}` } });
+            return;
+        }
 
         setAddingToCart(true);
         try {
@@ -69,9 +115,20 @@ const ProductDetails = () => {
             }
         } catch (error) {
             console.error('Error adding to cart:', error);
+            toast.error('Failed to add product to cart');
         } finally {
             setAddingToCart(false);
         }
+    };
+
+    const handleQuickAddToCart = async () => {
+        if (!authState.isAuthenticated) {
+            toast.info('Please login to add items to cart');
+            navigate( { state: { from: `/product/${productId}` } });
+            return;
+        }
+
+        await handleAddToCart();
     };
 
     const getImageSource = (imageData) => {
@@ -169,6 +226,7 @@ const ProductDetails = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-8">
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Product Images - Improved Section */}
                     <div className="space-y-6">
@@ -219,6 +277,17 @@ const ProductDetails = () => {
                                     className="absolute top-6 left-6 bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
                                     {discountPercentage}% OFF
                                 </div>
+                            )}
+
+                            {/* Quick Add to Cart Button on Image */}
+                            {authState.isAuthenticated && (
+                                <button
+                                    onClick={handleQuickAddToCart}
+                                    disabled={product.stock === 0 || addingToCart}
+                                    className="absolute bottom-6 right-6 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <ShoppingCart className="w-6 h-6"/>
+                                </button>
                             )}
                         </div>
 
@@ -381,21 +450,21 @@ const ProductDetails = () => {
                         <div className="flex space-x-4">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0 || addingToCart || loading}
+                                disabled={product.stock === 0 || addingToCart || loading || !authState.isAuthenticated}
                                 className="flex-1 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <ShoppingCart className="w-6 h-6"/>
                                 <span className="text-lg">
-                                    {addingToCart ? 'Adding...' : 'Add to Cart'}
+                                    {!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}
                                 </span>
                             </button>
                             <button
                                 onClick={handleBuyNow}
-                                disabled={product.stock === 0 || addingToCart || loading}
+                                disabled={product.stock === 0 || addingToCart || loading || !authState.isAuthenticated}
                                 className="flex-1 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <span className="text-lg">
-                                    {addingToCart ? 'Adding...' : 'Buy Now'}
+                                    {!authState.isAuthenticated ? 'Login to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}
                                 </span>
                             </button>
                         </div>
@@ -408,10 +477,13 @@ const ProductDetails = () => {
                                     isWishlisted
                                         ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
                                         : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105'
-                                }`}
+                                } ${!authState.isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                disabled={!authState.isAuthenticated}
                             >
                                 <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current animate-pulse' : ''}`}/>
-                                <span className="font-medium">{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                                <span className="font-medium">
+                                    {!authState.isAuthenticated ? 'Login for Wishlist' : isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
+                                </span>
                             </button>
                             <button
                                 onClick={handleShare}

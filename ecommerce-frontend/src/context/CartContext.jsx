@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, {createContext, useState, useContext, useEffect, useCallback} from 'react';
 import axios from 'axios';
+import {toast} from 'react-toastify';
 
 const CartContext = createContext();
 
@@ -11,7 +12,7 @@ export const useCart = () => {
     return context;
 };
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({children}) => {
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -19,8 +20,7 @@ export const CartProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('User not logged in');
-                setCart({ items: [], totalPrice: 0, totalItems: 0 });
+                setCart({items: [], totalPrice: 0, totalItems: 0});
                 return;
             }
 
@@ -32,11 +32,9 @@ export const CartProvider = ({ children }) => {
                 }
             });
 
-            console.log('Cart data received:', response.data);
             setCart(response.data);
         } catch (error) {
-            console.error('Failed to fetch cart:', error);
-            setCart({ items: [], totalPrice: 0, totalItems: 0 });
+            setCart({items: [], totalPrice: 0, totalItems: 0});
         } finally {
             setLoading(false);
         }
@@ -46,8 +44,7 @@ export const CartProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('Please login first to add items to cart');
-                return { success: false, error: 'User not logged in' };
+                toast.info('Please login first to add items to cart');
             }
 
             const requestData = {
@@ -72,11 +69,10 @@ export const CartProvider = ({ children }) => {
 
             console.log('Add to cart response:', response.data);
             setCart(response.data);
-            return { success: true };
+            return {success: true};
         } catch (error) {
-            console.error('Failed to add to cart:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to add product to cart';
-            return { success: false, error: errorMessage };
+            const errorMessage = error.response?.data?.message;
+            return {success: false, error: errorMessage};
         }
     };
 
@@ -95,11 +91,10 @@ export const CartProvider = ({ children }) => {
             );
 
             setCart(response.data);
-            return { success: true };
+            return {success: true};
         } catch (error) {
-            console.error('Failed to update cart item:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to update cart item';
-            return { success: false, error: errorMessage };
+            const errorMessage = error.response?.data?.message;
+            return {success: false, error: errorMessage};
         }
     };
 
@@ -117,11 +112,10 @@ export const CartProvider = ({ children }) => {
             );
 
             await fetchCart();
-            return { success: true };
+            return {success: true};
         } catch (error) {
-            console.error('Failed to remove cart item:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to remove cart item';
-            return { success: false, error: errorMessage };
+            const errorMessage = error.response?.data?.message;
+            return {success: false, error: errorMessage};
         }
     };
 
@@ -138,12 +132,11 @@ export const CartProvider = ({ children }) => {
                 }
             );
 
-            setCart({ items: [], totalPrice: 0, totalItems: 0 });
-            return { success: true };
+            setCart({items: [], totalPrice: 0, totalItems: 0});
+            return {success: true};
         } catch (error) {
-            console.error('Failed to clear cart:', error);
-            const errorMessage = error.response?.data?.message || 'Failed to clear cart';
-            return { success: false, error: errorMessage };
+            const errorMessage = error.response?.data?.message;
+            return {success: false, error: errorMessage};
         }
     };
 
@@ -152,7 +145,7 @@ export const CartProvider = ({ children }) => {
         if (token) {
             fetchCart();
         } else {
-            setCart({ items: [], totalPrice: 0, totalItems: 0 });
+            setCart({items: [], totalPrice: 0, totalItems: 0});
         }
     }, [fetchCart]);
 

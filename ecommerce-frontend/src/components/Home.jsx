@@ -26,7 +26,6 @@ const Home = () => {
                 setIsLoadingBanners(false);
             })
             .catch(err => {
-                console.error('Error loading banners:', err);
                 setIsLoadingBanners(false);
             });
     }, []);
@@ -210,8 +209,6 @@ const Home = () => {
                                                     </div>
                                                     <button
                                                         onClick={() => {
-                                                            // Navigate to category page
-                                                            console.log('Navigate to category:', categoryData.id);
                                                         }}
                                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                                     >
