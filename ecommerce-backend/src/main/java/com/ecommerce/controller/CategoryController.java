@@ -1,6 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.CategoryDTO;
+import com.ecommerce.dto.CategoryWithProductsDTO;
 import com.ecommerce.dto.SubCategoryDTO;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.SubCategory;
@@ -34,6 +35,12 @@ public class CategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategory(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryWithSubDTOById(id));
+    }
+
+    @GetMapping("/with-products")
+    public ResponseEntity<List<CategoryWithProductsDTO>> getCategoriesWithProducts(
+            @RequestParam(defaultValue = "4") int productsPerCategory) {
+        return ResponseEntity.ok(categoryService.getCategoriesWithProducts(productsPerCategory));
     }
 
     @PostMapping
