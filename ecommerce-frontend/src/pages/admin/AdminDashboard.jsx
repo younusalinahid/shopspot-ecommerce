@@ -8,6 +8,7 @@ import RecentOrdersTable from '../../components/admin/RecentOrdersTable';
 import CategoryManagement from '../../components/admin/CategoryManagement';
 import BannerManagement from '../../components/admin/BannerManagement';
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, BarChart3, FolderTree, ImageIcon, DollarSign } from 'lucide-react';
+import ProductManagement from "../../components/admin/ProductManagement";
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -77,15 +78,7 @@ export default function AdminDashboard() {
                 return <CategoryManagement />;
 
             case 'products':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Products Management</h2>
-                        <p className="text-gray-500">Add, edit, and manage your products inventory.</p>
-                        <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                            <p className="text-purple-700">Products section coming soon...</p>
-                        </div>
-                    </div>
-                );
+                return <ProductManagement />;
 
             case 'orders':
                 return (

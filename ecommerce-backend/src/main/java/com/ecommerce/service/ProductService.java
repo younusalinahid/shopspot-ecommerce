@@ -1,7 +1,7 @@
 package com.ecommerce.service;
 
-import com.ecommerce.dto.CategoryDTO;
 import com.ecommerce.dto.ProductDTO;
+import com.ecommerce.dto.ProductWithCategoryDTO;
 import com.ecommerce.dto.SearchResultDTO;
 import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.model.Category;
@@ -121,6 +121,29 @@ public class ProductService {
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    public List<ProductWithCategoryDTO> getAllProductsWithCategory() {
+        List<Product> products = productRepository.findAll();
+        return products.stream().map(p -> {
+            String subCategoryName = p.getSubCategory() != null ? p.getSubCategory().getName() : null;
+            String categoryName = p.getSubCategory() != null && p.getSubCategory().getCategory() != null
+                    ? p.getSubCategory().getCategory().getName()
+                    : null;
+
+            return new ProductWithCategoryDTO(
+                    p.getId(),
+                    p.getName(),
+                    p.getDescription(),
+                    p.getPrice(),
+                    p.isActive(),
+                    p.getCreatedAt(),
+                    p.getImageData(),
+                    subCategoryName,
+                    categoryName
+            );
+        }).collect(Collectors.toList());
+    }
+
 
     public ProductDTO updateProduct(Long id, Product updated, MultipartFile imageFile) throws IOException {
         Product product = productRepository.findById(id)

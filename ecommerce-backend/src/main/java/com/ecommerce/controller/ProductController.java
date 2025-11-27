@@ -1,6 +1,7 @@
 package com.ecommerce.controller;
 
 import com.ecommerce.dto.ProductDTO;
+import com.ecommerce.dto.ProductWithCategoryDTO;
 import com.ecommerce.dto.SearchResultDTO;
 import com.ecommerce.model.Product;
 import com.ecommerce.service.ProductService;
@@ -10,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
@@ -89,4 +89,11 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+
+    //product with category name and subCategory name
+    @GetMapping("/with-category")
+    public List<ProductWithCategoryDTO> getProductsWithCategory() {
+        return productService.getAllProductsWithCategory();
+    }
+
 }
