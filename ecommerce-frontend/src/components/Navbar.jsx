@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, ShoppingCart, User, Moon, Sun, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/logo/logo3.png";
+import logo from "../assets/logo/logo-6.png";
 import playStoreButton from "../assets/images/get-play-store-icon.png";
 import AuthPage from "../pages/auth/AuthPage";
 import { useTheme } from "../context/ThemeContext";
