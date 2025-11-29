@@ -2,6 +2,7 @@ package com.ecommerce.controller;
 
 import com.ecommerce.dto.CategoryDTO;
 import com.ecommerce.dto.CategoryWithProductsDTO;
+import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.dto.SubCategoryDTO;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.SubCategory;
@@ -41,6 +42,12 @@ public class CategoryController {
     public ResponseEntity<List<CategoryWithProductsDTO>> getCategoriesWithProducts(
             @RequestParam(defaultValue = "4") int productsPerCategory) {
         return ResponseEntity.ok(categoryService.getCategoriesWithProducts(productsPerCategory));
+    }
+
+    @GetMapping("/{categoryId}/products")
+    public ResponseEntity<List<ProductDTO>> getProductsByCategory(@PathVariable Long categoryId) {
+        List<ProductDTO> products = categoryService.getProductsByCategory(categoryId);
+        return ResponseEntity.ok(products);
     }
 
     @PostMapping

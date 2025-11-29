@@ -64,5 +64,17 @@ export const categoryApi = {
             getAuthConfig()
         );
         return response.data;
+    },
+
+    getProductsByCategory: async (categoryId) => {
+        try {
+            const response = await axios.get(
+                `${API_BASE_URL}/categories/${categoryId}/products`,
+                getAuthConfig()
+            );
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
