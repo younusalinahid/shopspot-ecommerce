@@ -4,10 +4,11 @@ import com.ecommerce.dto.CategoryDTO;
 import com.ecommerce.dto.CategoryWithProductsDTO;
 import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.dto.SubCategoryDTO;
-import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.model.Category;
+import com.ecommerce.model.Product;
 import com.ecommerce.repository.CategoryRepository;
+import com.ecommerce.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,12 +19,10 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final CategoryMapper categoryMapper;
     private final ProductMapper productMapper;
 
-    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper, ProductMapper productMapper) {
+    public CategoryService(CategoryRepository categoryRepository,  ProductMapper productMapper) {
         this.categoryRepository = categoryRepository;
-        this.categoryMapper = categoryMapper;
         this.productMapper = productMapper;
     }
 
@@ -87,6 +86,17 @@ public class CategoryService {
                     return null;
                 })
                 .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductDTO> getProductsByCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
+
+        return category.getSubCategories().stream()
+                .flatMap(subCategory -> subCategory.getProducts().stream())
+                .filter(Product::isActive)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
     }
 }

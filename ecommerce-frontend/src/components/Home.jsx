@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import CategorySidebar from './user/CategorySidebar';
 import { getActiveBanners } from "../api/banner-api-service";
 import Footer from "../components/Footer";
@@ -10,6 +11,7 @@ import { useProducts } from "../hooks/useProducts";
 import { useCategoryProducts } from "../hooks/useCategoryProducts";
 
 const Home = () => {
+    const navigate = useNavigate();
     const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
     const { products: featuredProducts, loading: productsLoading, error: productsError } = useProducts(8);
     const { categoryProducts, loading: categoryProductsLoading, error: categoryProductsError } = useCategoryProducts(4);
@@ -55,6 +57,34 @@ const Home = () => {
         }
     };
 
+    const handleCategoryClick = (categoryId, categoryName) => {
+        navigate(`/category/${categoryId}`, {
+            state: { categoryName }
+        });
+    };
+
+    const handleCategorySeeAll = (categoryId, categoryName) => {
+        navigate(`/category/${categoryId}`, {
+            state: { categoryName }
+        });
+    };
+
+    const handleViewAllFeatured = () => {
+        if (categories.length > 0) {
+            navigate(`/category/${categories[0].id}`, {
+                state: { categoryName: categories[0].name }
+            });
+        }
+    };
+
+    const handleAllCategoriesClick = () => {
+        if (categories.length > 0) {
+            navigate(`/category/${categories[0].id}`, {
+                state: { categoryName: categories[0].name }
+            });
+        }
+    };
+
     return (
         <div className="dark:bg-gray-900 transition-colors duration-300">
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -78,6 +108,7 @@ const Home = () => {
                                         Product Categories
                                     </h2>
                                     <button
+                                        onClick={handleAllCategoriesClick}
                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                     >
                                         <span>See All</span>
@@ -124,6 +155,7 @@ const Home = () => {
                                                 <div
                                                     key={category.id}
                                                     className={`${getCategoryCardStyles(category.color)} rounded-2xl p-6 text-center hover:shadow-lg dark:hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[150px] snap-start flex flex-col items-center cursor-pointer`}
+                                                    onClick={() => handleCategoryClick(category.id, category.name)}
                                                 >
                                                     <div
                                                         className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center text-white text-2xl shadow-lg mb-4 transition-colors duration-300`}
@@ -147,6 +179,7 @@ const Home = () => {
                                         Featured Products
                                     </h2>
                                     <button
+                                        onClick={handleViewAllFeatured}
                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                     >
                                         <span>View All</span>
@@ -208,8 +241,7 @@ const Home = () => {
                                                         </h2>
                                                     </div>
                                                     <button
-                                                        onClick={() => {
-                                                        }}
+                                                        onClick={() => handleCategorySeeAll(categoryData.id, categoryData.name)}
                                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                                     >
                                                         <span>See All</span>

@@ -17,6 +17,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import SettingsPage from "./pages/SettingsPage";
+import CategoryProducts from './pages/CategoryProducts';
 
 function App() {
     useEffect(() => {
@@ -35,6 +36,7 @@ function App() {
 
                         <Route path="/subcategory/:subCategoryId" element={<ProductList/>}/>
                         <Route path="/product/:productId" element={<ProductDetails/>}/>
+                        <Route path="/category/:categoryId" element={<CategoryProducts />} />
 
                         <Route path="/cart" element={<CartPage/>}/>
                         <Route path="/checkout" element={<CheckoutPage />} />
