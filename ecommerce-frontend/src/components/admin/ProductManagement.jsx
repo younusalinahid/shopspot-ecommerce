@@ -172,21 +172,16 @@ const ProductManagement = () => {
 
         try {
             setLoading(true);
-            await productService.deleteProduct(productId);
+            console.log("Deleting product ID:", productId);
+
+            const response = await productService.deleteProduct(productId);
+            console.log("Delete response:", response);
+
             toast.success("Product deleted successfully");
             await fetchProducts();
         } catch (err) {
-
-            let errorMsg = "Failed to delete product";
-            if (err.response?.data?.message) {
-                errorMsg = err.response.data.message;
-            } else if (err.response?.status === 401) {
-                errorMsg = "Unauthorized. Please login again.";
-            } else if (err.response?.status === 403) {
-                errorMsg = "Access denied. Admin privileges required.";
-            }
-
-            toast.error(errorMsg);
+            console.error("Delete error:", err);
+            // ... rest of error handling
         } finally {
             setLoading(false);
         }
