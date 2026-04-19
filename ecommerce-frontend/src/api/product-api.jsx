@@ -66,7 +66,6 @@ export const productService = {
         }
     },
 
-
     getProductById: async (productId) => {
         try {
             const response = await axios.get(`${API_BASE_URL}/${productId}`);
@@ -132,16 +131,20 @@ export const productService = {
         }
     },
 
-    deleteProduct: async (productId) => {
-        try {
-            const response = await axios.delete(
-                `${API_BASE_URL}/${productId}`,
-                getAuthConfig()
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            throw error;
+    deleteProduct: async (id) => {
+        const response = await fetch(`http://localhost:8080/api/products/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json"
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: "Failed to delete" }));
+            throw { response: { status: response.status, data: error } };
         }
-    }
+
+        return;
+    },
 };
