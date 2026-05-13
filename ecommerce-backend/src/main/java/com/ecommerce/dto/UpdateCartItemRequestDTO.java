@@ -1,12 +1,15 @@
 package com.ecommerce.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import lombok.Data;
+import jakarta.validation.constraints.Min;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class UpdateCartItemRequestDTO {
-    @NotNull(message = "Quantity is required")
-    @Positive(message = "Quantity must be positive")
+
+    @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
 }

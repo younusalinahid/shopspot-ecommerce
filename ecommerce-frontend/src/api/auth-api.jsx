@@ -1,14 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api/auth';
+const PUBLIC_API = 'http://localhost:8080/api/public/auth';
 
 const decodeTokenRole = (token) => {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
 
         if (payload.roles && Array.isArray(payload.roles)) {
-            const role = payload.roles[0];
-            return role.replace('ROLE_', '');
+            return payload.roles[0].replace('ROLE_', '');
         }
 
         if (payload.role) {
@@ -17,39 +16,41 @@ const decodeTokenRole = (token) => {
 
         return "USER";
     } catch (e) {
-        console.error("Error decoding token:", e);
+        console.error("Token decode error:", e);
         return "USER";
     }
 };
 
 export const register = async (fullName, email, password) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/register`, {
+        const response = await axios.post(`${PUBLIC_API}/register`, {
             fullName,
             email,
             password,
             confirmPassword: password
         });
 
-        const { accessToken, refreshToken, role, userId, email: userEmail, fullName: userName } = response.data;
+        const {
+            accessToken,
+            refreshToken,
+            userId,
+            email: userEmail,
+            fullName: userName,
+            role
+        } = response.data;
 
-        if (!accessToken) {
-            throw new Error("No token received from server");
-        }
+        if (!accessToken) throw new Error("No access token received");
 
         const user = {
             id: userId,
-            email: userEmail || email,
-            fullName: userName || fullName,
+            email: userEmail,
+            fullName: userName,
             role: role || decodeTokenRole(accessToken)
         };
 
         localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", accessToken);
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("fullName", user.fullName);
         localStorage.setItem("role", user.role);
 
         window.dispatchEvent(new Event('userLoggedIn'));
@@ -59,208 +60,155 @@ export const register = async (fullName, email, password) => {
             token: accessToken,
             user
         };
+
     } catch (error) {
-        console.error("Registration error:", error);
+        console.error("Register error:", error);
         return {
             success: false,
-            error: error.response?.data?.message || error.message || "Registration failed"
+            error: error.response?.data?.message || "Registration failed"
         };
     }
 };
 
 export const login = async (email, password) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/login`, {
+        const response = await axios.post(`${PUBLIC_API}/login`, {
             email,
             password
         });
 
-        const { token, email: userEmail, fullName, role, userId } = response.data;
+        const {
+            accessToken,
+            refreshToken,
+            userId,
+            email: userEmail,
+            fullName,
+            role
+        } = response.data;
 
-        if (!token) {
-            throw new Error("No token received from server");
-        }
+        if (!accessToken) throw new Error("No access token received");
 
         const user = {
             id: userId,
-            email: userEmail || email,
-            fullName: fullName,
-            role: role || decodeTokenRole(token)
+            email: userEmail,
+            fullName,
+            role: role || decodeTokenRole(accessToken)
         };
 
         localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", token);
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("jwtToken", token);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("fullName", user.fullName);
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("role", user.role);
 
         window.dispatchEvent(new Event('userLoggedIn'));
 
         return {
             success: true,
-            token,
+            token: accessToken,
             user
         };
+
     } catch (error) {
         console.error("Login error:", error);
         return {
             success: false,
-            error: error.response?.data?.message || error.message || "Login failed"
+            error: error.response?.data?.message || "Login failed"
         };
     }
 };
 
-// Logout user
 export const logout = async () => {
     try {
         const refreshToken = localStorage.getItem('refreshToken');
 
         if (refreshToken) {
-            await axios.post(`${API_BASE_URL}/logout`, { refreshToken });
+            await axios.post(`${PUBLIC_API}/logout`, { refreshToken });
         }
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error("Logout error:", error);
     } finally {
-        // Clear all localStorage
         localStorage.removeItem("user");
-        localStorage.removeItem("token");
         localStorage.removeItem("accessToken");
-        localStorage.removeItem("jwtToken");
         localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userEmail");
-        localStorage.removeItem("fullName");
         localStorage.removeItem("role");
 
-        // Dispatch logout event
         window.dispatchEvent(new Event('userLoggedOut'));
     }
 };
 
-// Refresh access token
 export const refreshToken = async () => {
     try {
         const refreshToken = localStorage.getItem('refreshToken');
 
-        if (!refreshToken) {
-            throw new Error('No refresh token available');
-        }
+        if (!refreshToken) throw new Error("No refresh token");
 
-        const response = await axios.post(`${API_BASE_URL}/refresh`, {
-            refreshToken: refreshToken
+        const response = await axios.post(`${PUBLIC_API}/refresh`, {
+            refreshToken
         });
 
-        const { accessToken, userId, email, fullName, role } = response.data;
+        const { accessToken } = response.data;
 
-        // Update tokens
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('token', accessToken);
-
-        // Update user info if provided
-        if (userId) {
-            const user = {
-                id: userId,
-                email: email,
-                fullName: fullName,
-                role: role
-            };
-            localStorage.setItem('user', JSON.stringify(user));
-        }
+        localStorage.setItem("accessToken", accessToken);
 
         return {
             success: true,
             token: accessToken
         };
+
     } catch (error) {
-        console.error('Token refresh failed:', error);
+        console.error("Refresh failed:", error);
         logout();
         return {
             success: false,
-            error: 'Session expired'
+            error: "Session expired"
         };
     }
 };
 
-// Check if user is authenticated
 export const isAuthenticated = () => {
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) return false;
 
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const exp = payload.exp * 1000;
-        return Date.now() < exp;
-    } catch (e) {
+        return Date.now() < payload.exp * 1000;
+    } catch {
         return false;
     }
 };
 
-// Get current user
 export const getCurrentUser = () => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-        try {
-            return JSON.parse(userStr);
-        } catch (e) {
-            console.error("Error parsing user:", e);
-        }
-    }
-
-    // Fallback to old method
-    const email = localStorage.getItem("userEmail");
-    const fullName = localStorage.getItem("fullName");
-    const role = localStorage.getItem("role");
-
-    if (email) {
-        return {
-            email,
-            fullName: fullName || email.split('@')[0],
-            username: email.split('@')[0],
-            role
-        };
-    }
-    return null;
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
 };
 
-// Get auth token
 export const getToken = () => {
-    return localStorage.getItem("accessToken") || localStorage.getItem("token");
+    return localStorage.getItem("accessToken");
 };
 
-// Get user role
 export const getUserRole = () => {
     const user = getCurrentUser();
     return user?.role || localStorage.getItem("role");
 };
 
-// Check if admin
-export const isAdmin = () => {
-    const role = getUserRole();
-    return role === "ADMIN";
-};
+export const isAdmin = () => getUserRole() === "ADMIN";
 
-// Check if user has specific role
-export const hasRole = (requiredRole) => {
-    const role = getUserRole();
-    return role === requiredRole;
-};
+export const hasRole = (role) => getUserRole() === role;
 
-// Get user from token
 export const getUserFromToken = () => {
     const token = getToken();
     if (!token) return null;
 
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
+
         return {
-            email: payload.sub || payload.email,
+            email: payload.sub,
             role: decodeTokenRole(token),
             exp: payload.exp,
             iat: payload.iat
         };
-    } catch (e) {
-        console.error("Error decoding token:", e);
+    } catch {
         return null;
     }
 };

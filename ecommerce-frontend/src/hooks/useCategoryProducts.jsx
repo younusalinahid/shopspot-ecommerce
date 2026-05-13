@@ -10,7 +10,7 @@ export const useCategoryProducts = (productsPerCategory = 4) => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `http://localhost:8080/api/categories/with-products?productsPerCategory=${productsPerCategory}`
+                    `http://localhost:8080/api/public/categories/with-products?productsPerCategory=${productsPerCategory}`
                 );
 
                 if (!response.ok) {

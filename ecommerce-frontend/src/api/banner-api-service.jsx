@@ -1,45 +1,46 @@
 import axios from "axios";
 import { getToken } from "./auth-api";
 
-const API_URL = "http://localhost:8080/api/banners";
+const PUBLIC_API = "http://localhost:8080/api/public/banners";
+const ADMIN_API = "http://localhost:8080/api/admin/banners";
 
-const getAuthHeaders = () => {
-    const token = getToken();
+const authConfig = () => {
+    const token = getToken(); // FIXED
+    if (!token) throw new Error("Not authenticated");
 
     return {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     };
 };
 
 export const getActiveBanners = async () => {
     try {
-        const response = await axios.get(API_URL);
+        const response = await axios.get(PUBLIC_API);
         return response.data;
     } catch (error) {
-        throw error.response?.data || { message: "Failed to fetch banners" };
+        console.error("Get active banners error:", error);
+        return [];
     }
 };
 
 export const getAllBanners = async () => {
     try {
-
-        const response = await axios.get(`${API_URL}`, {
-            headers: getAuthHeaders()
-        });
+        const response = await axios.get(PUBLIC_API);
         return response.data;
     } catch (error) {
-        throw error;
+        console.error(error);
+        return [];
     }
 };
 
 export const createBanner = async (bannerData) => {
     try {
-        const response = await axios.post(API_URL, bannerData, {
-            headers: getAuthHeaders()
-        });
+        const response = await axios.post(ADMIN_API, bannerData, authConfig());
         return response.data;
     } catch (error) {
+        console.error(error);
         throw error;
     }
 };
@@ -48,38 +49,36 @@ export const createBannerWithFile = async (formData) => {
     try {
         const token = getToken();
 
-        const response = await axios.post(`${API_URL}/upload`, formData, {
+        const response = await axios.post(`${ADMIN_API}/upload`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': token ? `Bearer ${token}` : ''
+                Authorization: token ? `Bearer ${token}` : "",
+                "Content-Type": "multipart/form-data"
             }
         });
+
         return response.data;
     } catch (error) {
+        console.error(error);
         throw error;
     }
 };
 
 export const updateBanner = async (id, bannerData) => {
     try {
-
-        const response = await axios.put(`${API_URL}/${id}`, bannerData, {
-            headers: getAuthHeaders()
-        });
+        const response = await axios.put(`${ADMIN_API}/${id}`, bannerData, authConfig());
         return response.data;
     } catch (error) {
+        console.error(error);
         throw error;
     }
 };
 
 export const deleteBanner = async (id) => {
     try {
-
-        const response = await axios.delete(`${API_URL}/${id}`, {
-            headers: getAuthHeaders()
-        });
+        const response = await axios.delete(`${ADMIN_API}/${id}`, authConfig());
         return response.data;
     } catch (error) {
+        console.error(error);
         throw error;
     }
 };

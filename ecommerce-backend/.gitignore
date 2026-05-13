@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+./idea
+
+ecommerce-backend/src/main/resources/application.properties
+ecommerce-backend/.env
+.env
