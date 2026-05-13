@@ -37,6 +37,17 @@ public class BannerService {
         return bannerRepository.save(existingBanner);
     }
 
+    public Banner updateBannerImage(Long id, byte[] imageData) {
+
+        Banner existingBanner = bannerRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Banner not found with id: " + id));
+
+        existingBanner.setImageData(imageData);
+
+        return bannerRepository.save(existingBanner);
+    }
+
     public Banner saveBanner(Banner banner) {
         return bannerRepository.save(banner);
     }

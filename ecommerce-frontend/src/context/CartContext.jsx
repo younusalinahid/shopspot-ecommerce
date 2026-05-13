@@ -1,166 +1,108 @@
-import React, {createContext, useState, useContext, useEffect, useCallback} from 'react';
-import axios from 'axios';
-import {toast} from 'react-toastify';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+    getCart,
+    addToCart,
+    updateCartItem,
+    removeCartItem,
+    clearCart
+} from '../api/cart-api-service';
 
 const CartContext = createContext();
 
 export const useCart = () => {
     const context = useContext(CartContext);
-    if (!context) {
-        throw new Error('useCart must be used within a CartProvider');
-    }
+    if (!context) throw new Error('useCart must be used within CartProvider');
     return context;
 };
 
-export const CartProvider = ({children}) => {
+export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    const isLoggedIn = useCallback(() => !!localStorage.getItem('token'), []);
 
     const fetchCart = useCallback(async () => {
+        if (!isLoggedIn()) {
+            setCart({ items: [], totalPrice: 0, totalItems: 0 });
+            setLoading(false);
+            return;
+        }
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setCart({items: [], totalPrice: 0, totalItems: 0});
-                return;
-            }
-
             setLoading(true);
-            const response = await axios.get('http://localhost:8080/api/cart', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            setCart(response.data);
-        } catch (error) {
-            setCart({items: [], totalPrice: 0, totalItems: 0});
+            const result = await getCart();
+            setCart(result.success
+                ? result.data
+                : { items: [], totalPrice: 0, totalItems: 0 }
+            );
+        } catch {
+            setCart({ items: [], totalPrice: 0, totalItems: 0 });
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isLoggedIn]);
 
-    const addToCart = async (productId, quantity = 1, size = null, color = null) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                toast.info('Please login first to add items to cart');
-            }
+    const handleAddToCart = async (productId, quantity = 1, size = null, color = null) => {
+        if (!isLoggedIn()) return { success: false };
+        const result = await addToCart(productId, quantity, size, color);
+        if (result.success) setCart(result.data);
+        return result;
+    };
 
-            const requestData = {
-                productId: productId,
-                quantity: quantity,
-                size: size,
-                color: color
+    const handleUpdateCartItem = async (cartItemId, quantity) => {
+        if (!isLoggedIn()) return { success: false };
+        const result = await updateCartItem(cartItemId, quantity);
+        if (result.success) setCart(result.data);
+        return result;
+    };
+
+    const handleRemoveCartItem = async (cartItemId) => {
+        if (!isLoggedIn()) return { success: false };
+
+        const previousCart = cart;
+
+        setCart(prev => {
+            const removedItem = prev.items.find(i => i.id === cartItemId);
+            const itemPrice  = (removedItem?.product?.price || 0) * (removedItem?.quantity || 0);
+            return {
+                ...prev,
+                items:      prev.items.filter(i => i.id !== cartItemId),
+                totalItems: Math.max(0, (prev.totalItems || 0) - (removedItem?.quantity || 0)),
+                totalPrice: Math.max(0, (prev.totalPrice || 0) - itemPrice)
             };
-
-            console.log('Adding to cart:', requestData);
-
-            const response = await axios.post(
-                'http://localhost:8080/api/cart/items',
-                requestData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            console.log('Add to cart response:', response.data);
-            setCart(response.data);
-            return {success: true};
-        } catch (error) {
-            const errorMessage = error.response?.data?.message;
-            return {success: false, error: errorMessage};
+        });
+        const result = await removeCartItem(cartItemId);
+        if (!result.success) {
+            setCart(previousCart);
         }
+
+        return result;
     };
 
-    const updateCartItem = async (cartItemId, quantity) => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.put(
-                `http://localhost:8080/api/cart/items/${cartItemId}?quantity=${quantity}`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+    const handleClearCart = async () => {
+        if (!isLoggedIn()) return { success: false };
 
-            setCart(response.data);
-            return {success: true};
-        } catch (error) {
-            const errorMessage = error.response?.data?.message;
-            return {success: false, error: errorMessage};
-        }
-    };
+        const previousCart = cart;
+        setCart({ items: [], totalPrice: 0, totalItems: 0 });
 
-    const removeCartItem = async (cartItemId) => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.delete(
-                `http://localhost:8080/api/cart/items/${cartItemId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            await fetchCart();
-            return {success: true};
-        } catch (error) {
-            const errorMessage = error.response?.data?.message;
-            return {success: false, error: errorMessage};
-        }
-    };
-
-    const clearCart = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.delete(
-                'http://localhost:8080/api/cart',
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            setCart({items: [], totalPrice: 0, totalItems: 0});
-            return {success: true};
-        } catch (error) {
-            const errorMessage = error.response?.data?.message;
-            return {success: false, error: errorMessage};
-        }
+        const result = await clearCart();
+        if (!result.success) setCart(previousCart);
+        return result;
     };
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            fetchCart();
-        } else {
-            setCart({items: [], totalPrice: 0, totalItems: 0});
-        }
+        fetchCart();
     }, [fetchCart]);
 
-    const value = {
-        cart,
-        loading,
-        fetchCart,
-        addToCart,
-        updateCartItem,
-        removeCartItem,
-        clearCart
-    };
-
     return (
-        <CartContext.Provider value={value}>
+        <CartContext.Provider value={{
+            cart,
+            loading,
+            fetchCart,
+            addToCart:      handleAddToCart,
+            updateCartItem: handleUpdateCartItem,
+            removeCartItem: handleRemoveCartItem,
+            clearCart:      handleClearCart,
+        }}>
             {children}
         </CartContext.Provider>
     );

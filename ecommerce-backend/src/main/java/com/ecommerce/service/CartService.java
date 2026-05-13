@@ -31,16 +31,14 @@ public class CartService {
 
     @Transactional(readOnly = true)
     public CartDTO getCart(Long userId) {
-        log.info("Fetching cart for user ID: {}", userId);
-
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseGet(() -> createNewCart(userId));
 
         return cartMapper.toDTO(cart);
     }
 
+    @Transactional
     public CartDTO addToCart(Long userId, AddToCartRequestDTO request) {
-
         try {
             Product product = productRepository.findById(request.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found with ID: " + request.getProductId()));
@@ -48,64 +46,53 @@ public class CartService {
             if (!product.isActive()) {
                 throw new RuntimeException("Product is not available");
             }
+
             Cart cart = cartRepository.findByUserId(userId)
                     .orElseGet(() -> createNewCart(userId));
 
-            Optional<CartItem> existingCartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), request.getProductId());
+            Optional<CartItem> existingItem = cartItemRepository
+                    .findByCartIdAndProductId(cart.getId(), request.getProductId());
 
-            if (existingCartItem.isPresent()) {
-                CartItem cartItem = existingCartItem.get();
-                int newQuantity = cartItem.getQuantity() + request.getQuantity();
-                cartItem.setQuantity(newQuantity);
-                cartItemRepository.save(cartItem);
-                log.info("Updated cart item quantity to: {}", newQuantity);
+            if (existingItem.isPresent()) {
+                CartItem item = existingItem.get();
+                item.setQuantity(item.getQuantity() + request.getQuantity());
+                cartItemRepository.save(item);
             } else {
-                CartItem newCartItem = CartItem.builder()
+                CartItem newItem = CartItem.builder()
                         .cart(cart)
                         .product(product)
                         .quantity(request.getQuantity())
                         .size(request.getSize())
                         .color(request.getColor())
                         .build();
-
-                cartItemRepository.save(newCartItem);
-                log.info("Created new cart item");
+                cartItemRepository.save(newItem);
             }
 
             Cart updatedCart = refreshCartWithItems(cart.getId());
             updateCartTotals(updatedCart);
             Cart savedCart = cartRepository.save(updatedCart);
-
-            log.info("Cart updated successfully - Total Items: {}, Total Price: {}",
-                    savedCart.getTotalItems(), savedCart.getTotalPrice());
-
             return cartMapper.toDTO(savedCart);
 
         } catch (Exception e) {
-            log.error("Error in addToCart for user {} and product {}", userId, request.getProductId(), e);
             throw new RuntimeException("Failed to add item to cart: " + e.getMessage());
         }
     }
 
-    private Cart refreshCartWithItems(Long cartId) {
-        try {
-            Cart cart = cartRepository.findById(cartId)
-                    .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartId));
+    @Transactional
+    public Cart refreshCartWithItems(Long cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
 
-            List<CartItem> cartItems = cartItemRepository.findByCartIdWithProduct(cartId);
+        List<CartItem> items = cartItemRepository.findByCartIdWithProduct(cartId);
+        cart.getCartItems().clear();
+        cart.getCartItems().addAll(items);
 
-            cart.getCartItems().clear();
-            cart.getCartItems().addAll(cartItems);
-
-            return cart;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to refresh cart: " + e.getMessage());
-        }
+        return cart;
     }
 
-    private void updateCartTotals(Cart cart) {
-        if (cart.getCartItems() == null) {
+    @Transactional
+    public void updateCartTotals(Cart cart) {
+        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
             cart.setTotalPrice(0);
             cart.setTotalItems(0);
             return;
@@ -116,8 +103,7 @@ public class CartService {
 
         for (CartItem item : cart.getCartItems()) {
             if (item.getProduct() != null) {
-                int itemTotal = item.getProduct().getPrice() * item.getQuantity();
-                totalPrice += itemTotal;
+                totalPrice += item.getProduct().getPrice() * item.getQuantity();
                 totalItems += item.getQuantity();
             }
         }
@@ -126,7 +112,8 @@ public class CartService {
         cart.setTotalItems(totalItems);
     }
 
-    private Cart createNewCart(Long userId) {
+    @Transactional
+    public Cart createNewCart(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
@@ -137,12 +124,11 @@ public class CartService {
                 .build();
 
         cart.setCartItems(new ArrayList<>());
-
         return cartRepository.save(cart);
     }
 
+    @Transactional
     public CartDTO updateCartItem(Long userId, Long cartItemId, Integer quantity) {
-
         CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
@@ -160,28 +146,21 @@ public class CartService {
         return cartMapper.toDTO(savedCart);
     }
 
+    @Transactional
     public void removeCartItem(Long userId, Long cartItemId) {
+        CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
 
-        try {
-            CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
-                    .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        Long cartId = cartItem.getCart().getId();
+        cartItemRepository.delete(cartItem);
 
-            Long cartId = cartItem.getCart().getId();
-            cartItemRepository.delete(cartItem);
-            Cart cart = refreshCartWithItems(cartId);
-            updateCartTotals(cart);
-            Cart savedCart = cartRepository.save(cart);
-
-            log.info("Cart updated after removal - Total Items: {}, Total Price: {}",
-                    savedCart.getTotalItems(), savedCart.getTotalPrice());
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to remove cart item: " + e.getMessage());
-        }
+        Cart cart = refreshCartWithItems(cartId);
+        updateCartTotals(cart);
+        cartRepository.save(cart);
     }
 
+    @Transactional
     public void clearCart(Long userId) {
-
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Cart not found for user"));
 

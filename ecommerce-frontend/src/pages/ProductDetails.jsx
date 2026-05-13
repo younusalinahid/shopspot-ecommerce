@@ -28,7 +28,6 @@ const ProductDetails = () => {
     useEffect(() => {
         checkAuthStatus();
 
-        // Listen for auth changes
         const handleAuthChange = () => {
             checkAuthStatus();
         };
@@ -57,6 +56,16 @@ const ProductDetails = () => {
                 setIsLoading(true);
                 setError(null);
                 const productData = await productService.getProductById(productId);
+
+                // FIXED: Handle missing stock field - set default stock if not present
+                if (productData) {
+                    productData.stock = productData.stock !== undefined ? parseInt(productData.stock) : 10; // Default stock 10 if not provided
+                    productData.price = parseFloat(productData.price) || 0;
+                    if (productData.originalPrice) {
+                        productData.originalPrice = parseFloat(productData.originalPrice) || 0;
+                    }
+                }
+
                 setProduct(productData);
             } catch (err) {
                 console.error('Error fetching product:', err);
@@ -70,6 +79,12 @@ const ProductDetails = () => {
             fetchProduct();
         }
     }, [productId]);
+
+    useEffect(() => {
+        if (product) {
+            setQuantity(1);
+        }
+    }, [product]);
 
     const handleAddToCart = async () => {
         if (addingToCart || !product) return;
@@ -120,16 +135,6 @@ const ProductDetails = () => {
         }
     };
 
-    const handleQuickAddToCart = async () => {
-        if (!authState.isAuthenticated) {
-            toast.info('Please login to add items to cart');
-            navigate( { state: { from: `/product/${productId}` } });
-            return;
-        }
-
-        await handleAddToCart();
-    };
-
     const getImageSource = (imageData) => {
         if (!imageData) return null;
         if (imageData.startsWith('data:')) return imageData;
@@ -158,23 +163,49 @@ const ProductDetails = () => {
                 console.error('Error sharing:', error);
             }
         } else {
-            // Fallback for browsers that don't support Web Share API
             navigator.clipboard.writeText(window.location.href);
             toast.info('Product link copied to clipboard!');
         }
     };
 
     const increaseQuantity = () => {
-        if (product && quantity < product.stock) {
-            setQuantity(prev => prev + 1);
+        if (!product) return;
+
+        const maxStock = parseInt(product.stock) || 0;
+        const currentQty = parseInt(quantity) || 1;
+
+        if (maxStock === 0) {
+            // If no stock limit, allow increasing (unlimited stock)
+            setQuantity(prev => parseInt(prev) + 1);
+        } else if (currentQty < maxStock) {
+            setQuantity(prev => parseInt(prev) + 1);
+        } else {
+            toast.warning(`Only ${maxStock} items available in stock`);
         }
     };
 
     const decreaseQuantity = () => {
-        if (quantity > 1) {
-            setQuantity(prev => prev - 1);
+        const currentQty = parseInt(quantity) || 1;
+        if (currentQty > 1) {
+            setQuantity(prev => parseInt(prev) - 1);
         }
     };
+
+    const getStockStatus = () => {
+        if (!product) return { hasStock: false, stockCount: 0, isUnlimited: false };
+
+        const stockCount = parseInt(product.stock);
+
+        // If stock is 0 or undefined, treat as unlimited (or set default)
+        if (isNaN(stockCount) || stockCount === 0) {
+            return { hasStock: true, stockCount: 999, isUnlimited: true };
+        }
+
+        return { hasStock: stockCount > 0, stockCount: stockCount, isUnlimited: false };
+    };
+
+    const { hasStock, stockCount, isUnlimited } = getStockStatus();
+    const maxStock = stockCount;
 
     if (isLoading) {
         return (
@@ -225,13 +256,10 @@ const ProductDetails = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 py-8">
-
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Product Images - Improved Section */}
+                    {/* Product Images */}
                     <div className="space-y-6">
-                        {/* Main Image Container */}
-                        <div
-                            className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md dark:hover:shadow-cyan-500/20 transition-all duration-500 overflow-hidden group">
+                        <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md dark:hover:shadow-cyan-500/20 transition-all duration-500 overflow-hidden group">
                             <div
                                 className={`relative overflow-hidden rounded-lg transition-all duration-500 ${
                                     isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
@@ -252,8 +280,6 @@ const ProductDetails = () => {
                                                 transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center'
                                             }}
                                         />
-
-                                        {/* Zoom Indicator */}
                                         <div
                                             className={`absolute top-4 right-4 bg-black/70 dark:bg-white/70 text-white dark:text-gray-900 p-2 rounded-full transition-all duration-300 ${
                                                 isZoomed ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
@@ -262,24 +288,19 @@ const ProductDetails = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div
-                                        className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg transition-colors duration-300">
+                                    <div className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg transition-colors duration-300">
                                         <span className="text-6xl text-gray-400 dark:text-gray-500 mb-4">📦</span>
                                         <p className="text-gray-500 dark:text-gray-400 text-lg">No Image Available</p>
                                     </div>
                                 )}
                             </div>
-
-                            {/* Discount Badge */}
                             {hasDiscount && (
-                                <div
-                                    className="absolute top-6 left-6 bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+                                <div className="absolute top-6 left-6 bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
                                     {discountPercentage}% OFF
                                 </div>
                             )}
                         </div>
 
-                        {/* Thumbnail Images with Enhanced Design */}
                         {productImages.length > 1 && (
                             <div className="flex space-x-4 overflow-x-auto pb-4">
                                 {productImages.map((image, index) => (
@@ -300,32 +321,20 @@ const ProductDetails = () => {
                                             alt={`${product.name} ${index + 1}`}
                                             className="w-20 h-20 object-cover transition-transform duration-300 group-hover/thumb:scale-110"
                                         />
-
-                                        {/* Selected Indicator */}
                                         {selectedImage === index && (
-                                            <div
-                                                className="absolute inset-0 bg-cyan-500/20 dark:bg-cyan-400/20 border-2 border-cyan-500 dark:border-cyan-400 rounded-xl"></div>
+                                            <div className="absolute inset-0 bg-cyan-500/20 dark:bg-cyan-400/20 border-2 border-cyan-500 dark:border-cyan-400 rounded-xl"></div>
                                         )}
                                     </button>
                                 ))}
-                            </div>
-                        )}
-
-                        {/* Single Image Placeholder for better UX */}
-                        {productImages.length === 1 && (
-                            <div className="text-center">
-                                <p className="text-gray-500 dark:text-gray-400 text-sm transition-colors duration-300">Scroll over image to zoom</p>
                             </div>
                         )}
                     </div>
 
                     {/* Product Info */}
                     <div className="space-y-6">
-                        {/* Category & Brand */}
                         <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
                             {product.subCategory && (
-                                <span
-                                    className="bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 text-cyan-700 dark:text-cyan-300 px-3 py-1 rounded-full font-medium transition-colors duration-300">
+                                <span className="bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 text-cyan-700 dark:text-cyan-300 px-3 py-1 rounded-full font-medium transition-colors duration-300">
                                     {product.subCategory.name || 'Uncategorized'}
                                 </span>
                             )}
@@ -334,10 +343,8 @@ const ProductDetails = () => {
                             )}
                         </div>
 
-                        {/* Product Name */}
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight transition-colors duration-300">{product.name}</h1>
 
-                        {/* Rating */}
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full transition-colors duration-300">
                                 {[...Array(5)].map((_, i) => (
@@ -351,7 +358,6 @@ const ProductDetails = () => {
                             <span className="text-gray-500 dark:text-gray-400 transition-colors duration-300">(128 reviews)</span>
                         </div>
 
-                        {/* Price */}
                         <div className="space-y-2">
                             <div className="flex items-baseline space-x-3">
                                 <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">৳{product.price?.toFixed(2)}</span>
@@ -360,8 +366,7 @@ const ProductDetails = () => {
                                         <span className="text-2xl text-gray-500 dark:text-gray-400 line-through transition-colors duration-300">
                                             ৳{product.originalPrice.toFixed(2)}
                                         </span>
-                                        <span
-                                            className="bg-red-500 dark:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-bounce transition-colors duration-300">
+                                        <span className="bg-red-500 dark:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-bounce transition-colors duration-300">
                                             {discountPercentage}% OFF
                                         </span>
                                     </>
@@ -375,17 +380,13 @@ const ProductDetails = () => {
                             )}
                         </div>
 
-                        {/* Stock Status */}
                         <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl transition-colors duration-300">
-                            <div
-                                className={`w-3 h-3 rounded-full animate-pulse ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'} transition-colors duration-300`}></div>
-                            <span
-                                className={product.stock > 0 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold transition-colors duration-300'}>
-                                {product.stock > 0 ? `${product.stock} items in stock` : 'Out of stock'}
+                            <div className={`w-3 h-3 rounded-full animate-pulse ${hasStock ? 'bg-green-500' : 'bg-red-500'} transition-colors duration-300`}></div>
+                            <span className={hasStock ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold transition-colors duration-300'}>
+                                {isUnlimited ? 'In Stock (Unlimited)' : hasStock ? `${stockCount} items in stock` : 'Out of stock'}
                             </span>
                         </div>
 
-                        {/* Description */}
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">Description</h3>
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-300">
@@ -393,18 +394,14 @@ const ProductDetails = () => {
                             </p>
                         </div>
 
-                        {/* Features */}
                         {product.features && product.features.length > 0 && (
                             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">Key Features</h3>
                                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {product.features.map((feature, index) => (
-                                        <li key={index}
-                                            className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 group/feature transition-colors duration-300">
-                                            <div
-                                                className="w-2 h-2 bg-cyan-500 dark:bg-cyan-400 rounded-full group-hover/feature:scale-150 transition-transform duration-300"></div>
-                                            <span
-                                                className="group-hover/feature:text-cyan-700 dark:group-hover/feature:text-cyan-400 transition-colors duration-300">{feature}</span>
+                                        <li key={index} className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 group/feature transition-colors duration-300">
+                                            <div className="w-2 h-2 bg-cyan-500 dark:bg-cyan-400 rounded-full group-hover/feature:scale-150 transition-transform duration-300"></div>
+                                            <span className="group-hover/feature:text-cyan-700 dark:group-hover/feature:text-cyan-400 transition-colors duration-300">{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -414,8 +411,7 @@ const ProductDetails = () => {
                         {/* Quantity Selector */}
                         <div className="flex items-center space-x-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
                             <span className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">Quantity:</span>
-                            <div
-                                className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden transition-colors duration-300">
+                            <div className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden transition-colors duration-300">
                                 <button
                                     onClick={decreaseQuantity}
                                     className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -423,22 +419,34 @@ const ProductDetails = () => {
                                 >
                                     <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
                                 </button>
-                                <span className="px-6 py-3 font-semibold text-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">{quantity}</span>
+                                <span className="px-6 py-3 font-semibold text-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
+                                    {quantity}
+                                </span>
                                 <button
                                     onClick={increaseQuantity}
                                     className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={quantity >= product.stock}
+                                    disabled={!isUnlimited && quantity >= maxStock}
                                 >
                                     <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
                                 </button>
                             </div>
+                            {!isUnlimited && maxStock > 0 && (
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    Max: {maxStock}
+                                </span>
+                            )}
+                            {isUnlimited && (
+                                <span className="text-sm text-green-500 dark:text-green-400">
+                                    Unlimited Stock
+                                </span>
+                            )}
                         </div>
 
                         {/* Action Buttons */}
                         <div className="flex space-x-4">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0 || addingToCart || loading || !authState.isAuthenticated}
+                                disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
                                 className="flex-1 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <ShoppingCart className="w-6 h-6"/>
@@ -448,7 +456,7 @@ const ProductDetails = () => {
                             </button>
                             <button
                                 onClick={handleBuyNow}
-                                disabled={product.stock === 0 || addingToCart || loading || !authState.isAuthenticated}
+                                disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
                                 className="flex-1 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <span className="text-lg">
@@ -482,18 +490,15 @@ const ProductDetails = () => {
                             </button>
                         </div>
 
-                        {/* Additional Info */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
-                            <div
-                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl transition-colors duration-300">
+                            <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl transition-colors duration-300">
                                 <Truck className="w-10 h-10 text-cyan-600 dark:text-cyan-400"/>
                                 <div>
                                     <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Free Delivery</h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Delivery within 2-3 days</p>
                                 </div>
                             </div>
-                            <div
-                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl transition-colors duration-300">
+                            <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl transition-colors duration-300">
                                 <Shield className="w-10 h-10 text-green-600 dark:text-green-400"/>
                                 <div>
                                     <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">1 Year Warranty</h4>
@@ -504,14 +509,12 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                {/* Specifications Section */}
                 {product.specifications && Object.keys(product.specifications).length > 0 && (
                     <div className="mt-12 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">Product Specifications</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Object.entries(product.specifications).map(([key, value]) => (
-                                <div key={key}
-                                     className="flex justify-between items-center py-4 px-6 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors duration-300 group">
+                                <div key={key} className="flex justify-between items-center py-4 px-6 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors duration-300 group">
                                     <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition-colors duration-300">{key}</span>
                                     <span className="text-gray-900 dark:text-white font-medium transition-colors duration-300">{value}</span>
                                 </div>

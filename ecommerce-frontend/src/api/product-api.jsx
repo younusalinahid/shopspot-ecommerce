@@ -1,7 +1,8 @@
 import axios from 'axios';
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
-const API_BASE_URL = 'http://localhost:8080/api/products';
+const PUBLIC_BASE_URL = 'http://localhost:8080/api/public/products';
+const ADMIN_BASE_URL = 'http://localhost:8080/api/admin/products';
 
 const getAuthConfig = () => {
     const token = localStorage.getItem("token");
@@ -25,30 +26,12 @@ const getFormDataConfig = () => {
 };
 
 export const productService = {
-    // Existing methods
-    getProductsBySubCategory: async (subCategoryId) => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/subCategory/${subCategoryId}`);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            throw error;
-        }
-    },
 
-    getRecentProducts: async (limit = 8) => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/recent?limit=${limit}`);
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching recent products:', error);
-            throw error;
-        }
-    },
+    // ─── Public Routes (/api/public/products) ───────────────────────────────
 
     getAllProducts: async () => {
         try {
-            const response = await axios.get(API_BASE_URL);
+            const response = await axios.get(PUBLIC_BASE_URL);
             return response.data;
         } catch (error) {
             console.error('Error fetching all products:', error);
@@ -56,19 +39,9 @@ export const productService = {
         }
     },
 
-    getAllProductsWithCategoryAndSubCategory: async () => {
-        try {
-            const res = await axios.get(`${API_BASE_URL}/with-category`);
-            return res.data;
-        } catch (err) {
-            toast.error("Failed to fetch products");
-            throw err;
-        }
-    },
-
     getProductById: async (productId) => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/${productId}`);
+            const response = await axios.get(`${PUBLIC_BASE_URL}/${productId}`);
             return response.data;
         } catch (error) {
             console.error('Error fetching product:', error);
@@ -78,7 +51,7 @@ export const productService = {
 
     searchProducts: async (query) => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/search?query=${query}`);
+            const response = await axios.get(`${PUBLIC_BASE_URL}/search?query=${query}`);
             return response.data;
         } catch (error) {
             console.error('Error searching products:', error);
@@ -86,7 +59,37 @@ export const productService = {
         }
     },
 
-    // New Admin methods
+    getProductsBySubCategory: async (subCategoryId) => {
+        try {
+            const response = await axios.get(`${PUBLIC_BASE_URL}/subCategory/${subCategoryId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching products by subCategory:', error);
+            throw error;
+        }
+    },
+
+    getRecentProducts: async (limit = 5) => {
+        try {
+            const response = await axios.get(`${PUBLIC_BASE_URL}/recent?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching recent products:', error);
+            throw error;
+        }
+    },
+
+    getAllProductsWithCategoryAndSubCategory: async () => {
+        try {
+            const response = await axios.get(`${PUBLIC_BASE_URL}/with-category`);
+            return response.data;
+        } catch (error) {
+            toast.error("Failed to fetch products");
+            throw error;
+        }
+    },
+
+
     createProduct: async (productData) => {
         try {
             const formData = new FormData();
@@ -99,7 +102,7 @@ export const productService = {
                 formData.append("imageFile", productData.images[0]);
             }
 
-            const response = await axios.post(API_BASE_URL, formData, getFormDataConfig());
+            const response = await axios.post(ADMIN_BASE_URL, formData, getFormDataConfig());
             return response.data;
         } catch (error) {
             console.error('Error creating product:', error);
@@ -113,14 +116,13 @@ export const productService = {
             formData.append("name", productData.name);
             formData.append("description", productData.description || "");
             formData.append("price", Number(productData.price));
-            formData.append("subCategoryId", Number(productData.subCategoryId));
 
             if (productData.images && productData.images.length > 0) {
                 formData.append("imageFile", productData.images[0]);
             }
 
             const response = await axios.put(
-                `${API_BASE_URL}/${productId}`,
+                `${ADMIN_BASE_URL}/${productId}`,
                 formData,
                 getFormDataConfig()
             );
@@ -132,19 +134,11 @@ export const productService = {
     },
 
     deleteProduct: async (id) => {
-        const response = await fetch(`http://localhost:8080/api/products/${id}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json"
-            },
-        });
-
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: "Failed to delete" }));
-            throw { response: { status: response.status, data: error } };
+        try {
+            await axios.delete(`${ADMIN_BASE_URL}/${id}`, getAuthConfig());
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            throw error;
         }
-
-        return;
     },
 };

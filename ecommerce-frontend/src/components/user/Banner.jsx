@@ -10,9 +10,7 @@ const Banner = () => {
     useEffect(() => {
         getAllBanners()
             .then(data => {
-                const activeBanners = data
-                    .filter(banner => banner.active)
-                    .sort((a, b) => a.orderIndex - b.orderIndex);
+                const activeBanners = data.sort((a, b) => a.orderIndex - b.orderIndex);
                 setBanners(activeBanners);
                 setIsLoading(false);
             })
