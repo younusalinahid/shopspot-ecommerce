@@ -7,13 +7,14 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+      - ./ecommerce.sql:/docker-entrypoint-initdb.d/ecommerce.sql
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
 
   backend:
     build: ./ecommerce-backend
@@ -23,8 +24,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ecommerce?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-    volumes:
-      - ./ecommerce-backend:/app/src
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+    restart: on-failure
     depends_on:
       mysql:
         condition: service_healthy
@@ -36,6 +39,8 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_51TWfjq30WA4btldZjCw0hx7B7ZOmefhJUftO8bEsgryOJqKMFNU6RxOjT6V8Z2GtuhqUa9RVX66UtQuFLMlODoth00wo5q2fMf
+      - REACT_APP_API_URL=http://localhost:8080
     volumes:
       - ./ecommerce-frontend/src:/app/src
     depends_on:
