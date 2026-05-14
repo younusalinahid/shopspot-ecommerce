@@ -1,13 +1,13 @@
 package com.ecommerce.dto;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import java.time.Instant;
 
 @Getter
-@Setter
-public class CheckoutRequestDTO {
-
-    private Long addressId;
+@Builder
+public class AddressResponseDTO {
+    private Long    id;
     private String  fullName;
     private String  phone;
     private String  addressLine;
@@ -15,5 +15,6 @@ public class CheckoutRequestDTO {
     private String  city;
     private String  district;
     private String  postalCode;
-    private Boolean saveAddress = false;
+    private Boolean isDefault;
+    private Instant createdAt;
 }

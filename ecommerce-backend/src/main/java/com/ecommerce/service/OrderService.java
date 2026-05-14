@@ -4,6 +4,7 @@ import com.ecommerce.dto.*;
 import com.ecommerce.model.*;
 import com.ecommerce.model.type.OrderStatus;
 import com.ecommerce.model.type.ShippingAddress;
+import com.ecommerce.repository.AddressRepository;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.UserRepository;
@@ -30,6 +31,8 @@ public class OrderService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final CartService cartService;
+    private final AddressService addressService;
+    private final AddressRepository addressRepository;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -50,18 +53,47 @@ public class OrderService {
             throw new RuntimeException("Cart is empty");
         }
 
-        ShippingAddress address = ShippingAddress.builder()
-                .fullName(request.getFullName())
-                .phone(request.getPhone())
-                .addressLine(request.getAddressLine())
-                .city(request.getCity())
-                .district(request.getDistrict())
-                .postalCode(request.getPostalCode())
-                .build();
+        ShippingAddress shippingAddress;
+        if (request.getAddressId() != null) {
+            Address saved = addressRepository.findByIdAndUserId(
+                            request.getAddressId(), userId)
+                    .orElseThrow(() -> new RuntimeException("Address not found"));
+
+            shippingAddress = ShippingAddress.builder()
+                    .fullName(saved.getFullName())
+                    .phone(saved.getPhone())
+                    .addressLine(saved.getAddressLine())
+                    .city(saved.getCity())
+                    .district(saved.getDistrict() != null ? saved.getDistrict() : saved.getArea())
+                    .postalCode(saved.getPostalCode())
+                    .build();
+        } else {
+            shippingAddress = ShippingAddress.builder()
+                    .fullName(request.getFullName())
+                    .phone(request.getPhone())
+                    .addressLine(request.getAddressLine())
+                    .city(request.getCity())
+                    .district(request.getDistrict())
+                    .postalCode(request.getPostalCode())
+                    .build();
+
+            if (Boolean.TRUE.equals(request.getSaveAddress())) {
+                AddressRequestDTO addrReq = new AddressRequestDTO();
+                addrReq.setFullName(request.getFullName());
+                addrReq.setPhone(request.getPhone());
+                addrReq.setAddressLine(request.getAddressLine());
+                addrReq.setArea(request.getArea() != null ? request.getArea() : request.getCity());
+                addrReq.setCity(request.getCity());
+                addrReq.setDistrict(request.getDistrict());
+                addrReq.setPostalCode(request.getPostalCode());
+                addrReq.setIsDefault(false);
+                addressService.addAddress(userId, addrReq);
+            }
+        }
 
         Order order = Order.builder()
                 .user(user)
-                .shippingAddress(address)
+                .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
                 .totalAmount(cart.getTotalPrice())
                 .build();
