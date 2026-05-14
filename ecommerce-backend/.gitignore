@@ -37,3 +37,4 @@ build/
 ecommerce-backend/src/main/resources/application.properties
 ecommerce-backend/.env
 .env
+*.env
