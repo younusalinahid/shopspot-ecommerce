@@ -235,4 +235,18 @@ public class OrderService {
 
         return dto;
     }
+
+    public OrderDTO cancelOrder(Long userId, Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getUser().getId().equals(userId))
+            throw new RuntimeException("Unauthorized");
+
+        if (order.getStatus() != OrderStatus.PENDING)
+            throw new RuntimeException("Only PENDING orders can be cancelled");
+
+        order.setStatus(OrderStatus.CANCELLED);
+        return toDTO(orderRepository.save(order));
+    }
 }

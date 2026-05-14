@@ -1,6 +1,6 @@
 import axiosInstance from './axiosConfig';
 
-const ORDER_API   = '/api/user/orders';
+const ORDER_API = '/api/user/orders';
 const ADMIN_ORDER = '/api/admin/orders';
 
 export const orderApi = {
@@ -28,6 +28,11 @@ export const orderApi = {
         return res.data;
     },
 
+    cancelOrder: async (id) => {
+        const res = await axiosInstance.put(`${ORDER_API}/${id}/cancel`)
+        return res.data;
+    },
+
     getAllOrders: async () => {
         const res = await axiosInstance.get(ADMIN_ORDER);
         return res.data;
@@ -37,7 +42,7 @@ export const orderApi = {
         const res = await axiosInstance.put(
             `${ADMIN_ORDER}/${orderId}/status`,
             null,
-            { params: { status } }
+            {params: {status}}
         );
         return res.data;
     },
