@@ -1,6 +1,6 @@
 import React from "react";
+import { Navigate } from 'react-router-dom';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -48,6 +48,7 @@ function App() {
                         {/* USER */}
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/settings" element={<SettingsPage />} />
+                        <Route path="/order-history" element={<Navigate to="/orders" replace />} />
 
                         {/* ADMIN */}
                         <Route
