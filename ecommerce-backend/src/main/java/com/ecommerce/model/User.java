@@ -38,6 +38,13 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    private String phone;
+    private String address;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] profileImage;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -47,6 +54,7 @@ public class User implements UserDetails {
     private Instant createdAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Cart cart;
 
     @Override
@@ -55,19 +63,10 @@ public class User implements UserDetails {
     }
 
     @Override
-    public String getUsername() {
-        return email;
-    }
+    public String getUsername() { return email; }
 
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return true; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 }
