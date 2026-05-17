@@ -1,13 +1,14 @@
-import {useState, useEffect} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
-import {Star, ShoppingCart, Heart, Share2, Truck, Shield, ArrowLeft, Plus, Minus, ZoomIn} from 'lucide-react';
-import {productService} from '../api/product-api';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Star, ShoppingCart, Heart, Share2, Truck, Shield, ArrowLeft, Plus, Minus, ZoomIn } from 'lucide-react';
+import { productService } from '../api/product-api';
 import { useCart } from '../context/CartContext';
-import { isAuthenticated, getCurrentUser} from '../api/auth-api';
+import { isAuthenticated, getCurrentUser } from '../api/auth-api';
 import { toast } from 'react-toastify';
+import { wishlistApi } from '../api/wishlist-api-service';
 
 const ProductDetails = () => {
-    const {productId} = useParams();
+    const { productId } = useParams();
     const navigate = useNavigate();
     const { addToCart, loading } = useCart();
     const [product, setProduct] = useState(null);
@@ -17,7 +18,7 @@ const ProductDetails = () => {
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [error, setError] = useState(null);
     const [isZoomed, setIsZoomed] = useState(false);
-    const [zoomPosition, setZoomPosition] = useState({x: 0, y: 0});
+    const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
     const [addingToCart, setAddingToCart] = useState(false);
 
     const [authState, setAuthState] = useState({
@@ -25,6 +26,17 @@ const ProductDetails = () => {
         user: null
     });
 
+    // Check authentication status
+    const checkAuthStatus = () => {
+        const authenticated = isAuthenticated();
+        const user = getCurrentUser();
+        setAuthState({
+            isAuthenticated: authenticated,
+            user: user
+        });
+    };
+
+    // Auth check on mount
     useEffect(() => {
         checkAuthStatus();
 
@@ -41,15 +53,16 @@ const ProductDetails = () => {
         };
     }, []);
 
-    const checkAuthStatus = () => {
-        const authenticated = isAuthenticated();
-        const user = getCurrentUser();
-        setAuthState({
-            isAuthenticated: authenticated,
-            user: user
-        });
-    };
+    // Check wishlist status when auth changes or product loads
+    useEffect(() => {
+        if (authState.isAuthenticated && productId && product) {
+            wishlistApi.getStatus(productId)
+                .then(data => setIsWishlisted(data.wishlisted))
+                .catch(() => {});
+        }
+    }, [authState.isAuthenticated, productId, product]);
 
+    // Fetch product on mount or when productId changes
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -57,9 +70,8 @@ const ProductDetails = () => {
                 setError(null);
                 const productData = await productService.getProductById(productId);
 
-                // FIXED: Handle missing stock field - set default stock if not present
                 if (productData) {
-                    productData.stock = productData.stock !== undefined ? parseInt(productData.stock) : 10; // Default stock 10 if not provided
+                    productData.stock = productData.stock !== undefined ? parseInt(productData.stock) : 10;
                     productData.price = parseFloat(productData.price) || 0;
                     if (productData.originalPrice) {
                         productData.originalPrice = parseFloat(productData.originalPrice) || 0;
@@ -80,12 +92,14 @@ const ProductDetails = () => {
         }
     }, [productId]);
 
+    // Reset quantity when product changes
     useEffect(() => {
         if (product) {
             setQuantity(1);
         }
     }, [product]);
 
+    // Handlers
     const handleAddToCart = async () => {
         if (addingToCart || !product) return;
 
@@ -135,27 +149,28 @@ const ProductDetails = () => {
         }
     };
 
-    const getImageSource = (imageData) => {
-        if (!imageData) return null;
-        if (imageData.startsWith('data:')) return imageData;
-        return `data:image/jpeg;base64,${imageData}`;
-    };
+    const handleWishlist = async () => {
+        if (!authState.isAuthenticated) {
+            toast.info('Please login to add to wishlist');
+            navigate('/login');
+            return;
+        }
 
-    const handleImageMouseMove = (e) => {
-        if (!isZoomed) return;
-
-        const {left, top, width, height} = e.currentTarget.getBoundingClientRect();
-        const x = ((e.clientX - left) / width) * 100;
-        const y = ((e.clientY - top) / height) * 100;
-        setZoomPosition({x, y});
+        try {
+            const res = await wishlistApi.toggleWishlist(product.id);
+            setIsWishlisted(res.wishlisted);
+            toast.success(res.wishlisted ? 'Added to wishlist' : 'Removed from wishlist');
+        } catch {
+            toast.error('Failed to update wishlist');
+        }
     };
 
     const handleShare = async () => {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: product.name,
-                    text: product.description,
+                    title: product?.name,
+                    text: product?.description,
                     url: window.location.href,
                 });
                 toast.success('Product shared successfully!');
@@ -168,6 +183,15 @@ const ProductDetails = () => {
         }
     };
 
+    const handleImageMouseMove = (e) => {
+        if (!isZoomed) return;
+
+        const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - left) / width) * 100;
+        const y = ((e.clientY - top) / height) * 100;
+        setZoomPosition({ x, y });
+    };
+
     const increaseQuantity = () => {
         if (!product) return;
 
@@ -175,7 +199,6 @@ const ProductDetails = () => {
         const currentQty = parseInt(quantity) || 1;
 
         if (maxStock === 0) {
-            // If no stock limit, allow increasing (unlimited stock)
             setQuantity(prev => parseInt(prev) + 1);
         } else if (currentQty < maxStock) {
             setQuantity(prev => parseInt(prev) + 1);
@@ -191,12 +214,17 @@ const ProductDetails = () => {
         }
     };
 
+    const getImageSource = (imageData) => {
+        if (!imageData) return null;
+        if (imageData.startsWith('data:')) return imageData;
+        return `data:image/jpeg;base64,${imageData}`;
+    };
+
     const getStockStatus = () => {
         if (!product) return { hasStock: false, stockCount: 0, isUnlimited: false };
 
         const stockCount = parseInt(product.stock);
 
-        // If stock is 0 or undefined, treat as unlimited (or set default)
         if (isNaN(stockCount) || stockCount === 0) {
             return { hasStock: true, stockCount: 999, isUnlimited: true };
         }
@@ -204,9 +232,7 @@ const ProductDetails = () => {
         return { hasStock: stockCount > 0, stockCount: stockCount, isUnlimited: false };
     };
 
-    const { hasStock, stockCount, isUnlimited } = getStockStatus();
-    const maxStock = stockCount;
-
+    // Loading state
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -215,12 +241,17 @@ const ProductDetails = () => {
         );
     }
 
+    // Error state
     if (error || !product) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 transition-colors duration-300">Product Not Found</h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4 transition-colors duration-300">{error || 'The product you are looking for does not exist.'}</p>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 transition-colors duration-300">
+                        Product Not Found
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4 transition-colors duration-300">
+                        {error || 'The product you are looking for does not exist.'}
+                    </p>
                     <button
                         onClick={() => navigate('/')}
                         className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
@@ -239,6 +270,8 @@ const ProductDetails = () => {
 
     const productImages = product.imageData ? [getImageSource(product.imageData)] : [];
     const mainImage = productImages[selectedImage];
+    const { hasStock, stockCount, isUnlimited } = getStockStatus();
+    const maxStock = stockCount;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -249,7 +282,7 @@ const ProductDetails = () => {
                         onClick={() => navigate(-1)}
                         className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors duration-300 group"
                     >
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300"/>
+                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
                         <span>Back</span>
                     </button>
                 </div>
@@ -280,11 +313,10 @@ const ProductDetails = () => {
                                                 transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center'
                                             }}
                                         />
-                                        <div
-                                            className={`absolute top-4 right-4 bg-black/70 dark:bg-white/70 text-white dark:text-gray-900 p-2 rounded-full transition-all duration-300 ${
-                                                isZoomed ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
-                                            }`}>
-                                            <ZoomIn className="w-5 h-5"/>
+                                        <div className={`absolute top-4 right-4 bg-black/70 dark:bg-white/70 text-white dark:text-gray-900 p-2 rounded-full transition-all duration-300 ${
+                                            isZoomed ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
+                                        }`}>
+                                            <ZoomIn className="w-5 h-5" />
                                         </div>
                                     </>
                                 ) : (
@@ -339,11 +371,15 @@ const ProductDetails = () => {
                                 </span>
                             )}
                             {product.brand && (
-                                <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-colors duration-300">{product.brand}</span>
+                                <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-colors duration-300">
+                                    {product.brand}
+                                </span>
                             )}
                         </div>
 
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight transition-colors duration-300">{product.name}</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight transition-colors duration-300">
+                            {product.name}
+                        </h1>
 
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full transition-colors duration-300">
@@ -353,14 +389,20 @@ const ProductDetails = () => {
                                         className={`w-5 h-5 ${i < 4 ? 'text-amber-400 fill-current' : 'text-gray-300 dark:text-gray-600'}`}
                                     />
                                 ))}
-                                <span className="ml-2 text-gray-700 dark:text-amber-300 font-semibold transition-colors duration-300">4.5</span>
+                                <span className="ml-2 text-gray-700 dark:text-amber-300 font-semibold transition-colors duration-300">
+                                    4.5
+                                </span>
                             </div>
-                            <span className="text-gray-500 dark:text-gray-400 transition-colors duration-300">(128 reviews)</span>
+                            <span className="text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                (128 reviews)
+                            </span>
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-baseline space-x-3">
-                                <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">৳{product.price?.toFixed(2)}</span>
+                                <span className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+                                    ৳{product.price?.toFixed(2)}
+                                </span>
                                 {hasDiscount && (
                                     <>
                                         <span className="text-2xl text-gray-500 dark:text-gray-400 line-through transition-colors duration-300">
@@ -388,7 +430,9 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">Description</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">
+                                Description
+                            </h3>
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed transition-colors duration-300">
                                 {product.description || 'No description available.'}
                             </p>
@@ -396,12 +440,16 @@ const ProductDetails = () => {
 
                         {product.features && product.features.length > 0 && (
                             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">Key Features</h3>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">
+                                    Key Features
+                                </h3>
                                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {product.features.map((feature, index) => (
                                         <li key={index} className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 group/feature transition-colors duration-300">
                                             <div className="w-2 h-2 bg-cyan-500 dark:bg-cyan-400 rounded-full group-hover/feature:scale-150 transition-transform duration-300"></div>
-                                            <span className="group-hover/feature:text-cyan-700 dark:group-hover/feature:text-cyan-400 transition-colors duration-300">{feature}</span>
+                                            <span className="group-hover/feature:text-cyan-700 dark:group-hover/feature:text-cyan-400 transition-colors duration-300">
+                                                {feature}
+                                            </span>
                                         </li>
                                     ))}
                                 </ul>
@@ -410,14 +458,16 @@ const ProductDetails = () => {
 
                         {/* Quantity Selector */}
                         <div className="flex items-center space-x-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">Quantity:</span>
+                            <span className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                                Quantity:
+                            </span>
                             <div className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden transition-colors duration-300">
                                 <button
                                     onClick={decreaseQuantity}
                                     className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={quantity <= 1}
                                 >
-                                    <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
+                                    <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                                 </button>
                                 <span className="px-6 py-3 font-semibold text-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
                                     {quantity}
@@ -427,7 +477,7 @@ const ProductDetails = () => {
                                     className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={!isUnlimited && quantity >= maxStock}
                                 >
-                                    <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
+                                    <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                                 </button>
                             </div>
                             {!isUnlimited && maxStock > 0 && (
@@ -449,7 +499,7 @@ const ProductDetails = () => {
                                 disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
                                 className="flex-1 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
-                                <ShoppingCart className="w-6 h-6"/>
+                                <ShoppingCart className="w-6 h-6" />
                                 <span className="text-lg">
                                     {!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}
                                 </span>
@@ -468,15 +518,15 @@ const ProductDetails = () => {
                         {/* Secondary Actions */}
                         <div className="flex space-x-4">
                             <button
-                                onClick={() => setIsWishlisted(!isWishlisted)}
+                                onClick={handleWishlist}
+                                disabled={!authState.isAuthenticated}
                                 className={`flex items-center space-x-3 px-6 py-3 rounded-xl border transition-all duration-300 ${
                                     isWishlisted
                                         ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
                                         : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105'
                                 } ${!authState.isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={!authState.isAuthenticated}
                             >
-                                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current animate-pulse' : ''}`}/>
+                                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current animate-pulse' : ''}`} />
                                 <span className="font-medium">
                                     {!authState.isAuthenticated ? 'Login for Wishlist' : isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
                                 </span>
@@ -485,24 +535,32 @@ const ProductDetails = () => {
                                 onClick={handleShare}
                                 className="flex items-center space-x-3 px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-300 font-medium"
                             >
-                                <Share2 className="w-5 h-5"/>
+                                <Share2 className="w-5 h-5" />
                                 <span>Share</span>
                             </button>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
                             <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl transition-colors duration-300">
-                                <Truck className="w-10 h-10 text-cyan-600 dark:text-cyan-400"/>
+                                <Truck className="w-10 h-10 text-cyan-600 dark:text-cyan-400" />
                                 <div>
-                                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">Free Delivery</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Delivery within 2-3 days</p>
+                                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                                        Free Delivery
+                                    </h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                                        Delivery within 2-3 days
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl transition-colors duration-300">
-                                <Shield className="w-10 h-10 text-green-600 dark:text-green-400"/>
+                                <Shield className="w-10 h-10 text-green-600 dark:text-green-400" />
                                 <div>
-                                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">1 Year Warranty</h4>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Manufacturer warranty</p>
+                                    <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                                        1 Year Warranty
+                                    </h4>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                                        Manufacturer warranty
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -511,12 +569,18 @@ const ProductDetails = () => {
 
                 {product.specifications && Object.keys(product.specifications).length > 0 && (
                     <div className="mt-12 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">Product Specifications</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">
+                            Product Specifications
+                        </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Object.entries(product.specifications).map(([key, value]) => (
                                 <div key={key} className="flex justify-between items-center py-4 px-6 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors duration-300 group">
-                                    <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition-colors duration-300">{key}</span>
-                                    <span className="text-gray-900 dark:text-white font-medium transition-colors duration-300">{value}</span>
+                                    <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition-colors duration-300">
+                                        {key}
+                                    </span>
+                                    <span className="text-gray-900 dark:text-white font-medium transition-colors duration-300">
+                                        {value}
+                                    </span>
                                 </div>
                             ))}
                         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { User, LogOut, Settings, ShoppingBag } from "lucide-react";
+import { User, LogOut, ShoppingBag } from "lucide-react";
 import {Link, useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -82,9 +82,9 @@ export default function UserMenu() {
                     <Link to="/orders" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <ShoppingBag className="mr-3" size={16}/> My Orders
                     </Link>
-                    <Link to="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <Settings className="mr-3" size={16}/> Settings
-                    </Link>
+                    {/*<Link to="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">*/}
+                    {/*    <Settings className="mr-3" size={16}/> Settings*/}
+                    {/*</Link>*/}
 
                     <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <LogOut className="mr-3" size={16}/> Logout

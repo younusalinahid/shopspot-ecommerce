@@ -1,316 +1,422 @@
-import { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Camera, Package, ShoppingBag, DollarSign } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { userApi } from "../api/user-api";
+import { wishlistApi } from "../api/wishlist-api-service";
+import { orderApi } from "../api/order-api";
+import {
+    Camera, Edit2, X, Check, Lock, User, Mail,
+    Phone, MapPin, Heart, ShoppingBag, ChevronRight,
+    Shield, Calendar, Package
+} from "lucide-react";
+import { toast } from "react-toastify";
+
+const TABS = [
+    { id: "profile", label: "Profile Info", icon: User },
+    { id: "orders", label: "My Orders", icon: Package },
+    { id: "wishlist", label: "Wishlist", icon: Heart },
+    { id: "security", label: "Security", icon: Shield },
+];
+
+const statusColors = {
+    PENDING: "bg-yellow-100 text-yellow-700",
+    PAID: "bg-blue-100 text-blue-700",
+    PROCESSING: "bg-purple-100 text-purple-700",
+    SHIPPED: "bg-indigo-100 text-indigo-700",
+    DELIVERED: "bg-green-100 text-green-700",
+    CANCELLED: "bg-red-100 text-red-700",
+};
 
 const ProfilePage = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [profileData, setProfileData] = useState({
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+880 1712-345678',
-        address: '123 Main Street, Dhaka',
-        city: 'Dhaka',
-        postalCode: '1212',
-        dateOfBirth: '1990-01-15',
-        gender: 'Male',
-        bio: 'Tech enthusiast and online shopping lover'
+    const [activeTab, setActiveTab] = useState("profile");
+    const [profile, setProfile] = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [wishlist, setWishlist] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [editMode, setEditMode] = useState(false);
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const [form, setForm] = useState({ fullName: "", phone: "", address: "" });
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: "", newPassword: "", confirmPassword: ""
     });
 
-    const [tempData, setTempData] = useState(profileData);
+    useEffect(() => {
+        Promise.all([
+            userApi.getProfile(),
+            orderApi.getUserOrders(),
+            wishlistApi.getWishlist(),
+        ]).then(([profileData, ordersData, wishlistData]) => {
+            setProfile(profileData);
+            setForm({
+                fullName: profileData.fullName || "",
+                phone: profileData.phone || "",
+                address: profileData.address || "",
+            });
+            setOrders(ordersData);
+            setWishlist(wishlistData);
+        }).catch(() => toast.error("Failed to load profile"))
+            .finally(() => setLoading(false));
+    }, []);
 
-    const handleEdit = () => {
-        setIsEditing(true);
-        setTempData(profileData);
+    const handleSaveProfile = async () => {
+        setSaving(true);
+        try {
+            const updated = await userApi.updateProfile(form);
+            setProfile(updated);
+            setEditMode(false);
+            toast.success("Profile updated");
+        } catch {
+            toast.error("Failed to update profile");
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleSave = () => {
-        setProfileData(tempData);
-        setIsEditing(false);
-        // Here you would make API call to update profile
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+            const updated = await userApi.updateProfileImage(file);
+            setProfile(updated);
+            toast.success("Profile image updated");
+        } catch {
+            toast.error("Failed to update image");
+        }
     };
 
-    const handleCancel = () => {
-        setTempData(profileData);
-        setIsEditing(false);
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            toast.error("Passwords do not match");
+            return;
+        }
+        setSaving(true);
+        try {
+            await userApi.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+            toast.success("Password changed successfully");
+            setShowPasswordForm(false);
+            setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        } catch {
+            toast.error("Current password is incorrect");
+        } finally {
+            setSaving(false);
+        }
     };
 
-    const handleChange = (field, value) => {
-        setTempData(prev => ({ ...prev, [field]: value }));
+    const handleRemoveWishlist = async (productId) => {
+        try {
+            await wishlistApi.toggleWishlist(productId);
+            setWishlist(prev => prev.filter(w => w.productId !== productId));
+            toast.success("Removed from wishlist");
+        } catch {
+            toast.error("Failed to remove");
+        }
     };
+
+    if (loading) return (
+        <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500" />
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
-                    <p className="text-gray-600 dark:text-gray-400">Manage your personal information</p>
-                </div>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col lg:flex-row gap-6">
 
-                {/* Profile Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-colors duration-300 mb-8">
-                    {/* Cover Image */}
-                    <div className="h-32 sm:h-40 bg-gradient-to-r from-cyan-500 to-blue-500 relative">
-                        <div className="absolute -bottom-12 sm:-bottom-16 left-4 sm:left-8">
-                            <div className="relative">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-3xl sm:text-4xl font-bold shadow-lg">
-                                    {profileData.name.charAt(0)}
+                    {/* ── Left Sidebar ── */}
+                    <div className="lg:w-72 flex-shrink-0 space-y-4">
+
+                        {/* Avatar Card */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 text-center">
+                            <div className="relative inline-block mb-4">
+                                <div className="w-24 h-24 rounded-full overflow-hidden bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center mx-auto">
+                                    {profile?.profileImage ? (
+                                        <img
+                                            src={`data:image/jpeg;base64,${profile.profileImage}`}
+                                            alt={profile.fullName}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <User className="w-12 h-12 text-cyan-500" />
+                                    )}
                                 </div>
-                                <button className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110">
-                                    <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Profile Content */}
-                    <div className="pt-16 sm:pt-20 px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
-                        {/* Action Buttons */}
-                        <div className="flex justify-end mb-6 space-x-3">
-                            {!isEditing ? (
                                 <button
-                                    onClick={handleEdit}
-                                    className="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-600 text-white px-4 sm:px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 bg-cyan-500 hover:bg-cyan-600 text-white p-1.5 rounded-full shadow-lg transition-colors"
                                 >
-                                    <Edit2 className="w-4 h-4" />
-                                    <span>Edit Profile</span>
+                                    <Camera className="w-3.5 h-3.5" />
                                 </button>
-                            ) : (
-                                <>
-                                    <button
-                                        onClick={handleCancel}
-                                        className="flex items-center space-x-2 bg-gray-500 hover:bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base"
-                                    >
-                                        <X className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Cancel</span>
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base"
-                                    >
-                                        <Save className="w-4 h-4" />
-                                        <span>Save</span>
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Profile Information */}
-                        <div className="space-y-8">
-                            {/* Personal Information */}
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                    <User className="w-5 h-5 mr-2 text-cyan-500" />
-                                    Personal Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Full Name
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={tempData.name}
-                                                onChange={(e) => handleChange('name', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                                                {profileData.name}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Gender
-                                        </label>
-                                        {isEditing ? (
-                                            <select
-                                                value={tempData.gender}
-                                                onChange={(e) => handleChange('gender', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            >
-                                                <option>Male</option>
-                                                <option>Female</option>
-                                                <option>Other</option>
-                                            </select>
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                                                {profileData.gender}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Date of Birth
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="date"
-                                                value={tempData.dateOfBirth}
-                                                onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white flex items-center">
-                                                <Calendar className="w-4 h-4 mr-2 text-gray-500" />
-                                                {new Date(profileData.dateOfBirth).toLocaleDateString('en-GB')}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Bio
-                                        </label>
-                                        {isEditing ? (
-                                            <textarea
-                                                value={tempData.bio}
-                                                onChange={(e) => handleChange('bio', e.target.value)}
-                                                rows="3"
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                                                {profileData.bio}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+                                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                             </div>
 
-                            {/* Contact Information */}
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                    <Mail className="w-5 h-5 mr-2 text-cyan-500" />
-                                    Contact Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Email Address
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="email"
-                                                value={tempData.email}
-                                                onChange={(e) => handleChange('email', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white flex items-center break-all">
-                                                <Mail className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
-                                                {profileData.email}
-                                            </p>
-                                        )}
-                                    </div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{profile?.fullName}</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{profile?.email}</p>
+                            <span className="inline-block px-3 py-0.5 bg-cyan-100 dark:bg-cyan-900 text-cyan-700 dark:text-cyan-300 text-xs font-semibold rounded-full uppercase">
+                                {profile?.role}
+                            </span>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Phone Number
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="tel"
-                                                value={tempData.phone}
-                                                onChange={(e) => handleChange('phone', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white flex items-center">
-                                                <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                                                {profileData.phone}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Address Information */}
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                    <MapPin className="w-5 h-5 mr-2 text-cyan-500" />
-                                    Address Information
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Street Address
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={tempData.address}
-                                                onChange={(e) => handleChange('address', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white flex items-center">
-                                                <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                                                {profileData.address}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            City
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={tempData.city}
-                                                onChange={(e) => handleChange('city', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                                                {profileData.city}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Postal Code
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={tempData.postalCode}
-                                                onChange={(e) => handleChange('postalCode', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 transition-colors duration-300"
-                                            />
-                                        ) : (
-                                            <p className="px-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-gray-900 dark:text-white">
-                                                {profileData.postalCode}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+                            <div className="mt-4 pt-4 border-t dark:border-gray-700 flex items-center justify-center gap-1 text-xs text-gray-400">
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>Joined {new Date(profile?.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Account Stats */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-6 rounded-xl text-center transition-colors duration-300 hover:shadow-lg">
-                        <Package className="w-12 h-12 text-cyan-600 dark:text-cyan-400 mx-auto mb-3" />
-                        <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">24</p>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">Total Orders</p>
+                        {/* Stats */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 grid grid-cols-3 gap-2 text-center">
+                            {[
+                                { label: "Orders", value: orders.length, icon: ShoppingBag },
+                                { label: "Wishlist", value: wishlist.length, icon: Heart },
+                                { label: "Delivered", value: orders.filter(o => o.status === "DELIVERED").length, icon: Package },
+                            ].map(({ label, value, icon: Icon }) => (
+                                <div key={label} className="p-2">
+                                    <Icon className="w-5 h-5 text-cyan-500 mx-auto mb-1" />
+                                    <p className="text-xl font-bold text-gray-900 dark:text-white">{value}</p>
+                                    <p className="text-xs text-gray-400">{label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Nav Tabs */}
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
+                            {TABS.map(({ id, label, icon: Icon }) => (
+                                <button
+                                    key={id}
+                                    onClick={() => setActiveTab(id)}
+                                    className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors border-l-4 ${
+                                        activeTab === id
+                                            ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400"
+                                            : "border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    }`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {label}
+                                    <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${activeTab === id ? "rotate-90" : ""}`} />
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-xl text-center transition-colors duration-300 hover:shadow-lg">
-                        <ShoppingBag className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" />
-                        <p className="text-3xl font-bold text-green-600 dark:text-green-400">18</p>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">Completed</p>
-                    </div>
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-6 rounded-xl text-center transition-colors duration-300 hover:shadow-lg sm:col-span-2 lg:col-span-1">
-                        <DollarSign className="w-12 h-12 text-purple-600 dark:text-purple-400 mx-auto mb-3" />
-                        <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">৳45,320</p>
-                        <p className="text-gray-600 dark:text-gray-400 mt-2">Total Spent</p>
+
+                    {/* ── Right Content ── */}
+                    <div className="flex-1 min-w-0">
+
+                        {/* Profile Info Tab */}
+                        {activeTab === "profile" && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Personal Information</h3>
+                                    {!editMode ? (
+                                        <button onClick={() => setEditMode(true)}
+                                                className="flex items-center gap-1.5 text-cyan-500 hover:text-cyan-600 text-sm font-medium">
+                                            <Edit2 className="w-4 h-4" /> Edit
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setEditMode(false)}
+                                                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={handleSaveProfile} disabled={saving}
+                                                    className="flex items-center gap-1 bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">
+                                                <Check className="w-4 h-4" />
+                                                {saving ? "Saving..." : "Save"}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {[
+                                        { icon: User, label: "Full Name", field: "fullName", value: profile?.fullName },
+                                        { icon: Phone, label: "Phone", field: "phone", value: profile?.phone },
+                                        { icon: MapPin, label: "Address", field: "address", value: profile?.address },
+                                    ].map(({ icon: Icon, label, field, value }) => (
+                                        <div key={field} className={field === "address" ? "md:col-span-2" : ""}>
+                                            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                                                <Icon className="w-3.5 h-3.5" /> {label}
+                                            </label>
+                                            {editMode ? (
+                                                <input
+                                                    type="text"
+                                                    value={form[field]}
+                                                    onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                />
+                                            ) : (
+                                                <p className="text-gray-900 dark:text-white font-medium px-1">
+                                                    {value || <span className="text-gray-400 italic font-normal text-sm">Not set</span>}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    <div>
+                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                                            <Mail className="w-3.5 h-3.5" /> Email
+                                        </label>
+                                        <p className="text-gray-900 dark:text-white font-medium px-1">{profile?.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Orders Tab */}
+                        {activeTab === "orders" && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">My Orders</h3>
+
+                                {orders.length === 0 ? (
+                                    <div className="text-center py-16">
+                                        <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                        <p className="text-gray-500 dark:text-gray-400 mb-4">No orders yet</p>
+                                        <Link to="/" className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors">
+                                            Start Shopping
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {orders.map(order => (
+                                            <Link key={order.id} to={`/order-confirmation/${order.id}`}
+                                                  className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-cyan-200 dark:hover:border-cyan-800 hover:bg-cyan-50 dark:hover:bg-cyan-900/10 transition-all">
+                                                <div className="flex -space-x-2">
+                                                    {order.items?.slice(0, 2).map(item => (
+                                                        item.productImage && (
+                                                            <img key={item.id}
+                                                                 src={`data:image/jpeg;base64,${item.productImage}`}
+                                                                 alt={item.productName}
+                                                                 className="w-12 h-12 rounded-lg object-cover border-2 border-white dark:border-gray-800"
+                                                            />
+                                                        )
+                                                    ))}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-gray-900 dark:text-white text-sm">Order #{order.id}</p>
+                                                    <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-1 ${statusColors[order.status]}`}>
+                                                        {order.status}
+                                                    </span>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">${order.totalAmount}</p>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Wishlist Tab */}
+                        {activeTab === "wishlist" && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">My Wishlist</h3>
+
+                                {wishlist.length === 0 ? (
+                                    <div className="text-center py-16">
+                                        <Heart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                        <p className="text-gray-500 dark:text-gray-400 mb-4">Your wishlist is empty</p>
+                                        <Link to="/" className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors">
+                                            Explore Products
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {wishlist.map(item => (
+                                            <div key={item.id} className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-cyan-200 dark:hover:border-cyan-800 transition-all group">
+                                                <Link to={`/product/${item.productId}`} className="flex-shrink-0">
+                                                    {item.productImage ? (
+                                                        <img
+                                                            src={`data:image/jpeg;base64,${item.productImage}`}
+                                                            alt={item.productName}
+                                                            className="w-16 h-16 object-cover rounded-lg"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                                            <Package className="w-6 h-6 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                </Link>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link to={`/product/${item.productId}`}>
+                                                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate hover:text-cyan-500 transition-colors">
+                                                            {item.productName}
+                                                        </p>
+                                                    </Link>
+                                                    <p className="text-cyan-500 font-bold text-sm mt-0.5">৳{item.productPrice}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveWishlist(item.productId)}
+                                                    className="p-1.5 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Security Tab */}
+                        {activeTab === "security" && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Security Settings</h3>
+
+                                {!showPasswordForm ? (
+                                    <div className="flex items-center justify-between p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-cyan-200 dark:hover:border-cyan-800 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center">
+                                                <Lock className="w-6 h-6 text-cyan-500" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-gray-900 dark:text-white">Password</p>
+                                                <p className="text-sm text-gray-400">Last changed: Unknown</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setShowPasswordForm(true)}
+                                            className="text-sm text-cyan-500 hover:text-cyan-600 font-medium"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleChangePassword} className="max-w-md space-y-4">
+                                        {[
+                                            { name: "currentPassword", label: "Current Password" },
+                                            { name: "newPassword", label: "New Password" },
+                                            { name: "confirmPassword", label: "Confirm New Password" },
+                                        ].map(({ name, label }) => (
+                                            <div key={name}>
+                                                <label className="block text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
+                                                    {label}
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    value={passwordForm[name]}
+                                                    onChange={e => setPasswordForm(prev => ({ ...prev, [name]: e.target.value }))}
+                                                    required
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                />
+                                            </div>
+                                        ))}
+                                        <div className="flex gap-3 pt-2">
+                                            <button type="button"
+                                                    onClick={() => { setShowPasswordForm(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); }}
+                                                    className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                Cancel
+                                            </button>
+                                            <button type="submit" disabled={saving}
+                                                    className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors">
+                                                {saving ? "Saving..." : "Update Password"}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
