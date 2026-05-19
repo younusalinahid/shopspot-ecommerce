@@ -1,0 +1,12 @@
+# IDE
+.idea/
+*.iml
+*.iws
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
