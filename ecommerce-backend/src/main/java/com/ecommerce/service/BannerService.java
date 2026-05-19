@@ -27,12 +27,14 @@ public class BannerService {
         Banner existingBanner = bannerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Banner not found with id: " + id));
 
-        existingBanner.setImageData(updatedBanner.getImageData());
         existingBanner.setTitle(updatedBanner.getTitle());
         existingBanner.setActive(updatedBanner.isActive());
         existingBanner.setOrderIndex(updatedBanner.getOrderIndex());
         existingBanner.setLinkUrl(updatedBanner.getLinkUrl());
         existingBanner.setRole(updatedBanner.getRole());
+        if (updatedBanner.getImageData() != null) {
+            existingBanner.setImageData(updatedBanner.getImageData());
+        }
 
         return bannerRepository.save(existingBanner);
     }

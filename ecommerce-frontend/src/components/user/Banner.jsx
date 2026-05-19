@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getAllBanners } from "../../api/banner-api-service";
+import { getActiveBanners } from "../../api/banner-api-service";
 
 const Banner = () => {
     const [banners, setBanners] = useState([]);
@@ -8,7 +8,7 @@ const Banner = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        getAllBanners()
+        getActiveBanners()
             .then(data => {
                 const activeBanners = data.sort((a, b) => a.orderIndex - b.orderIndex);
                 setBanners(activeBanners);

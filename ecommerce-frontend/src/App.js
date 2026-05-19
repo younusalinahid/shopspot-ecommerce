@@ -1,12 +1,11 @@
 import React from "react";
-import { Navigate } from 'react-router-dom';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {Navigate} from 'react-router-dom';
+import {BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserDashboard from "./components/user/UserDashboard";
-import AuthPage from "./pages/auth/AuthPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import {ProtectedRoute} from "./components/ProtectedRoute";
 import ProductList from "./components/user/productList";
 import ProductDetails from "./pages/ProductDetails";
 import CartPage from "./pages/CartPage";
@@ -16,9 +15,9 @@ import OrdersPage from "./pages/OrdersPage";
 import SettingsPage from "./pages/SettingsPage";
 import CategoryProducts from "./pages/CategoryProducts";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
-import { ThemeProvider } from "./context/ThemeContext";
-import { CartProvider } from "./context/CartContext";
-import { ToastContainer } from "react-toastify";
+import {ThemeProvider} from "./context/ThemeContext";
+import {CartProvider} from "./context/CartContext";
+import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
@@ -26,36 +25,32 @@ function App() {
         <ThemeProvider>
             <CartProvider>
                 <Router>
-                    <Navbar />
+                    <Navbar/>
 
                     <Routes>
-
-                        {/* AUTH */}
-                        <Route path="/login" element={<AuthPage />} />
-
                         {/* PUBLIC */}
-                        <Route path="/" element={<Home />} />
-                        <Route path="/subcategory/:subCategoryId" element={<ProductList />} />
-                        <Route path="/product/:productId" element={<ProductDetails />} />
-                        <Route path="/category/:categoryId" element={<CategoryProducts />} />
+                        <Route path="/" element={<Home/>}/>
+                        <Route path="/subcategory/:subCategoryId" element={<ProductList/>}/>
+                        <Route path="/product/:productId" element={<ProductDetails/>}/>
+                        <Route path="/category/:categoryId" element={<CategoryProducts/>}/>
 
                         {/* CART & CHECKOUT */}
-                        <Route path="/cart" element={<CartPage />} />
-                        <Route path="/checkout" element={<CheckoutPage />} />
-                        <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-                        <Route path="/orders" element={<OrdersPage />} />
+                        <Route path="/cart" element={<CartPage/>}/>
+                        <Route path="/checkout" element={<CheckoutPage/>}/>
+                        <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage/>}/>
+                        <Route path="/orders" element={<OrdersPage/>}/>
 
                         {/* USER */}
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/order-history" element={<Navigate to="/orders" replace />} />
+                        <Route path="/profile" element={<ProfilePage/>}/>
+                        <Route path="/settings" element={<SettingsPage/>}/>
+                        <Route path="/order-history" element={<Navigate to="/orders" replace/>}/>
 
                         {/* ADMIN */}
                         <Route
                             path="/admin"
                             element={
                                 <ProtectedRoute role="ADMIN">
-                                    <AdminDashboard />
+                                    <AdminDashboard/>
                                 </ProtectedRoute>
                             }
                         />
@@ -65,11 +60,10 @@ function App() {
                             path="/user"
                             element={
                                 <ProtectedRoute role="USER">
-                                    <UserDashboard />
+                                    <UserDashboard/>
                                 </ProtectedRoute>
                             }
                         />
-
                     </Routes>
 
                     <ToastContainer

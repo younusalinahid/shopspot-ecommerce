@@ -29,14 +29,14 @@ public class CategoryController {
 
     @GetMapping("/with-products")
     public ResponseEntity<List<CategoryWithProductsDTO>> getCategoriesWithProducts(
-            @RequestParam(defaultValue = "4") int productsPerCategory) {
+            @RequestParam(name = "productsPerCategory", defaultValue = "4") int productsPerCategory) {
         return ResponseEntity.ok(
                 categoryService.getCategoriesWithProducts(productsPerCategory));
     }
 
     @GetMapping("/{categoryId}/products")
     public ResponseEntity<List<ProductDTO>> getProductsByCategory(
-            @PathVariable Long categoryId) {
+            @PathVariable(name = "categoryId") Long categoryId) {
         return ResponseEntity.ok(categoryService.getProductsByCategory(categoryId));
     }
 }

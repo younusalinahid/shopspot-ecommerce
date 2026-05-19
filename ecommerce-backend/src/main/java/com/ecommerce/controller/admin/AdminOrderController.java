@@ -25,7 +25,7 @@ public class AdminOrderController {
     @PatchMapping("/{orderId}/status")
     public ResponseEntity<OrderDTO> updateStatus(
             @PathVariable Long orderId,
-            @RequestParam OrderStatus status) {
+            @RequestParam(name = "status") OrderStatus status) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
 }

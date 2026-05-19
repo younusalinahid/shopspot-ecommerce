@@ -27,7 +27,7 @@ export const getActiveBanners = async () => {
 
 export const getAllBanners = async () => {
     try {
-        const response = await axios.get(PUBLIC_API);
+        const response = await axios.get(ADMIN_API, authConfig());
         return response.data;
     } catch (error) {
         console.error(error);
@@ -35,9 +35,17 @@ export const getAllBanners = async () => {
     }
 };
 
-export const createBanner = async (bannerData) => {
+export const createBannerWithFile = async (formData) => {
     try {
-        const response = await axios.post(ADMIN_API, bannerData, authConfig());
+        const token = getToken();
+
+        const response = await axios.post(`${ADMIN_API}`, formData, {
+            headers: {
+                Authorization: token ? `Bearer ${token}` : "",
+                "Content-Type": "multipart/form-data"
+            }
+        });
+
         return response.data;
     } catch (error) {
         console.error(error);
@@ -45,17 +53,15 @@ export const createBanner = async (bannerData) => {
     }
 };
 
-export const createBannerWithFile = async (formData) => {
+export const updateBannerImage = async (id, formData) => {
     try {
         const token = getToken();
-
-        const response = await axios.post(`${ADMIN_API}/upload`, formData, {
+        const response = await axios.put(`${ADMIN_API}/${id}/image`, formData, {
             headers: {
-                Authorization: token ? `Bearer ${token}` : "",
-                "Content-Type": "multipart/form-data"
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
             }
         });
-
         return response.data;
     } catch (error) {
         console.error(error);

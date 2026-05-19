@@ -1,6 +1,7 @@
 package com.ecommerce.controller.admin;
 
 import com.ecommerce.model.Banner;
+import com.ecommerce.model.type.Role;
 import com.ecommerce.service.BannerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,23 +29,27 @@ public class AdminBannerController {
     @PostMapping
     public ResponseEntity<?> createBanner(
             @RequestParam("title") String title,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile) {
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestParam(value = "linkUrl", required = false) String linkUrl,
+            @RequestParam(value = "active", required = false, defaultValue = "true") boolean active,
+            @RequestParam(value = "orderIndex", required = false, defaultValue = "0") Integer orderIndex,
+            @RequestParam(value = "role", required = false, defaultValue = "USER") String role) {
 
         try {
             Banner banner = new Banner();
             banner.setTitle(title);
+            banner.setLinkUrl(linkUrl);
+            banner.setActive(active);
+            banner.setOrderIndex(orderIndex);
+            banner.setRole(Role.valueOf(role));
 
             if (imageFile != null && !imageFile.isEmpty()) {
                 banner.setImageData(imageFile.getBytes());
             }
 
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(bannerService.saveBanner(banner));
-
+            return ResponseEntity.status(HttpStatus.CREATED).body(bannerService.saveBanner(banner));
         } catch (IOException e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Image upload failed: " + e.getMessage());
         }
     }

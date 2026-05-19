@@ -28,7 +28,8 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SearchResultDTO>> searchProducts(@RequestParam String query) {
+    public ResponseEntity<List<SearchResultDTO>> searchProducts(
+            @RequestParam(name = "query") String query) {
         return ResponseEntity.ok(productService.universalSearch(query));
     }
 
@@ -39,7 +40,8 @@ public class ProductController {
 
     @GetMapping("/recent")
     public ResponseEntity<List<ProductDTO>> getRecentProducts(
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(name = "limit", defaultValue = "8") int limit
+    ) {
         return ResponseEntity.ok(productService.getRecentProducts(limit));
     }
 

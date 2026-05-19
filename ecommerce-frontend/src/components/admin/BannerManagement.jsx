@@ -1,10 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import {Plus, Edit2, Trash2, X, Image, Eye, EyeOff} from 'lucide-react';
+import {Plus, Edit2, Trash2, X, Image} from 'lucide-react';
 import {
     getAllBanners,
     createBannerWithFile,
     updateBanner,
-    deleteBanner
+    deleteBanner,
+    updateBannerImage
 } from '../../api/banner-api-service';
 
 export default function BannerManagement() {
@@ -85,8 +86,9 @@ export default function BannerManagement() {
         }
 
         try {
+            const { imageData, ...selectedWithoutImage } = selectedBanner;
             const bannerData = {
-                ...selectedBanner,
+                ...selectedWithoutImage,
                 title: formData.title.trim(),
                 linkUrl: formData.linkUrl.trim() || '',
                 active: formData.active,
@@ -94,8 +96,14 @@ export default function BannerManagement() {
                 role: formData.role
             };
 
-            console.log('Updating banner:', bannerData);
             await updateBanner(selectedBanner.id, bannerData);
+
+            if (formData.imageFile) {
+                const imageForm = new FormData();
+                imageForm.append('imageFile', formData.imageFile);
+                await updateBannerImage(selectedBanner.id, imageForm);
+            }
+
             await loadBanners();
             setShowModal(false);
             setEditMode(false);
@@ -106,7 +114,6 @@ export default function BannerManagement() {
             alert('Failed to update banner: ' + (error.response?.data?.message || error.message));
         }
     };
-
     const handleDeleteBanner = async (id) => {
         if (window.confirm('Are you sure you want to delete this banner?')) {
             try {
@@ -117,20 +124,6 @@ export default function BannerManagement() {
                 console.error('Error deleting banner:', error);
                 alert('Failed to delete banner');
             }
-        }
-    };
-
-    const toggleBannerStatus = async (banner) => {
-        try {
-            const updatedBanner = {
-                ...banner,
-                active: !banner.active
-            };
-            await updateBanner(banner.id, updatedBanner);
-            await loadBanners();
-        } catch (error) {
-            console.error('Error toggling banner status:', error);
-            alert('Failed to toggle banner status');
         }
     };
 
@@ -280,20 +273,9 @@ export default function BannerManagement() {
                                             {/* Action Buttons */}
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => toggleBannerStatus(banner)}
-                                                    className={`p-2 rounded-lg transition-colors ${
-                                                        banner.active
-                                                            ? 'text-green-600 hover:bg-green-50'
-                                                            : 'text-gray-600 hover:bg-gray-50'
-                                                    }`}
-                                                    title={banner.active ? 'Deactivate' : 'Activate'}
-                                                >
-                                                    {banner.active ? <Eye className="w-5 h-5"/> : <EyeOff className="w-5 h-5"/>}
-                                                </button>
-
-                                                <button
                                                     onClick={() => openEditModal(banner)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Edit"
                                                 >
                                                     <Edit2 className="w-5 h-5"/>
                                                 </button>
@@ -301,6 +283,7 @@ export default function BannerManagement() {
                                                 <button
                                                     onClick={() => handleDeleteBanner(banner.id)}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete"
                                                 >
                                                     <Trash2 className="w-5 h-5"/>
                                                 </button>
