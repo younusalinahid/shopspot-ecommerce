@@ -14,9 +14,9 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
-*.iws
+.idea/
 *.iml
+*.iws
 *.ipr
 
 ### NetBeans ###
@@ -32,9 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-./idea
-
-ecommerce-backend/src/main/resources/application.properties
+src/main/resources/application.properties
 ecommerce-backend/.env
 .env
 *.env
