@@ -4,12 +4,12 @@ import Header from '../../components/admin/AdminHeader';
 import StatsCards from '../../components/admin/StatsCards';
 import SalesChart from '../../components/admin/SalesChart';
 import CategoryChart from '../../components/admin/CategoryChart';
-import RecentOrdersTable from '../../components/admin/OrderManagement';
-import CategoryManagement from '../../components/admin/CategoryManagement';
-import BannerManagement from '../../components/admin/BannerManagement';
-import OrderManagement from '../../components/admin/OrderManagement';
+import RecentOrdersTable from '../../pages/admin/OrderManagementPage';
+import CategoryManagement from '../../pages/admin/CategoryManagementPage';
+import BannerManagement from '../../pages/admin/BannerManagementPage';
+import OrderManagement from '../../pages/admin/OrderManagementPage';
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, BarChart3, FolderTree, ImageIcon, DollarSign } from 'lucide-react';
-import ProductManagement from "../../components/admin/ProductManagement";
+import ProductManagement from "../../pages/admin/ProductManagementPage";
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');

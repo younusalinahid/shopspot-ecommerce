@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Login from "./Login";
-import Register from "./Register";
+import LoginPage from "./LoginPage";
+import RegisterPage from "./RegisterPage";
 
 const AuthPage = ({ isLoginOpen = true, onClose, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(isLoginOpen);
@@ -17,14 +17,14 @@ const AuthPage = ({ isLoginOpen = true, onClose, onLoginSuccess }) => {
     return (
         <>
             {isLogin ? (
-                <Login
+                <LoginPage
                     isOpen={true}
                     onClose={onClose}
                     onSwitchToRegister={openRegister}
                     onLoginSuccess={handleLoginSuccess}
                 />
             ) : (
-                <Register
+                <RegisterPage
                     isOpen={true}
                     onClose={onClose}
                     onSwitchToLogin={openLogin}
