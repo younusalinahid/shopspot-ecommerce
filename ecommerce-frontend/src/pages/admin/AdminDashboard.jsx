@@ -4,9 +4,10 @@ import Header from '../../components/admin/AdminHeader';
 import StatsCards from '../../components/admin/StatsCards';
 import SalesChart from '../../components/admin/SalesChart';
 import CategoryChart from '../../components/admin/CategoryChart';
-import RecentOrdersTable from '../../components/admin/RecentOrdersTable';
+import RecentOrdersTable from '../../components/admin/OrderManagement';
 import CategoryManagement from '../../components/admin/CategoryManagement';
 import BannerManagement from '../../components/admin/BannerManagement';
+import OrderManagement from '../../components/admin/OrderManagement';
 import { LayoutDashboard, Package, ShoppingBag, Users, Settings, BarChart3, FolderTree, ImageIcon, DollarSign } from 'lucide-react';
 import ProductManagement from "../../components/admin/ProductManagement";
 
@@ -81,15 +82,7 @@ export default function AdminDashboard() {
                 return <ProductManagement />;
 
             case 'orders':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Orders Management</h2>
-                        <p className="text-gray-500">View and manage customer orders and their status.</p>
-                        <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                            <p className="text-green-700">Orders section coming soon...</p>
-                        </div>
-                    </div>
-                );
+                return <OrderManagement />;
 
             case 'customers':
                 return (

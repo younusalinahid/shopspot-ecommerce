@@ -249,4 +249,11 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         return toDTO(orderRepository.save(order));
     }
+
+    @Transactional(readOnly = true)
+    public OrderDTO getAdminOrderById(Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return toDTO(order);
+    }
 }

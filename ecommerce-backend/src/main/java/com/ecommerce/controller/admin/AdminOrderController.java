@@ -28,4 +28,10 @@ public class AdminOrderController {
             @RequestParam(name = "status") OrderStatus status) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDTO> getOrderById(
+            @PathVariable(name = "orderId") Long orderId) {
+        return ResponseEntity.ok(orderService.getAdminOrderById(orderId));
+    }
 }
