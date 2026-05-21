@@ -4,11 +4,11 @@ import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.model.Product;
 import com.ecommerce.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 
 @RestController
@@ -25,40 +25,45 @@ public class AdminProductController {
             @RequestParam("description") String description,
             @RequestParam("price") int price,
             @RequestParam("subCategoryId") Long subCategoryId,
+            @RequestParam(value = "stockQuantity", defaultValue = "0") int stockQuantity,
+            @RequestParam(value = "discountPercent", defaultValue = "0") int discountPercent,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
-
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
         product.setPrice(price);
+        product.setStockQuantity(stockQuantity);
+        product.setDiscountPercent(discountPercent);
 
-        return ResponseEntity.ok(
-                productService.createProduct(product, subCategoryId, imageFile)
-        );
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(productService.createProduct(product, subCategoryId, imageFile));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestParam("name") String name,
             @RequestParam("description") String description,
             @RequestParam("price") int price,
+            @RequestParam("subCategoryId") Long subCategoryId,
+            @RequestParam(value = "stockQuantity", defaultValue = "0") int stockQuantity,
+            @RequestParam(value = "discountPercent", defaultValue = "0") int discountPercent,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
-
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
         product.setPrice(price);
+        product.setStockQuantity(stockQuantity);
+        product.setDiscountPercent(discountPercent);
 
-        return ResponseEntity.ok(
-                productService.updateProduct(id, product, imageFile)
-        );
+        return ResponseEntity.ok(productService.updateProduct(id, product, subCategoryId, imageFile));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(
+            @PathVariable(name = "id") Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }

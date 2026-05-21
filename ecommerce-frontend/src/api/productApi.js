@@ -27,8 +27,6 @@ const getFormDataConfig = () => {
 
 export const productService = {
 
-    // ─── Public Routes (/api/public/products) ───────────────────────────────
-
     getAllProducts: async () => {
         try {
             const response = await axios.get(PUBLIC_BASE_URL);
@@ -90,18 +88,8 @@ export const productService = {
     },
 
 
-    createProduct: async (productData) => {
+    createProduct: async (formData) => {
         try {
-            const formData = new FormData();
-            formData.append("name", productData.name);
-            formData.append("description", productData.description || "");
-            formData.append("price", Number(productData.price));
-            formData.append("subCategoryId", Number(productData.subCategoryId));
-
-            if (productData.images && productData.images.length > 0) {
-                formData.append("imageFile", productData.images[0]);
-            }
-
             const response = await axios.post(ADMIN_BASE_URL, formData, getFormDataConfig());
             return response.data;
         } catch (error) {
@@ -110,17 +98,9 @@ export const productService = {
         }
     },
 
-    updateProduct: async (productId, productData) => {
+
+    updateProduct: async (productId, formData) => {
         try {
-            const formData = new FormData();
-            formData.append("name", productData.name);
-            formData.append("description", productData.description || "");
-            formData.append("price", Number(productData.price));
-
-            if (productData.images && productData.images.length > 0) {
-                formData.append("imageFile", productData.images[0]);
-            }
-
             const response = await axios.put(
                 `${ADMIN_BASE_URL}/${productId}`,
                 formData,

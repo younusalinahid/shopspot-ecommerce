@@ -8,7 +8,7 @@ export default function Sidebar({ menuItems, activeTab, setActiveTab, isSidebarO
                 <p className="text-gray-400 text-sm">Admin Panel</p>
             </div>
             <nav className="mt-6">
-                {menuItems.map((item) => {
+                {menuItems?.map((item) => {
                     const Icon = item.icon;
                     return (
                         <button

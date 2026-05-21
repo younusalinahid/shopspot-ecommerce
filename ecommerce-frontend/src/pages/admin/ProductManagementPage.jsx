@@ -4,22 +4,21 @@ import { productService } from "../../api/productApi";
 import { categoryApi } from "../../api/categoryApi";
 
 const ProductManagementPage = () => {
-    const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [subCategories, setSubCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState("");
+    const [products,            setProducts]            = useState([]);
+    const [categories,          setCategories]          = useState([]);
+    const [subCategories,       setSubCategories]       = useState([]);
+    const [selectedCategory,    setSelectedCategory]    = useState("");
     const [selectedSubCategory, setSelectedSubCategory] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading,             setLoading]             = useState(false);
+    const [showModal,           setShowModal]           = useState(false);
+    const [editingProduct,      setEditingProduct]      = useState(null);
 
-    const [showModal, setShowModal] = useState(false);
-    const [editingProduct, setEditingProduct] = useState(null);
+    const EMPTY_FORM = {
+        name: "", description: "", price: "",
+        stockQuantity: 0, discountPercent: 0, images: [],
+    };
 
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        price: "",
-        images: [],
-    });
+    const [formData, setFormData] = useState(EMPTY_FORM);
 
     const fetchProducts = async () => {
         try {
@@ -27,14 +26,7 @@ const ProductManagementPage = () => {
             const data = await productService.getAllProductsWithCategoryAndSubCategory();
             setProducts(data);
         } catch (err) {
-            let errorMsg = "Failed to fetch products";
-            if (err.response) {
-                errorMsg = `Error ${err.response.status}: ${err.response.data?.message || err.response.statusText}`;
-            } else {
-                errorMsg = err.message;
-            }
-
-            toast.error(errorMsg);
+            toast.error(err.response?.data?.message || "Failed to fetch products");
         } finally {
             setLoading(false);
         }
@@ -44,35 +36,34 @@ const ProductManagementPage = () => {
         try {
             const data = await categoryApi.getAllCategories();
             setCategories(data);
-        } catch (err) {
+        } catch {
             toast.error("Failed to fetch categories");
         }
     };
 
-    const fetchSubCategories = async (categoryId) => {
-        if (!categoryId) {
-            setSubCategories([]);
-            return;
-        }
-
+    const fetchSubCategories = async (categoryId, preSelectSubCategoryId = null) => {
+        if (!categoryId) { setSubCategories([]); return; }
         try {
             const data = await categoryApi.getCategoryById(categoryId);
-            setSubCategories(data.subCategories || []);
-        } catch (err) {
-            toast.error("Failed to fetch subcategories");
+            const subs = data.subCategories || [];
+            setSubCategories(subs);
+
+            if (preSelectSubCategoryId) {
+                setSelectedSubCategory(String(preSelectSubCategoryId));
+            }
+        } catch {
             setSubCategories([]);
         }
     };
 
-    useEffect(() => {
-        fetchProducts();
-        fetchCategories();
-    }, []);
+    useEffect(() => { fetchProducts(); fetchCategories(); }, []);
 
     useEffect(() => {
         if (selectedCategory) {
             fetchSubCategories(selectedCategory);
-            setSelectedSubCategory("");
+            if (!editingProduct) {
+                setSelectedSubCategory("");
+            }
         } else {
             setSubCategories([]);
             setSelectedSubCategory("");
@@ -81,38 +72,40 @@ const ProductManagementPage = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        setFormData((prev) => ({ ...prev, images: files }));
+        setFormData(prev => ({ ...prev, images: Array.from(e.target.files) }));
     };
 
     const handleOpenModal = (product = null) => {
         if (product) {
             setEditingProduct(product);
             setFormData({
-                name: product.name || "",
-                description: product.description || "",
-                price: product.price || "",
+                name:            product.name          || "",
+                description:     product.description   || "",
+                price:           product.originalPrice > 0
+                    ? product.originalPrice
+                    : product.price || "",
+                stockQuantity:   product.stock         || 0,
+                discountPercent: product.discountPercent || 0,
                 images: [],
             });
-            setSelectedCategory(product.category?.id || "");
-            setSelectedSubCategory(product.subCategory?.id || "");
+
+            if (product.categoryId) {
+                setSelectedCategory(String(product.categoryId));
+                fetchSubCategories(product.categoryId, product.subCategoryId);
+            }
+            if (product.subCategoryId) {
+                setSelectedSubCategory(String(product.subCategoryId));
+            }
         } else {
             setEditingProduct(null);
-            setFormData({
-                name: "",
-                description: "",
-                price: "",
-                images: []
-            });
+            setFormData(EMPTY_FORM);
             setSelectedCategory("");
             setSelectedSubCategory("");
+            setSubCategories([]);
         }
         setShowModal(true);
     };
@@ -120,133 +113,173 @@ const ProductManagementPage = () => {
     const handleCloseModal = () => {
         setShowModal(false);
         setEditingProduct(null);
-        setFormData({ name: "", description: "", price: "", images: [] });
+        setFormData(EMPTY_FORM);
         setSelectedCategory("");
         setSelectedSubCategory("");
+        setSubCategories([]);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!selectedSubCategory) {
+            toast.error("Please select a subcategory");
+            return;
+        }
+
         try {
             setLoading(true);
 
-            const payload = {
-                name: formData.name.trim(),
-                description: formData.description.trim(),
-                price: formData.price,
-                subCategoryId: selectedSubCategory,
-                images: formData.images
-            };
+            const fd = new FormData();
+            fd.append("name",            formData.name.trim());
+            fd.append("description",     formData.description.trim());
+            fd.append("price",           formData.price);
+            fd.append("subCategoryId",   selectedSubCategory);
+            fd.append("stockQuantity",   formData.stockQuantity);
+            fd.append("discountPercent", formData.discountPercent);
+            if (formData.images[0]) {
+                fd.append("imageFile", formData.images[0]);
+            }
 
             if (editingProduct) {
-                await productService.updateProduct(editingProduct.id, payload);
+                await productService.updateProduct(editingProduct.id, fd);
                 toast.success("Product updated successfully");
             } else {
-                await productService.createProduct(payload);
+                await productService.createProduct(fd);
                 toast.success("Product created successfully");
             }
 
             await fetchProducts();
             handleCloseModal();
         } catch (err) {
-            let errorMsg = "Failed to save product";
-            if (err.response?.data?.message) {
-                errorMsg = err.response.data.message;
-            } else if (err.response?.status === 401) {
-                errorMsg = "Unauthorized. Please login again.";
-            } else if (err.response?.status === 403) {
-                errorMsg = "Access denied. Admin privileges required.";
-            }
-
-            toast.error(errorMsg);
+            const msg = err.response?.data?.message
+                || (err.response?.status === 403 ? "Access denied. Admin required." : "Failed to save product");
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (productId) => {
-        if (!window.confirm("Are you sure you want to delete this product?")) {
-            return;
-        }
-
+        if (!window.confirm("Are you sure you want to delete this product?")) return;
         try {
             setLoading(true);
-            console.log("Deleting product ID:", productId);
-
-            const response = await productService.deleteProduct(productId);
-            console.log("Delete response:", response);
-
+            await productService.deleteProduct(productId);
             toast.success("Product deleted successfully");
             await fetchProducts();
-        } catch (err) {
-            console.error("Delete error:", err);
-            // ... rest of error handling
+        } catch {
+            toast.error("Failed to delete product");
         } finally {
             setLoading(false);
         }
     };
 
+    const discountedPreview = formData.price > 0 && formData.discountPercent > 0
+        ? Math.round(formData.price - (formData.price * formData.discountPercent / 100))
+        : null;
+
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Product Management</h2>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-800">Product Management</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{products.length} products</p>
+                </div>
                 <button
                     onClick={() => handleOpenModal()}
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
                 >
                     + Add Product
                 </button>
             </div>
 
-            {/* Products Table */}
+            {/* Table */}
             {loading && products.length === 0 ? (
-                <div className="text-center py-8">
-                    <p className="text-gray-500">Loading products...</p>
-                </div>
+                <div className="text-center py-12 text-gray-500">Loading products...</div>
             ) : products.length === 0 ? (
-                <div className="text-center py-8">
-                    <p className="text-gray-500">No products found. Create your first product!</p>
+                <div className="text-center py-12 text-gray-500">
+                    No products found. Create your first product!
                 </div>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="w-full border border-gray-200 rounded">
-                        <thead className="bg-gray-100">
+                    <table className="w-full border border-gray-200 rounded text-sm">
+                        <thead className="bg-gray-50">
                         <tr>
-                            <th className="p-2 border-b text-left">Name</th>
-                            <th className="p-2 border-b text-left">Price</th>
-                            <th className="p-2 border-b text-left">Category</th>
-                            <th className="p-2 border-b text-left">SubCategory</th>
-                            <th className="p-2 border-b text-left">Status</th>
-                            <th className="p-2 border-b text-center">Actions</th>
+                            <th className="p-3 border-b text-left">Name</th>
+                            <th className="p-3 border-b text-left">Price</th>
+                            <th className="p-3 border-b text-left">Stock</th>
+                            <th className="p-3 border-b text-left">Discount</th>
+                            <th className="p-3 border-b text-left">Category</th>
+                            <th className="p-3 border-b text-left">Status</th>
+                            <th className="p-3 border-b text-center">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
-                        {products.map((p) => (
+                        {products.map(p => (
                             <tr key={p.id} className="hover:bg-gray-50">
-                                <td className="p-2 border-b">{p.name}</td>
-                                <td className="p-2 border-b">৳{p.price}</td>
-                                <td className="p-2 border-b">{p.subCategoryName || "-"}</td>
-                                <td className="p-2 border-b">{p.categoryName || "-"}</td>
+                                <td className="p-3 border-b font-medium">{p.name}</td>
 
-                                <td className="p-2 border-b">
-                                    <span className={`px-2 py-1 rounded text-xs ${p.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {p.active ? "Active" : "Inactive"}
-                                    </span>
+                                {/* Price — original + discounted */}
+                                <td className="p-3 border-b">
+                                    <span className="font-semibold">৳{p.price}</span>
+                                    {p.originalPrice > 0 && p.originalPrice !== p.price && (
+                                        <span className="text-gray-400 line-through text-xs ml-1">
+                                                ৳{p.originalPrice}
+                                            </span>
+                                    )}
                                 </td>
-                                <td className="p-2 border-b text-center space-x-2">
+
+                                {/* Stock */}
+                                <td className="p-3 border-b">
+                                    {p.stock === 0 ? (
+                                        <span className="text-green-600 text-xs font-medium">Unlimited</span>
+                                    ) : (
+                                        <span className={p.stock < 5
+                                            ? "text-red-600 font-semibold"
+                                            : "text-gray-700"}>
+                                                {p.stock}
+                                            </span>
+                                    )}
+                                </td>
+
+                                {/* Discount */}
+                                <td className="p-3 border-b">
+                                    {p.discountPercent > 0 ? (
+                                        <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                                {p.discountPercent}% OFF
+                                            </span>
+                                    ) : (
+                                        <span className="text-gray-400 text-xs">—</span>
+                                    )}
+                                </td>
+
+                                <td className="p-3 border-b text-gray-600">
+                                    {p.categoryName || "—"} / {p.subCategoryName || "—"}
+                                </td>
+
+                                <td className="p-3 border-b">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium
+                                            ${p.active
+                                            ? "bg-green-100 text-green-800"
+                                            : "bg-red-100 text-red-800"}`}>
+                                            {p.active ? "Active" : "Inactive"}
+                                        </span>
+                                </td>
+
+                                <td className="p-3 border-b text-center space-x-2">
                                     <button
                                         onClick={() => handleOpenModal(p)}
                                         disabled={loading}
-                                        className="px-2 py-1 bg-yellow-400 rounded hover:bg-yellow-500 text-white text-sm disabled:bg-gray-300"
+                                        className="px-3 py-1 bg-amber-400 hover:bg-amber-500 text-white rounded text-xs disabled:opacity-50"
                                     >
                                         Edit
                                     </button>
                                     <button
                                         onClick={() => handleDelete(p.id)}
                                         disabled={loading}
-                                        className="px-2 py-1 bg-red-500 rounded hover:bg-red-600 text-white text-sm disabled:bg-gray-300"
+                                        className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs disabled:opacity-50"
                                     >
                                         Delete
                                     </button>
@@ -260,137 +293,113 @@ const ProductManagementPage = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
                         <button
-                            className="absolute top-2 right-2 text-gray-600 hover:text-red-500 text-2xl font-bold"
                             onClick={handleCloseModal}
-                            disabled={loading}
-                        >
-                            ×
-                        </button>
-                        <h3 className="text-lg font-bold mb-4">
+                            className="absolute top-3 right-4 text-gray-400 hover:text-red-500 text-2xl font-bold"
+                        >×</button>
+
+                        <h3 className="text-lg font-bold mb-5">
                             {editingProduct ? "Edit Product" : "Add Product"}
                         </h3>
+
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Product Name <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                    disabled={loading}
-                                />
+
+                            {/* Name */}
+                            <Field label="Product Name" required>
+                                <input type="text" name="name" value={formData.name}
+                                       onChange={handleInputChange} required disabled={loading}
+                                       className={INPUT_CLS} placeholder="e.g. Blue Denim Jacket" />
+                            </Field>
+
+                            {/* Description */}
+                            <Field label="Description">
+                                <textarea name="description" value={formData.description}
+                                          onChange={handleInputChange} rows={3} disabled={loading}
+                                          className={INPUT_CLS} placeholder="Product description..." />
+                            </Field>
+
+                            {/* Price + Discount side by side */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Price (৳)" required>
+                                    <input type="number" name="price" value={formData.price}
+                                           onChange={handleInputChange} min="0" required disabled={loading}
+                                           className={INPUT_CLS} placeholder="1200" />
+                                </Field>
+
+                                <Field label="Discount (%)">
+                                    <input type="number" name="discountPercent"
+                                           value={formData.discountPercent}
+                                           onChange={handleInputChange}
+                                           min="0" max="100" disabled={loading}
+                                           className={INPUT_CLS} placeholder="0" />
+                                    {discountedPreview && (
+                                        <p className="text-xs text-green-600 mt-1">
+                                            Sale price: ৳{discountedPreview}
+                                        </p>
+                                    )}
+                                </Field>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    rows="3"
-                                    disabled={loading}
-                                />
-                            </div>
+                            {/* Stock */}
+                            <Field label="Stock Quantity">
+                                <input type="number" name="stockQuantity"
+                                       value={formData.stockQuantity}
+                                       onChange={handleInputChange}
+                                       min="0" disabled={loading}
+                                       className={INPUT_CLS} placeholder="0" />
+                                <p className="text-xs text-gray-400 mt-1">0 = unlimited stock</p>
+                            </Field>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Price (৳) <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    value={formData.price}
-                                    onChange={handleInputChange}
-                                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    min="0"
-                                    step="0.01"
-                                    required
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Category <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                    disabled={loading}
-                                >
+                            {/* Category */}
+                            <Field label="Category" required>
+                                <select value={selectedCategory}
+                                        onChange={e => setSelectedCategory(e.target.value)}
+                                        required disabled={loading} className={INPUT_CLS}>
                                     <option value="">Select Category</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
+                                    {categories.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
-                            </div>
+                            </Field>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    SubCategory <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={selectedSubCategory}
-                                    onChange={(e) => setSelectedSubCategory(e.target.value)}
-                                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                    disabled={!selectedCategory || loading}
-                                >
+                            {/* SubCategory */}
+                            <Field label="SubCategory" required>
+                                <select value={selectedSubCategory}
+                                        onChange={e => setSelectedSubCategory(e.target.value)}
+                                        required disabled={!selectedCategory || loading}
+                                        className={INPUT_CLS}>
                                     <option value="">
                                         {selectedCategory ? "Select SubCategory" : "Select Category First"}
                                     </option>
-                                    {subCategories.map((sc) => (
-                                        <option key={sc.id} value={sc.id}>
-                                            {sc.name}
-                                        </option>
+                                    {subCategories.map(sc => (
+                                        <option key={sc.id} value={sc.id}>{sc.name}</option>
                                     ))}
                                 </select>
-                            </div>
+                            </Field>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    Product Image {editingProduct ? "(Optional)" : ""}
-                                </label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="w-full"
-                                    disabled={loading}
-                                />
-                                {formData.images.length > 0 && (
+                            {/* Image */}
+                            <Field label={`Product Image${editingProduct ? " (optional — leave empty to keep current)" : ""}`}>
+                                <input type="file" accept="image/*"
+                                       onChange={handleImageChange} disabled={loading}
+                                       className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3
+                                        file:rounded file:border-0 file:bg-blue-50 file:text-blue-700
+                                        hover:file:bg-blue-100" />
+                                {formData.images[0] && (
                                     <p className="text-xs text-gray-500 mt-1">
                                         Selected: {formData.images[0].name}
                                     </p>
                                 )}
-                            </div>
+                            </Field>
 
-                            <div className="flex space-x-2 pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? "Saving..." : editingProduct ? "Update Product" : "Add Product"}
+                            <div className="flex gap-3 pt-2">
+                                <button type="submit" disabled={loading}
+                                        className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50">
+                                    {loading ? "Saving..." : editingProduct ? "Update" : "Add Product"}
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    disabled={loading}
-                                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:bg-gray-200"
-                                >
+                                <button type="button" onClick={handleCloseModal} disabled={loading}
+                                        className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">
                                     Cancel
                                 </button>
                             </div>
@@ -401,5 +410,18 @@ const ProductManagementPage = () => {
         </div>
     );
 };
+
+const INPUT_CLS = "w-full border border-gray-300 p-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+
+function Field({ label, required, children }) {
+    return (
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
 
 export default ProductManagementPage;

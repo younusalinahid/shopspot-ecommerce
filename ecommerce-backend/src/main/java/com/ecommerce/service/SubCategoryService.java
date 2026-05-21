@@ -3,6 +3,7 @@ package com.ecommerce.service;
 import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.dto.SubCategoryDTO;
 import com.ecommerce.dto.SubCategoryWithProductsDto;
+import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.SubCategory;
 import com.ecommerce.repository.CategoryRepository;
@@ -17,10 +18,12 @@ public class SubCategoryService {
 
     private final SubCategoryRepository subCategoryRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductMapper productMapper;
 
-    public SubCategoryService(SubCategoryRepository subCategoryRepository,
+    public SubCategoryService(SubCategoryRepository subCategoryRepository, ProductMapper productMapper,
                               CategoryRepository categoryRepository) {
         this.subCategoryRepository = subCategoryRepository;
+        this.productMapper = productMapper;
         this.categoryRepository = categoryRepository;
     }
 
@@ -37,18 +40,14 @@ public class SubCategoryService {
 
         List<ProductDTO> productDTOs = subCategory.getProducts()
                 .stream()
-                .map(product -> new ProductDTO(
-                        product.getId(),
-                        product.getName(),
-                        product.getDescription(),
-                        product.getPrice(),
-                        product.isActive(),
-                        product.getCreatedAt(),
-                        product.getImageData()
-                ))
+                .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
 
-        return new SubCategoryWithProductsDto(subCategory.getId(), subCategory.getName(), productDTOs);
+        return new SubCategoryWithProductsDto(
+                subCategory.getId(),
+                subCategory.getName(),
+                productDTOs
+        );
     }
 
 

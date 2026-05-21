@@ -16,7 +16,7 @@ import OrdersPage from "../pages/order/OrdersPage";
 import ProfilePage from "../pages/user/ProfilePage";
 import SettingsPage from "../pages/user/SettingsPage";
 import {ProtectedRoute} from "../components/common/ProtectedRoute";
-import CheckoutPage from "../pages/cart/PaymentForm";
+import CheckoutPage from "../pages/cart/CheckoutPage";
 import CartPage from "../pages/cart/CartPage";
 
 export default function AppRoutes() {
@@ -66,7 +66,6 @@ export default function AppRoutes() {
                 }
             />
 
-            {/* fallback */}
             <Route path="*" element={<Navigate to="/" />} />
 
         </Routes>

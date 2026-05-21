@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -39,19 +38,16 @@ public class ProductService {
         this.productMapper = productMapper;
     }
 
-    public ProductDTO createProduct(Product product, Long subCategoryId, MultipartFile imageFile) throws IOException {
+    public ProductDTO createProduct(Product product, Long subCategoryId, MultipartFile imageFile)
+            throws IOException {
         SubCategory subCategory = subCategoryRepository.findById(subCategoryId)
                 .orElseThrow(() -> new RuntimeException("SubCategory not found"));
-
         product.setSubCategory(subCategory);
-        product.setCreatedAt(Instant.now());
 
         if (imageFile != null && !imageFile.isEmpty()) {
             product.setImageData(imageFile.getBytes());
         }
-
-        Product saved = productRepository.save(product);
-        return productMapper.convertToDTO(saved);
+        return productMapper.convertToDTO(productRepository.save(product));
     }
 
     public List<ProductDTO> getAllProducts() {
@@ -64,7 +60,6 @@ public class ProductService {
     public List<SearchResultDTO> universalSearch(String query) {
         List<SearchResultDTO> results = new ArrayList<>();
 
-        // Search Products
         List<Product> products = productRepository.searchByNameOrSubCategory(query);
         for (Product product : products) {
             String imageData = null;
@@ -80,7 +75,6 @@ public class ProductService {
             ));
         }
 
-        // Search Categories
         List<Category> categories = categoryRepository.findByNameContainingIgnoreCase(query);
         for (Category category : categories) {
             results.add(new SearchResultDTO(
@@ -90,7 +84,6 @@ public class ProductService {
             ));
         }
 
-        // Search SubCategories
         List<SubCategory> subCategories = subCategoryRepository.findByNameContainingIgnoreCase(query);
         for (SubCategory subCategory : subCategories) {
             results.add(new SearchResultDTO(
@@ -99,7 +92,6 @@ public class ProductService {
                     subCategory.getCategory().getId()
             ));
         }
-
         return results;
     }
 
@@ -134,18 +126,26 @@ public class ProductService {
                     p.getId(),
                     p.getName(),
                     p.getDescription(),
-                    p.getPrice(),
+                    p.getDiscountPercent() > 0
+                            ? p.getPrice() - (p.getPrice() * p.getDiscountPercent() / 100)
+                            : p.getPrice(),
                     p.isActive(),
                     p.getCreatedAt(),
                     p.getImageData(),
                     subCategoryName,
-                    categoryName
+                    categoryName,
+                    p.getStockQuantity(),
+                    p.getDiscountPercent(),
+                    p.getPrice(),
+                    p.getSubCategory() != null && p.getSubCategory().getCategory() != null
+                            ? p.getSubCategory().getCategory().getId() : null,
+                    p.getSubCategory() != null ? p.getSubCategory().getId() : null
             );
         }).collect(Collectors.toList());
     }
 
 
-    public ProductDTO updateProduct(Long id, Product updated, MultipartFile imageFile) throws IOException {
+    public ProductDTO updateProduct(Long id, Product updated, Long subCategoryId, MultipartFile imageFile) throws IOException {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -153,13 +153,20 @@ public class ProductService {
         product.setDescription(updated.getDescription());
         product.setPrice(updated.getPrice());
         product.setActive(updated.isActive());
+        product.setStockQuantity(updated.getStockQuantity());
+        product.setDiscountPercent(updated.getDiscountPercent());
+
+        if (subCategoryId != null) {
+            SubCategory subCategory = subCategoryRepository.findById(subCategoryId)
+                    .orElseThrow(() -> new RuntimeException("SubCategory not found"));
+            product.setSubCategory(subCategory);
+        }
 
         if (imageFile != null && !imageFile.isEmpty()) {
             product.setImageData(imageFile.getBytes());
         }
 
-        Product saved = productRepository.save(product);
-        return productMapper.convertToDTO(saved);
+        return productMapper.convertToDTO(productRepository.save(product));
     }
 
     public void deleteProduct(Long id) {

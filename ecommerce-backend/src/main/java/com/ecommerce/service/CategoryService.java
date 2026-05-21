@@ -8,7 +8,6 @@ import com.ecommerce.mapper.ProductMapper;
 import com.ecommerce.model.Category;
 import com.ecommerce.model.Product;
 import com.ecommerce.repository.CategoryRepository;
-import com.ecommerce.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -72,7 +71,7 @@ public class CategoryService {
                             .flatMap(subCategory -> subCategory.getProducts().stream())
                             .filter(product -> product.isActive())
                             .limit(productsPerCategory)
-                            .map(productMapper::toDTO)
+                            .map(productMapper::convertToDTO)
                             .collect(Collectors.toList());
 
                     if (!products.isEmpty()) {
@@ -96,7 +95,7 @@ public class CategoryService {
         return category.getSubCategories().stream()
                 .flatMap(subCategory -> subCategory.getProducts().stream())
                 .filter(Product::isActive)
-                .map(productMapper::toDTO)
+                .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
     }
 }
