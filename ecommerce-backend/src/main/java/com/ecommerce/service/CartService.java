@@ -29,7 +29,7 @@ public class CartService {
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CartDTO getCart(Long userId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseGet(() -> createNewCart(userId));

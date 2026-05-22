@@ -18,6 +18,7 @@ import SettingsPage from "../pages/user/SettingsPage";
 import {ProtectedRoute} from "../components/common/ProtectedRoute";
 import CheckoutPage from "../pages/cart/CheckoutPage";
 import CartPage from "../pages/cart/CartPage";
+import OAuth2CallbackPage from "../pages/auth/OAuth2CallbackPage";
 
 export default function AppRoutes() {
     return (
@@ -42,6 +43,7 @@ export default function AppRoutes() {
             <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
             </Route>
 
             {/* ================= ADMIN ================= */}

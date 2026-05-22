@@ -46,10 +46,12 @@ const Footer = () => {
         <footer className="w-full bg-[#0b1322] text-white py-14 border-t border-gray-800 mt-16 px-6 md:px-10 lg:px-12 box-border">
             <div className="w-full">
 
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16 lg:gap-24">
 
+
                     <div className="w-full text-left">
-                        <h2 className="text-2xl font-bold mb-4 tracking-wide text-white">ShopSpot Online</h2>
+                        <h3 className="text-2xl font-bold mb-4 tracking-wide text-white">ShopSpot Online</h3>
                         <p className="text-gray-400 leading-relaxed text-sm">
                             Discover the finest collection of traditional fabrics, premium sarees, and modern clothing.
                             We blend heritage craftsmanship with modern trends to offer you the finest quality and an exceptional shopping experience.
@@ -77,10 +79,10 @@ const Footer = () => {
                         </div>
                     </div>
 
+
                     <div className="w-full flex flex-col items-center text-center">
                         <div>
-                            <h2 className="text-lg font-semibold mb-4 text-white tracking-wide">Quick Links</h2>
-
+                            <h4 className="text-lg font-semibold mb-4 text-white tracking-wide">Quick Links</h4>
                             <div className="flex flex-wrap justify-center gap-2.5 max-w-[260px]">
                                 <a href="/" className="px-3.5 py-1.5 text-xs font-medium text-gray-300 border border-slate-700 rounded-full bg-slate-900/50 hover:text-cyan-400 hover:border-cyan-500 hover:bg-cyan-500/10 transition duration-300 cursor-pointer">
                                     Home
@@ -101,33 +103,46 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    <div className="w-full flex flex-col md:items-end text-left md:text-right">
-                        <div className="w-full max-w-[280px]">
-                            <h2 className="text-lg font-semibold mb-4 text-white tracking-wide">Contact Us</h2>
-                            <ul className="space-y-4 text-gray-400 text-sm w-full">
-                                <li className="flex items-start md:flex-row-reverse md:space-x-reverse space-x-3 group">
+
+                    <div className="w-full flex flex-col items-start md:items-end">
+
+                        <div className="w-full max-w-[270px] flex flex-col items-start">
+
+                            <h4 className="text-lg font-semibold mb-4 text-white tracking-wide text-left">
+                                Contact Us
+                            </h4>
+
+                            <ul className="space-y-4 text-gray-400 text-sm w-full flex flex-col items-start">
+
+
+                                <li className="flex items-start gap-3 group text-left w-full">
                                     <MapPin size={18} className="text-blue-400 mt-0.5 shrink-0 group-hover:scale-110 transition duration-300" />
                                     <span className="hover:text-white transition duration-300 leading-relaxed">
                                         23 Street, Gulshan, Dhaka
                                     </span>
                                 </li>
-                                <li className="flex items-center md:flex-row-reverse md:space-x-reverse space-x-3 group">
+
+                                <li className="flex items-center gap-3 group text-left w-full">
                                     <Mail size={18} className="text-blue-400 shrink-0 group-hover:scale-110 transition duration-300" />
                                     <a href="mailto:shopspot-online@gmail.com" className="hover:text-blue-400 transition duration-300 break-all">
                                         shopspot-online@gmail.com
                                     </a>
                                 </li>
-                                <li className="flex items-center md:flex-row-reverse md:space-x-reverse space-x-3 group">
+
+                                <li className="flex items-center gap-3 group text-left w-full">
                                     <Phone size={18} className="text-blue-400 shrink-0 group-hover:scale-110 transition duration-300" />
                                     <a href="tel:+8801784377301" className="hover:text-blue-400 transition duration-300">
                                         +880 1234-567890
                                     </a>
                                 </li>
+
                             </ul>
+
                         </div>
                     </div>
 
                 </div>
+
 
                 <div className="border-t border-slate-800 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 w-full">
                     <p className="text-gray-500 text-sm">
@@ -147,9 +162,16 @@ const Footer = () => {
                 </div>
             </div>
 
+
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
-                    <div className="relative w-full max-w-lg bg-[#111a2e] border border-slate-700 text-white p-8 rounded-2xl shadow-2xl mx-4">
+                <div
+                    onClick={() => setIsModalOpen(false)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative w-full max-w-lg bg-[#111a2e] border border-slate-700 text-white p-8 rounded-2xl shadow-2xl mx-4"
+                    >
                         <button
                             onClick={() => setIsModalOpen(false)}
                             className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-800 text-gray-400 hover:text-white hover:bg-red-500/20 transition duration-200 cursor-pointer"

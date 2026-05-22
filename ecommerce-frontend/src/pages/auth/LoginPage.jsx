@@ -75,7 +75,8 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
     };
 
     const handleSocialLogin = (provider) => {
-        toast.info(`${provider} login coming soon!`);
+        const providerKey = provider.toLowerCase();
+        window.location.href = `http://localhost:8080/oauth2/authorization/${providerKey}`;
     };
 
     return (
