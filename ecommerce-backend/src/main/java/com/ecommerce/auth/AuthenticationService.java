@@ -44,13 +44,18 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            throw new RuntimeException("Your account has been deactivated. Please contact support.");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            throw new RuntimeException("Invalid email or password");
+        }
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -66,5 +71,4 @@ public class AuthenticationService {
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .build();
-    }
-}
+    }}

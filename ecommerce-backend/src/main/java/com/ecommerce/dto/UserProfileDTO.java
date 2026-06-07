@@ -12,6 +12,7 @@ public class UserProfileDTO {
     private String phone;
     private String address;
     private String profileImage;
+    private boolean active;
     private Role role;
     private Instant createdAt;
 }

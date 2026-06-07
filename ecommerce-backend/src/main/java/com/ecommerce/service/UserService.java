@@ -75,11 +75,25 @@ public class UserService {
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
         dto.setAddress(user.getAddress());
+        dto.setActive(user.isActive());
         dto.setRole(user.getRole());
         dto.setCreatedAt(user.getCreatedAt());
         if (user.getProfileImage() != null) {
             dto.setProfileImage(Base64.getEncoder().encodeToString(user.getProfileImage()));
         }
         return dto;
+    }
+
+    public List<UserProfileDTO> getAllUsersAsDTO() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public void toggleUserStatus(Long id) {
+        User user = getUserById(id);
+        user.setActive(!user.isActive());
+        userRepository.save(user);
     }
 }

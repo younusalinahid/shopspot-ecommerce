@@ -108,11 +108,19 @@ export const login = async (email, password) => {
             user
         };
 
-    } catch (error) {
-        console.error("LoginPage error:", error);
+    } catch (err) {
+        const backendMsg = err.response?.data?.message || err.message || "";
+
+        let errorMessage = "Invalid email or password";
+
+        if (backendMsg.toLowerCase().includes("disabled") ||
+            backendMsg.toLowerCase().includes("deactivated")) {
+            errorMessage = "Your account has been deactivated. Please contact support.";
+        }
+
         return {
             success: false,
-            error: error.response?.data?.message || "LoginPage failed"
+            error: errorMessage
         };
     }
 };
@@ -122,7 +130,7 @@ export const logout = async () => {
         const refreshToken = localStorage.getItem('refreshToken');
 
         if (refreshToken) {
-            await axios.post(`${PUBLIC_API}/logout`, { refreshToken });
+            await axios.post(`${PUBLIC_API}/logout`, {refreshToken});
         }
     } catch (error) {
         console.error("Logout error:", error);
@@ -146,7 +154,7 @@ export const refreshToken = async () => {
             refreshToken
         });
 
-        const { accessToken } = response.data;
+        const {accessToken} = response.data;
 
         localStorage.setItem("accessToken", accessToken);
 

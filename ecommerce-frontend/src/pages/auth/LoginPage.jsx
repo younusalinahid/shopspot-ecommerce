@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {useNavigate, Link} from "react-router-dom";
-import { Roles } from "../../constants/roles";
+import React, {useEffect, useState} from "react";
+import {useNavigate, Link, useSearchParams} from "react-router-dom";
+import {Roles} from "../../constants/roles";
 import {login as loginApi} from "../../api/authApi";
 import "../../styles/App.css";
 import {toast} from "react-toastify";
@@ -13,6 +13,15 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const error = searchParams.get("error");
+        if (error === "deactivated") {
+            setError("Your account has been deactivated. Please contact support.");
+            toast.error("Your account has been deactivated. Please contact support.");
+        }
+    }, []);
 
     if (!isOpen) return null;
 
@@ -38,19 +47,20 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
         try {
             const response = await loginApi(email, password);
 
-            if (!response.success) {
-                throw new Error(response.error || "LoginPage failed");
+            if (!response?.success) {
+                const errMsg = response?.error || "Invalid email or password";
+                setError(errMsg);
+                if (errMsg.toLowerCase().includes("deactivated")) {
+                    toast.error("Your account has been deactivated. Please contact support.");
+                }
+                return;
             }
 
             const {user, token} = response;
-
             localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("token", token);
-
             window.dispatchEvent(new Event('userLoggedIn'));
-
             toast.success(`Welcome back, ${user.fullName || user.email}!`);
-
             if (onLoginSuccess) onLoginSuccess();
             onClose();
 
@@ -61,10 +71,7 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
             }
 
         } catch (err) {
-            console.error("LoginPage error:", err);
-            const errorMessage = err.message || "Invalid email or password";
-            setError(errorMessage);
-            toast.error("Invalid email or password!");
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }

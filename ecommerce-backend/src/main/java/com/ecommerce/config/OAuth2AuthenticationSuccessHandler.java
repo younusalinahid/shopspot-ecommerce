@@ -5,7 +5,7 @@ import com.ecommerce.model.type.Role;
 import com.ecommerce.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -16,11 +16,17 @@ import java.io.IOException;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+
+    public OAuth2AuthenticationSuccessHandler(
+            @Lazy JwtService jwtService,
+            UserRepository userRepository) {
+        this.jwtService = jwtService;
+        this.userRepository = userRepository;
+    }
 
     @Override
     @Transactional
@@ -55,6 +61,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .build();
             return userRepository.save(newUser);
         });
+
+        if (!user.isActive()) {
+            response.sendRedirect("http://localhost:3000/?error=deactivated");
+            return;
+        }
 
         String token = jwtService.generateToken(user);
         response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token);

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {ArrowRight} from 'lucide-react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useSearchParams} from 'react-router-dom';
 import CategorySidebar from '../../components/category/CategorySidebar';
 import {getActiveBanners} from "../../api/bannerApi";
 import Banner from "../../components/banner/Banner";
@@ -8,6 +8,7 @@ import {useCategories} from "../../hooks/useCategory";
 import ProductCard from "../../components/product/ProductCard";
 import {useProducts} from "../../hooks/useProducts";
 import {useCategoryProducts} from "../../hooks/useCategoryProducts";
+import {toast} from "react-toastify";
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -16,6 +17,15 @@ const HomePage = () => {
     const {categoryProducts, loading: categoryProductsLoading, error: categoryProductsError} = useCategoryProducts(4);
     const [banners, setBanners] = useState([]);
     const [isLoadingBanners, setIsLoadingBanners] = useState(true);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(() => {
+        const error = searchParams.get("error");
+        if (error === "deactivated") {
+            toast.error("Your account has been deactivated. Please contact support.");
+            setSearchParams({});
+        }
+    }, []);
 
     useEffect(() => {
         getActiveBanners()

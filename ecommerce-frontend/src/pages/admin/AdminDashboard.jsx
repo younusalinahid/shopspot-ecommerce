@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import Sidebar from '../../components/admin/AdminSidebar';
 import Header from '../../components/admin/AdminHeader';
 import StatsCards from '../../components/admin/StatsCards';
@@ -8,8 +8,19 @@ import RecentOrdersTable from '../../pages/admin/OrderManagementPage';
 import CategoryManagement from '../../pages/admin/CategoryManagementPage';
 import BannerManagement from '../../pages/admin/BannerManagementPage';
 import OrderManagement from '../../pages/admin/OrderManagementPage';
-import { LayoutDashboard, Package, ShoppingBag, Users, Settings, BarChart3, FolderTree, ImageIcon, DollarSign } from 'lucide-react';
+import {
+    LayoutDashboard,
+    Package,
+    ShoppingBag,
+    Users,
+    Settings,
+    BarChart3,
+    FolderTree,
+    ImageIcon,
+    DollarSign
+} from 'lucide-react';
 import ProductManagement from "../../pages/admin/ProductManagementPage";
+import CustomerManagementPage from "./CustomerManagementPage";
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -17,83 +28,75 @@ export default function AdminDashboard() {
 
     // Menu items
     const menuItems = [
-        { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { id: 'banners', icon: ImageIcon, label: 'Banners' },
-        { id: 'categories', icon: FolderTree, label: 'Categories' },
-        { id: 'products', icon: Package, label: 'Products' },
-        { id: 'orders', icon: ShoppingBag, label: 'Orders' },
-        { id: 'customers', icon: Users, label: 'Customers' },
-        { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-        { id: 'settings', icon: Settings, label: 'Settings' }
+        {id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard'},
+        {id: 'banners', icon: ImageIcon, label: 'Banners'},
+        {id: 'categories', icon: FolderTree, label: 'Categories'},
+        {id: 'products', icon: Package, label: 'Products'},
+        {id: 'orders', icon: ShoppingBag, label: 'Orders'},
+        {id: 'customers', icon: Users, label: 'Customers'},
+        {id: 'analytics', icon: BarChart3, label: 'Analytics'},
+        {id: 'settings', icon: Settings, label: 'Settings'}
     ];
 
     // Dummy data for dashboard
     const stats = [
-        { title: 'Total Sales', value: '৳42,580', change: '+12.5%', icon: DollarSign, color: 'bg-blue-500' },
-        { title: 'Orders', value: '156', change: '+8.2%', icon: ShoppingBag, color: 'bg-green-500' },
-        { title: 'Products', value: '1,234', change: '+3.1%', icon: Package, color: 'bg-purple-500' },
-        { title: 'Customers', value: '892', change: '+15.3%', icon: Users, color: 'bg-orange-500' }
+        {title: 'Total Sales', value: '৳42,580', change: '+12.5%', icon: DollarSign, color: 'bg-blue-500'},
+        {title: 'Orders', value: '156', change: '+8.2%', icon: ShoppingBag, color: 'bg-green-500'},
+        {title: 'Products', value: '1,234', change: '+3.1%', icon: Package, color: 'bg-purple-500'},
+        {title: 'Customers', value: '892', change: '+15.3%', icon: Users, color: 'bg-orange-500'}
     ];
 
     const salesData = [
-        { month: 'Jan', sales: 4200 },
-        { month: 'Feb', sales: 3800 },
-        { month: 'Mar', sales: 5100 },
-        { month: 'Apr', sales: 4600 },
-        { month: 'May', sales: 6200 },
-        { month: 'Jun', sales: 7100 }
+        {month: 'Jan', sales: 4200},
+        {month: 'Feb', sales: 3800},
+        {month: 'Mar', sales: 5100},
+        {month: 'Apr', sales: 4600},
+        {month: 'May', sales: 6200},
+        {month: 'Jun', sales: 7100}
     ];
 
     const categoryData = [
-        { name: 'T-Shirts', value: 450 },
-        { name: 'Jeans', value: 320 },
-        { name: 'Dresses', value: 280 },
-        { name: 'Shoes', value: 390 }
+        {name: 'T-Shirts', value: 450},
+        {name: 'Jeans', value: 320},
+        {name: 'Dresses', value: 280},
+        {name: 'Shoes', value: 390}
     ];
 
     const recentOrders = [
-        { id: '#ORD-001', customer: 'Rahim Ahmed', items: 3, amount: '৳2,450', status: 'Delivered' },
-        { id: '#ORD-002', customer: 'Fatima Khan', items: 1, amount: '৳890', status: 'Processing' },
-        { id: '#ORD-003', customer: 'Karim Hasan', items: 2, amount: '৳1,650', status: 'Shipped' }
+        {id: '#ORD-001', customer: 'Rahim Ahmed', items: 3, amount: '৳2,450', status: 'Delivered'},
+        {id: '#ORD-002', customer: 'Fatima Khan', items: 1, amount: '৳890', status: 'Processing'},
+        {id: '#ORD-003', customer: 'Karim Hasan', items: 2, amount: '৳1,650', status: 'Shipped'}
     ];
 
     // Render content based on active tab
     const renderContent = () => {
-        switch(activeTab) {
+        switch (activeTab) {
             case 'dashboard':
                 return (
                     <div>
-                        <StatsCards stats={stats} />
+                        <StatsCards stats={stats}/>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                            <SalesChart data={salesData} />
-                            <CategoryChart data={categoryData} />
+                            <SalesChart data={salesData}/>
+                            <CategoryChart data={categoryData}/>
                         </div>
-                        <RecentOrdersTable orders={recentOrders} />
+                        <RecentOrdersTable orders={recentOrders}/>
                     </div>
                 );
 
             case 'banners':
-                return <BannerManagement />;
+                return <BannerManagement/>;
 
             case 'categories':
-                return <CategoryManagement />;
+                return <CategoryManagement/>;
 
             case 'products':
-                return <ProductManagement />;
+                return <ProductManagement/>;
 
             case 'orders':
-                return <OrderManagement />;
+                return <OrderManagement/>;
 
             case 'customers':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Customers Management</h2>
-                        <p className="text-gray-500">View customer information and purchase history.</p>
-                        <div className="mt-6 p-4 bg-orange-50 rounded-lg">
-                            <p className="text-orange-700">Customers section coming soon...</p>
-                        </div>
-                    </div>
-                );
+                return <CustomerManagementPage/>;
 
             case 'analytics':
                 return (
@@ -102,17 +105,6 @@ export default function AdminDashboard() {
                         <p className="text-gray-500">View detailed analytics and reports.</p>
                         <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
                             <p className="text-indigo-700">Analytics section coming soon...</p>
-                        </div>
-                    </div>
-                );
-
-            case 'settings':
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
-                        <p className="text-gray-500">Configure your store settings and preferences.</p>
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <p className="text-gray-700">Settings section coming soon...</p>
                         </div>
                     </div>
                 );
