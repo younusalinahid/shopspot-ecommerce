@@ -48,7 +48,17 @@ export default function AppRoutes() {
 
             {/* ================= ADMIN ================= */}
             <Route
-                path="/admin/*"
+                path="/admin"
+                element={
+                    <ProtectedRoute role="ADMIN">
+                        <AdminLayout>
+                            <AdminDashboard />
+                        </AdminLayout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/:tab"
                 element={
                     <ProtectedRoute role="ADMIN">
                         <AdminLayout>

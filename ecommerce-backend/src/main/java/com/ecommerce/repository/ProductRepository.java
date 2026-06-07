@@ -16,14 +16,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findBySubCategoryId(Long subCategoryId);
 
-//    @Query("""
-//        SELECT p FROM Product p
-//        WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))
-//           OR LOWER(p.subCategory.name) LIKE LOWER(CONCAT('%', :query, '%'))
-//           OR LOWER(p.subCategory.category.name) LIKE LOWER(CONCAT('%', :query, '%'))
-//    """)
-//    List<Product> searchByNameOrSubCategory(@Param("query") String query);
-
     @Query("SELECT p FROM Product p " +
             "WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
             "OR LOWER(p.subCategory.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
@@ -32,10 +24,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByActiveTrue();
 
-    // Find by ID and active
     Optional<Product> findByIdAndActiveTrue(Long id);
 
-    // For admin - get all including inactive
     @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")
     List<Product> findAllProducts();
+
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.stockQuantity > 0 AND p.stockQuantity < 10 ORDER BY p.stockQuantity ASC")
+    List<Product> findLowStockProducts();
 }

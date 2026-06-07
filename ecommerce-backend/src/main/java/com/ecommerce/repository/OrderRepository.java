@@ -1,6 +1,7 @@
 package com.ecommerce.repository;
 
 import com.ecommerce.model.Order;
+import com.ecommerce.model.type.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +18,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product ORDER BY o.createdAt DESC")
     List<Order> findAllWithItems();
+
+    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<Order> findTop5ByOrderByCreatedAtDesc();
+
+    List<Order> findByStatus(OrderStatus status);
 }

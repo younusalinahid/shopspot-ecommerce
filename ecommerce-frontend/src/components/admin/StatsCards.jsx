@@ -1,5 +1,4 @@
 import React from 'react';
-import { TrendingUp } from 'lucide-react';
 
 export default function StatsCards({ stats }) {
     return (
@@ -12,13 +11,12 @@ export default function StatsCards({ stats }) {
                             <div className={`${stat.color} p-3 rounded-lg`}>
                                 <Icon className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-green-500 text-sm font-semibold flex items-center">
-                                <TrendingUp className="w-4 h-4 mr-1" />
-                                {stat.change}
-                            </span>
                         </div>
                         <p className="text-gray-500 text-sm mb-1">{stat.title}</p>
                         <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+                        {stat.change && (
+                            <p className="text-xs text-gray-400 mt-1">{stat.change}</p>
+                        )}
                     </div>
                 );
             })}
