@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import Sidebar from '../../components/admin/AdminSidebar';
 import Header from '../../components/admin/AdminHeader';
 import StatsCards from '../../components/admin/StatsCards';
@@ -9,8 +9,8 @@ import OrderManagement from '../../pages/admin/OrderManagementPage';
 import ProductManagement from "../../pages/admin/ProductManagementPage";
 import CustomerManagementPage from "../../pages/admin/CustomerManagementPage";
 import AnalyticsPage from "../../pages/admin/AnalyticsPage";
-import { dashboardApi } from "../../api/dashboardApi";
-import { useNavigate, useLocation } from 'react-router-dom';
+import {dashboardApi} from "../../api/dashboardApi";
+import {useNavigate, useLocation} from 'react-router-dom';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign
 } from 'lucide-react';
@@ -28,6 +28,7 @@ export default function AdminDashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isHighlighted, setIsHighlighted] = useState(false);
 
     useEffect(() => {
         setActiveTab(getTabFromPath());
@@ -36,7 +37,8 @@ export default function AdminDashboard() {
     useEffect(() => {
         dashboardApi.getDashboard()
             .then(setDashboardData)
-            .catch(() => {})
+            .catch(() => {
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -45,14 +47,29 @@ export default function AdminDashboard() {
         navigate(`/admin/${tabId}`);
     };
 
+    const lowStockRef = useRef(null);
+
+    const scrollToLowStock = () => {
+        lowStockRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+
+        setIsHighlighted(true);
+
+        setTimeout(() => {
+            setIsHighlighted(false);
+        }, 2000);
+    };
+
     const menuItems = [
-        { id: 'dashboard',  icon: LayoutDashboard, label: 'Dashboard'  },
-        { id: 'banners',    icon: ImageIcon,        label: 'Banners'    },
-        { id: 'categories', icon: FolderTree,       label: 'Categories' },
-        { id: 'products',   icon: Package,          label: 'Products'   },
-        { id: 'orders',     icon: ShoppingBag,      label: 'Orders'     },
-        { id: 'customers',  icon: Users,            label: 'Customers'  },
-        { id: 'analytics',  icon: BarChart3,        label: 'Analytics'  }
+        {id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard'},
+        {id: 'banners', icon: ImageIcon, label: 'Banners'},
+        {id: 'categories', icon: FolderTree, label: 'Categories'},
+        {id: 'products', icon: Package, label: 'Products'},
+        {id: 'orders', icon: ShoppingBag, label: 'Orders'},
+        {id: 'customers', icon: Users, label: 'Customers'},
+        {id: 'analytics', icon: BarChart3, label: 'Analytics'}
     ];
 
     const stats = dashboardData ? [
@@ -66,13 +83,19 @@ export default function AdminDashboard() {
             title: 'Total Orders',
             value: dashboardData.totalOrders ?? 0,
             change: `${dashboardData.ordersThisMonth ?? 0} this month`,
-            icon: ShoppingBag, color: 'bg-green-500'
+            icon: ShoppingBag, color: 'bg-green-500',
+            showButton: true,
+            buttonText: "View Low Stock",
+            onClick: scrollToLowStock
         },
         {
             title: 'Total Products',
             value: dashboardData.totalProducts ?? 0,
             change: 'Active products',
-            icon: Package, color: 'bg-purple-500'
+            icon: Package, color: 'bg-purple-500',
+            showButton: true,
+            buttonText: "View Low Stock",
+            onClick: scrollToLowStock
         },
         {
             title: 'Total Customers',
@@ -83,37 +106,39 @@ export default function AdminDashboard() {
     ] : [];
 
     const STATUS_COLORS = {
-        PENDING:    "bg-yellow-50 text-yellow-700",
+        PENDING: "bg-yellow-50 text-yellow-700",
         PROCESSING: "bg-blue-50 text-blue-700",
-        SHIPPED:    "bg-purple-50 text-purple-700",
-        DELIVERED:  "bg-green-50 text-green-700",
-        CANCELLED:  "bg-red-50 text-red-700",
+        SHIPPED: "bg-purple-50 text-purple-700",
+        DELIVERED: "bg-green-50 text-green-700",
+        CANCELLED: "bg-red-50 text-red-700",
     };
 
     const STATUS_BADGE_COLORS = {
-        PENDING:    "bg-yellow-100 text-yellow-700",
+        PENDING: "bg-yellow-100 text-yellow-700",
         PROCESSING: "bg-blue-100 text-blue-700",
-        SHIPPED:    "bg-purple-100 text-purple-700",
-        DELIVERED:  "bg-green-100 text-green-700",
-        CANCELLED:  "bg-red-100 text-red-700",
+        SHIPPED: "bg-purple-100 text-purple-700",
+        DELIVERED: "bg-green-100 text-green-700",
+        CANCELLED: "bg-red-100 text-red-700",
     };
 
     const renderDashboard = () => {
         if (loading) return (
             <div className="flex items-center justify-center py-24">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500" />
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"/>
             </div>
         );
+
+        const hasLowStock = dashboardData?.lowStockProducts?.length > 0;
 
         return (
             <div className="space-y-6">
 
                 {/* Stats Cards */}
-                <StatsCards stats={stats} />
+                <StatsCards stats={stats}/>
 
                 {/* Sales Chart + Order Status */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <SalesChart data={dashboardData?.dailySales || []} />
+                    <SalesChart data={dashboardData?.dailySales || []}/>
 
                     <div className="bg-white rounded-lg shadow-sm p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Status</h3>
@@ -167,8 +192,15 @@ export default function AdminDashboard() {
                         )}
                     </div>
 
-                    {/* Low Stock Alert */}
-                    <div className="bg-white rounded-lg shadow-sm p-6">
+                    {/* Low Stock Alert with Highlight Effect */}
+                    <div
+                        ref={lowStockRef}
+                        className={`bg-white rounded-lg shadow-sm p-6 transition-all duration-300 ${
+                            isHighlighted
+                                ? 'ring-4 ring-yellow-400 ring-opacity-75 shadow-lg scale-[1.02] bg-yellow-50'
+                                : ''
+                        }`}
+                    >
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">
                             ⚠️ Low Stock Alert
                         </h3>
@@ -202,13 +234,20 @@ export default function AdminDashboard() {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'dashboard':  return renderDashboard();
-            case 'banners':    return <BannerManagement />;
-            case 'categories': return <CategoryManagement />;
-            case 'products':   return <ProductManagement />;
-            case 'orders':     return <OrderManagement />;
-            case 'customers':  return <CustomerManagementPage />;
-            case 'analytics':  return <AnalyticsPage />;
+            case 'dashboard':
+                return renderDashboard();
+            case 'banners':
+                return <BannerManagement/>;
+            case 'categories':
+                return <CategoryManagement/>;
+            case 'products':
+                return <ProductManagement/>;
+            case 'orders':
+                return <OrderManagement/>;
+            case 'customers':
+                return <CustomerManagementPage/>;
+            case 'analytics':
+                return <AnalyticsPage/>;
                 return (
                     <div className="bg-white rounded-lg shadow-sm p-8">
                         <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
@@ -218,7 +257,8 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 );
-            default: return null;
+            default:
+                return null;
         }
     };
 

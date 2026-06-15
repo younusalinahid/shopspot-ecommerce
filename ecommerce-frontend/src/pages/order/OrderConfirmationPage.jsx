@@ -71,6 +71,18 @@ export default function OrderConfirmationPage() {
                             {order.status}
                         </span>
                     </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6 flex items-start gap-3">
+                        <span className="text-2xl flex-shrink-0">📧</span>
+                        <div>
+                            <p className="font-medium text-blue-800 dark:text-blue-300 text-sm">
+                                Confirmation email sent
+                            </p>
+                            <p className="text-blue-600 dark:text-blue-400 text-sm mt-0.5">
+                                We've sent an order confirmation to your email address.
+                                Please check your inbox (and spam folder if not found).
+                            </p>
+                        </div>
+                    </div>
 
                     {/* Items */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">

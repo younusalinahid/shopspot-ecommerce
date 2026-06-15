@@ -22,7 +22,7 @@ public class AdminOrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    @PatchMapping("/{orderId}/status")
+    @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderDTO> updateStatus(
             @PathVariable Long orderId,
             @RequestParam(name = "status") OrderStatus status) {

@@ -42,7 +42,6 @@ const ProductDetailsPage = () => {
         if (!productId) return;
         try {
             const response = await getReviewSummary(productId);
-            // Handle the response properly - it might be wrapped in response.data
             const summary = response.data || response;
             setReviewSummary({
                 averageRating: summary.averageRating || 0,
@@ -551,7 +550,7 @@ const ProductDetailsPage = () => {
                             >
                                 <ShoppingCart className="w-6 h-6"/>
                                 <span className="text-lg">
-                                    {!authState.isAuthenticated ? 'LoginPage to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}
+                                    {!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}
                                 </span>
                             </button>
                             <button
@@ -560,7 +559,7 @@ const ProductDetailsPage = () => {
                                 className="flex-1 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
                             >
                                 <span className="text-lg">
-                                    {!authState.isAuthenticated ? 'LoginPage to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}
+                                    {!authState.isAuthenticated ? 'Login to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}
                                 </span>
                             </button>
                         </div>
@@ -578,7 +577,7 @@ const ProductDetailsPage = () => {
                             >
                                 <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current animate-pulse' : ''}`}/>
                                 <span className="font-medium">
-                                    {!authState.isAuthenticated ? 'LoginPage for Wishlist' : isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
+                                    {!authState.isAuthenticated ? 'Login for Wishlist' : isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
                                 </span>
                             </button>
                             <button

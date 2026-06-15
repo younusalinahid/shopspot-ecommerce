@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class OrderService {
     private final CartService cartService;
     private final AddressService addressService;
     private final AddressRepository addressRepository;
+    private final EmailService emailService;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -139,9 +141,8 @@ public class OrderService {
         Order order = orderRepository.findByIdWithItems(request.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (!order.getUser().getId().equals(userId)) {
+        if (!order.getUser().getId().equals(userId))
             throw new RuntimeException("Unauthorized");
-        }
 
         try {
             PaymentIntent intent = PaymentIntent.retrieve(request.getPaymentIntentId());
@@ -150,9 +151,19 @@ public class OrderService {
                 order.setStatus(OrderStatus.PAID);
                 orderRepository.save(order);
                 cartService.clearCart(userId);
-            } else {
-                throw new RuntimeException("Payment not successful");
+
+                log.info("Sending email to: {}", order.getUser().getEmail());
+                log.info("Customer name: {}", order.getUser().getFullName());
+
+                emailService.sendOrderConfirmationEmail(
+                        order.getUser().getEmail(),
+                        order.getUser().getFullName() != null
+                                ? order.getUser().getFullName() : "Customer",
+                        toDTO(order)
+                );
+                log.info("Sending email ...");
             }
+
         } catch (Exception e) {
             log.error("Payment confirm error", e);
             throw new RuntimeException("Payment confirmation failed");

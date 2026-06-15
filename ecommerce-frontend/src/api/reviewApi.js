@@ -11,3 +11,14 @@ export const getReviewSummary = (productId) =>
 
 export const deleteReview = (reviewId) =>
     axiosInstance.delete(`/api/user/reviews/${reviewId}`);
+
+export const canUserReview = async (productId) => {
+    try {
+        const res = await axiosInstance.get(
+            `/api/user/reviews/product/${productId}/can-review`
+        );
+        return res.data.canReview;
+    } catch {
+        return false;
+    }
+};

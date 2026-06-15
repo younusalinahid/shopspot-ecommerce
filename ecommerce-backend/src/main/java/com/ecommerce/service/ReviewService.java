@@ -2,9 +2,12 @@ package com.ecommerce.service;
 
 import com.ecommerce.dto.ReviewDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
+import com.ecommerce.model.Order;
 import com.ecommerce.model.Product;
 import com.ecommerce.model.Review;
 import com.ecommerce.model.User;
+import com.ecommerce.model.type.OrderStatus;
+import com.ecommerce.repository.OrderRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.ReviewRepository;
 import com.ecommerce.repository.UserRepository;
@@ -23,18 +26,36 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
 
-    public ReviewDTO addOrUpdateReview(Long productId, String userEmail, ReviewRequestDTO request) {
-        if (request.getRating() < 1 || request.getRating() > 5) {
+    public ReviewDTO addOrUpdateReview(Long productId, String userEmail,
+                                       ReviewRequestDTO request) {
+        if (request.getRating() < 1 || request.getRating() > 5)
             throw new RuntimeException("Rating must be between 1 and 5");
-        }
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean hasPurchased = orderRepository.hasUserOrderedProduct(
+                user.getId(),
+                productId,
+                List.of(
+                        OrderStatus.PAID,
+                        OrderStatus.SHIPPED,
+                        OrderStatus.DELIVERED
+                )
+        );
+
+        if (!hasPurchased) {
+            throw new RuntimeException(
+                    "You can only review products you have purchased");
+        }
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        Review review = reviewRepository.findByUserIdAndProductId(user.getId(), productId)
+        Review review = reviewRepository
+                .findByUserIdAndProductId(user.getId(), productId)
                 .orElse(Review.builder().user(user).product(product).build());
 
         review.setRating(request.getRating());
@@ -42,6 +63,20 @@ public class ReviewService {
 
         return toDTO(reviewRepository.save(review));
     }
+
+    public boolean canUserReview(Long productId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElse(null);
+        if (user == null) return false;
+        return orderRepository.hasUserOrderedProduct(
+                user.getId(),
+                productId,
+                List.of(
+                        OrderStatus.PAID,
+                        OrderStatus.SHIPPED,
+                        OrderStatus.DELIVERED
+                )
+        );    }
 
     public List<ReviewDTO> getReviewsByProduct(Long productId) {
         return reviewRepository.findByProductIdOrderByCreatedAtDesc(productId)

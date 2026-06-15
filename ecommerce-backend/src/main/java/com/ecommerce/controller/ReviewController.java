@@ -21,28 +21,40 @@ public class ReviewController {
 
     @PostMapping("/user/reviews/product/{productId}")
     public ResponseEntity<ReviewDTO> addOrUpdateReview(
-            @PathVariable Long productId,
+            @PathVariable(name = "productId") Long productId,
             @RequestBody ReviewRequestDTO request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                reviewService.addOrUpdateReview(productId, userDetails.getUsername(), request));
+                reviewService.addOrUpdateReview(
+                        productId, userDetails.getUsername(), request));
     }
 
     @GetMapping("/public/reviews/product/{productId}")
-    public ResponseEntity<List<ReviewDTO>> getReviews(@PathVariable Long productId) {
+    public ResponseEntity<List<ReviewDTO>> getReviews(
+            @PathVariable(name = "productId") Long productId) {
         return ResponseEntity.ok(reviewService.getReviewsByProduct(productId));
     }
 
     @GetMapping("/public/reviews/product/{productId}/summary")
-    public ResponseEntity<Map<String, Object>> getSummary(@PathVariable Long productId) {
+    public ResponseEntity<Map<String, Object>> getSummary(
+            @PathVariable(name = "productId") Long productId) {
         return ResponseEntity.ok(reviewService.getProductRatingSummary(productId));
     }
 
     @DeleteMapping("/user/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(
-            @PathVariable Long reviewId,
+            @PathVariable(name = "reviewId") Long reviewId,
             @AuthenticationPrincipal UserDetails userDetails) {
         reviewService.deleteReview(reviewId, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/user/reviews/product/{productId}/can-review")
+    public ResponseEntity<Map<String, Boolean>> canReview(
+            @PathVariable(name = "productId") Long productId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        boolean canReview = reviewService.canUserReview(
+                productId, userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("canReview", canReview));
     }
 }

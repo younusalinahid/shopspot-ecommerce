@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import {userApi} from "../../api/userApi";
+import { userApi } from "../../api/userApi";
 import { Search, Trash2, ToggleLeft, ToggleRight, Users } from "lucide-react";
 
 const CustomerManagementPage = () => {
@@ -14,10 +14,36 @@ const CustomerManagementPage = () => {
             setLoading(true);
             const data = await userApi.getAllUsers();
             const customers = data.filter(u => u.role !== "ADMIN");
-            setUsers(customers);
-            setFiltered(customers);
+
+            const customersWithActiveStatus = customers.map(customer => ({
+                ...customer,
+                active: customer.active === undefined ? true : customer.active
+            }));
+
+            setUsers(customersWithActiveStatus);
+            setFiltered(customersWithActiveStatus);
         } catch {
             toast.error("Failed to fetch customers");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fixAllUsersStatus = async () => {
+        if (!window.confirm("This will set ALL customers to ACTIVE status. Continue?")) return;
+
+        setLoading(true);
+        try {
+            for (const user of users) {
+                if (user.active === false || user.active === undefined) {
+                    await userApi.toggleStatus(user.id);
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+                }
+            }
+            toast.success("All customers have been set to active status");
+            fetchUsers();
+        } catch {
+            toast.error("Failed to fix some users");
         } finally {
             setLoading(false);
         }
@@ -64,7 +90,7 @@ const CustomerManagementPage = () => {
 
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
-            {/* Header */}
+            {/* Header with Fix Button */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-orange-100 rounded-lg">
@@ -76,16 +102,26 @@ const CustomerManagementPage = () => {
                     </div>
                 </div>
 
-                {/* Search */}
-                <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search by name, email, phone..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                    />
+                <div className="flex gap-2 w-full sm:w-auto">
+                    {/* Fix All Button - Temporary */}
+                    <button
+                        onClick={fixAllUsersStatus}
+                        className="px-3 py-2 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition-colors"
+                    >
+                        Fix All Active Status
+                    </button>
+
+                    {/* Search */}
+                    <div className="relative w-full sm:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, phone..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -97,13 +133,13 @@ const CustomerManagementPage = () => {
                 </div>
                 <div className="bg-green-50 rounded-xl p-4 text-center">
                     <p className="text-2xl font-bold text-green-600">
-                        {users.filter(u => u.active).length}
+                        {users.filter(u => u.active === true).length}
                     </p>
                     <p className="text-sm text-green-500">Active</p>
                 </div>
                 <div className="bg-red-50 rounded-xl p-4 text-center">
                     <p className="text-2xl font-bold text-red-600">
-                        {users.filter(u => !u.active).length}
+                        {users.filter(u => u.active === false).length}
                     </p>
                     <p className="text-sm text-red-500">Inactive</p>
                 </div>
@@ -133,8 +169,6 @@ const CustomerManagementPage = () => {
                         {filtered.map((user, index) => (
                             <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="p-3 border-b text-gray-400">{index + 1}</td>
-
-                                {/* Customer Info */}
                                 <td className="p-3 border-b">
                                     <div className="flex items-center gap-3">
                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -146,39 +180,33 @@ const CustomerManagementPage = () => {
                                         </div>
                                     </div>
                                 </td>
-
                                 <td className="p-3 border-b text-gray-600">
                                     {user.phone || <span className="text-gray-300">—</span>}
                                 </td>
-
                                 <td className="p-3 border-b text-gray-500">
                                     {formatDate(user.createdAt)}
                                 </td>
-
-                                {/* Status */}
                                 <td className="p-3 border-b text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            user.active
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-red-100 text-red-600"
-                                        }`}>
-                                            {user.active ? "Active" : "Inactive"}
-                                        </span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        user.active === true
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-red-100 text-red-600"
+                                    }`}>
+                                        {user.active === true ? "Active" : "Inactive"}
+                                    </span>
                                 </td>
-
-                                {/* Actions */}
                                 <td className="p-3 border-b text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         <button
                                             onClick={() => handleToggleStatus(user)}
-                                            title={user.active ? "Deactivate" : "Activate"}
+                                            title={user.active === true ? "Deactivate" : "Activate"}
                                             className={`p-1.5 rounded-lg transition-colors ${
-                                                user.active
+                                                user.active === true
                                                     ? "text-green-600 hover:bg-green-50"
                                                     : "text-gray-400 hover:bg-gray-100"
                                             }`}
                                         >
-                                            {user.active
+                                            {user.active === true
                                                 ? <ToggleRight className="w-5 h-5" />
                                                 : <ToggleLeft className="w-5 h-5" />
                                             }

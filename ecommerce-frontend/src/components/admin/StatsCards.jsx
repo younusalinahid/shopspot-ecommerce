@@ -17,6 +17,16 @@ export default function StatsCards({ stats }) {
                         {stat.change && (
                             <p className="text-xs text-gray-400 mt-1">{stat.change}</p>
                         )}
+                        {stat.showButton && stat.onClick && (
+                            <button
+                                onClick={stat.onClick}
+                                className="mt-3 text-xs font-medium text-cyan-600 hover:text-cyan-700
+                                         bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg
+                                         transition-colors duration-200 w-full"
+                            >
+                                {stat.buttonText || 'View Details'}
+                            </button>
+                        )}
                     </div>
                 );
             })}

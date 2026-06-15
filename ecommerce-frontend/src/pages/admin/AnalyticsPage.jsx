@@ -221,9 +221,15 @@ const AnalyticsPage = () => {
                     </h3>
                     <ResponsiveContainer width="100%" height={240}>
                         <PieChart>
-                            <Pie data={pieData} cx="50%" cy="50%" outerRadius={80}
-                                 dataKey="value" label={({name, value}) => `${name}: ${value}`}
-                                 labelLine={false}>
+                            <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={80}
+                                dataKey="value"
+                                label={false}
+                                labelLine={false}
+                            >
                                 {pieData.map((_, i) => (
                                     <Cell key={i} fill={COLORS[i % COLORS.length]}/>
                                 ))}
@@ -235,8 +241,8 @@ const AnalyticsPage = () => {
                                 align="center"
                                 formatter={(value, entry) => (
                                     <span style={{fontSize: 12, color: "#374151"}}>
-                        {value}: {entry.payload.value}
-                    </span>
+                                        {value}: {entry.payload.value}
+                                    </span>
                                 )}
                             />
                         </PieChart>

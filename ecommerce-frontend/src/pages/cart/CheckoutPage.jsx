@@ -153,7 +153,18 @@ function CheckoutContent() {
             if (paymentIntent.status === 'succeeded') {
                 await orderApi.confirmPayment(createdOrder.id, paymentIntent.id);
                 await clearCart();
-                toast.success('Order placed! 🎉');
+
+                // ✅ Order success toast
+                toast.success('Order placed successfully! 🎉');
+
+                // ✅ Email notification toast — 1.5 সেকেন্ড পরে দেখাবে
+                setTimeout(() => {
+                    toast.info(
+                        '📧 A confirmation email has been sent to your email address.',
+                        { autoClose: 5000 }
+                    );
+                }, 1500);
+
                 navigate(`/order-confirmation/${createdOrder.id}`);
             }
         } catch (err) {

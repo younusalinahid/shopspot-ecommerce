@@ -19,9 +19,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product ORDER BY o.createdAt DESC")
     List<Order> findAllWithItems();
 
-    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
-
     List<Order> findTop5ByOrderByCreatedAtDesc();
 
-    List<Order> findByStatus(OrderStatus status);
+    @Query("""
+            SELECT COUNT(oi) > 0
+            FROM OrderItem oi
+            WHERE oi.product.id = :productId
+              AND oi.order.user.id = :userId
+              AND oi.order.status IN :statuses
+            """)
+    boolean hasUserOrderedProduct(
+            @Param("userId") Long userId,
+            @Param("productId") Long productId,
+            @Param("statuses") List<OrderStatus> statuses
+    );
 }
