@@ -1,4 +1,4 @@
-import axiosInstance from './axiosClient';
+import axiosInstance from './axiosConfig';
 
 const ORDER_API = '/api/user/orders';
 const ADMIN_ORDER = '/api/admin/orders';

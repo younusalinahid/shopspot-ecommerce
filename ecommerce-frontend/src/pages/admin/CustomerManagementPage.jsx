@@ -103,13 +103,6 @@ const CustomerManagementPage = () => {
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
-                    {/* Fix All Button - Temporary */}
-                    <button
-                        onClick={fixAllUsersStatus}
-                        className="px-3 py-2 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition-colors"
-                    >
-                        Fix All Active Status
-                    </button>
 
                     {/* Search */}
                     <div className="relative w-full sm:w-72">

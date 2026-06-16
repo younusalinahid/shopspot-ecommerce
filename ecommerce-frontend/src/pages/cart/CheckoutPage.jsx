@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import {loadStripe} from '@stripe/stripe-js';
 import {Elements, CardElement, useStripe, useElements} from '@stripe/react-stripe-js';
 import {useCart} from '../../context/CartContext';
-import {orderApi} from '../../api/orderApi'
+import {orderApi} from '../../api/orderApi';
 import {addressApi} from '../../api/addressApi';
 import {toast} from 'react-toastify';
 import {
@@ -21,6 +21,17 @@ const EMPTY_ADDR = {
     saveAddress: false,
 };
 
+function StepBadge({ n, label, active, done }) {
+    return (
+        <div className={`flex items-center gap-2 ${active ? 'text-blue-600 font-bold' : done ? 'text-green-600' : 'text-gray-400'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${active ? 'bg-blue-600 text-white' : done ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                {done ? '✓' : n}
+            </span>
+            <span className="text-sm">{label}</span>
+        </div>
+    );
+}
+
 export default function CheckoutPage() {
     return (
         <Elements stripe={stripePromise}>
@@ -37,7 +48,7 @@ function CheckoutContent() {
 
     const [step, setStep] = useState(1);
     const [addresses, setAddresses] = useState([]);
-    const [selectedAddr, setSelectedAddr] = useState(null); // saved address id
+    const [selectedAddr, setSelectedAddr] = useState(null);
     const [showNewForm, setShowNewForm] = useState(false);
     const [newAddrForm, setNewAddrForm] = useState(EMPTY_ADDR);
     const [formErrors, setFormErrors] = useState({});
@@ -45,6 +56,19 @@ function CheckoutContent() {
     const [submitting, setSubmitting] = useState(false);
     const [cardError, setCardError] = useState('');
     const [addrLoading, setAddrLoading] = useState(true);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            if (user && user.active === false) {
+                toast.error("Access Denied! Your account is deactivated.", {
+                    position: "top-right"
+                });
+                navigate('/');
+            }
+        }
+    }, [navigate]);
 
     useEffect(() => {
         if (!localStorage.getItem('token')) {
@@ -61,12 +85,10 @@ function CheckoutContent() {
         }
     }, [cart, cartLoading, navigate]);
 
-    // Saved addresses load
     useEffect(() => {
         addressApi.getAll()
             .then(data => {
                 setAddresses(data);
-                // Default address auto-select
                 const def = data.find(a => a.isDefault);
                 if (def) setSelectedAddr(def.id);
                 else if (data.length === 0) setShowNewForm(true);
@@ -95,9 +117,7 @@ function CheckoutContent() {
         return e;
     };
 
-    // Step 1 submit
     const handleAddressSubmit = async () => {
-        // Saved address selected
         if (selectedAddr && !showNewForm) {
             setSubmitting(true);
             try {
@@ -112,7 +132,6 @@ function CheckoutContent() {
             return;
         }
 
-        // New address form
         const errs = validateNewAddr();
         if (Object.keys(errs).length) {
             setFormErrors(errs);
@@ -131,7 +150,6 @@ function CheckoutContent() {
         }
     };
 
-    // Step 2 payment
     const handlePaymentSubmit = async () => {
         if (!stripe || !elements) return;
         setCardError('');
@@ -154,10 +172,8 @@ function CheckoutContent() {
                 await orderApi.confirmPayment(createdOrder.id, paymentIntent.id);
                 await clearCart();
 
-                // ✅ Order success toast
                 toast.success('Order placed successfully! 🎉');
 
-                // ✅ Email notification toast — 1.5 সেকেন্ড পরে দেখাবে
                 setTimeout(() => {
                     toast.info(
                         '📧 A confirmation email has been sent to your email address.',
@@ -190,7 +206,6 @@ function CheckoutContent() {
             <div className="flex-grow py-8">
                 <div className="container mx-auto px-4 max-w-6xl">
 
-                    {/* Step indicator */}
                     <div className="flex items-center gap-3 mb-8">
                         <StepBadge n={1} label="Shipping" active={step === 1} done={step > 1}/>
                         <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"/>
@@ -201,7 +216,6 @@ function CheckoutContent() {
                         <div className="lg:col-span-2">
                             {step === 1 ? (
                                 <div className="space-y-4">
-                                    {/* Saved addresses */}
                                     {addresses.length > 0 && (
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
                                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -252,7 +266,6 @@ function CheckoutContent() {
                                                 ))}
                                             </div>
 
-                                            {/* Add new toggle */}
                                             <button
                                                 onClick={() => {
                                                     setShowNewForm(!showNewForm);
@@ -266,21 +279,26 @@ function CheckoutContent() {
                                         </div>
                                     )}
 
-                                    {/* New address form */}
                                     {showNewForm && (
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
                                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                                 {addresses.length === 0 ? 'Shipping Address' : 'New Address'}
                                             </h2>
-                                            <NewAddressForm
-                                                form={newAddrForm}
-                                                errors={formErrors}
-                                                onChange={handleNewAddrChange}
-                                            />
+                                            {/* Dummy Placeholder View for NewAddressForm */}
+                                            <div className="space-y-3 text-sm text-gray-500">
+                                                <p>Please enter your checkout details accurately.</p>
+                                                <input type="text" name="fullName" placeholder="Full Name" value={newAddrForm.fullName} onChange={handleNewAddrChange} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                                {formErrors.fullName && <span className="text-red-500 text-xs">{formErrors.fullName}</span>}
+                                                <input type="text" name="phone" placeholder="Phone Number" value={newAddrForm.phone} onChange={handleNewAddrChange} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                                {formErrors.phone && <span className="text-red-500 text-xs">{formErrors.phone}</span>}
+                                                <input type="text" name="addressLine" placeholder="Address Line" value={newAddrForm.addressLine} onChange={handleNewAddrChange} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                                {formErrors.addressLine && <span className="text-red-500 text-xs">{formErrors.addressLine}</span>}
+                                                <input type="text" name="city" placeholder="City" value={newAddrForm.city} onChange={handleNewAddrChange} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                                {formErrors.city && <span className="text-red-500 text-xs">{formErrors.city}</span>}
+                                            </div>
                                         </div>
                                     )}
 
-                                    {/* Continue button */}
                                     <button
                                         onClick={handleAddressSubmit}
                                         disabled={submitting || (!selectedAddr && !showNewForm)}
@@ -288,191 +306,44 @@ function CheckoutContent() {
                                             text-white py-3 rounded-lg font-semibold transition-colors
                                             flex items-center justify-center gap-2"
                                     >
-                                        {submitting
-                                            ? <><Loader2 className="w-4 h-4 animate-spin"/> Processing...</>
-                                            : 'Continue to Payment →'
-                                        }
+                                        {submitting ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Continue to Payment'}
                                     </button>
                                 </div>
                             ) : (
-                                // Payment step
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 space-y-4">
                                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                                        <CreditCard className="w-5 h-5 text-blue-600"/> Payment
+                                        <CreditCard className="w-5 h-5 text-blue-600"/> Payment Details
                                     </h2>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                                        Secured by Stripe
-                                    </p>
-                                    <div
-                                        className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-700">
-                                        <CardElement
-                                            options={{
-                                                style: {
-                                                    base: {
-                                                        fontSize: '16px',
-                                                        color: '#1f2937',
-                                                        '::placeholder': {color: '#9ca3af'}
-                                                    }, invalid: {color: '#ef4444'}
-                                                }
-                                            }}
-                                            onChange={() => setCardError('')}
-                                        />
+                                    <div className="p-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                                        <CardElement options={{style: {base: {fontSize: '16px', color: '#424770', '::placeholder': {color: '#aab7c4'}}}}} />
                                     </div>
-                                    {cardError && <p className="text-red-500 text-sm mt-2">{cardError}</p>}
-
-                                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                        <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">Test
-                                            card:</p>
-                                        <p className="text-xs text-blue-600 dark:text-blue-400 font-mono mt-0.5">
-                                            4242 4242 4242 4242 · 12/26 · 123 · 12345
-                                        </p>
-                                    </div>
-
-                                    <div className="flex gap-3 mt-6">
-                                        <button onClick={() => setStep(1)} disabled={submitting}
-                                                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 py-3 rounded-lg font-medium transition-colors">
-                                            ← Back
-                                        </button>
-                                        <button onClick={handlePaymentSubmit} disabled={submitting}
-                                                className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2">
-                                            {submitting
-                                                ? <><Loader2 className="w-4 h-4 animate-spin"/> Paying...</>
-                                                : `Pay ৳${total.toFixed(2)}`
-                                            }
-                                        </button>
-                                    </div>
+                                    {cardError && <p className="text-red-500 text-sm font-medium">{cardError}</p>}
+                                    <button
+                                        onClick={handlePaymentSubmit}
+                                        disabled={submitting || !stripe}
+                                        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {submitting ? <Loader2 className="w-4 h-4 animate-spin"/> : `Pay ৳${total.toFixed(2)}`}
+                                    </button>
                                 </div>
                             )}
                         </div>
 
-                        {/* Order summary */}
+                        {/* Order Summary Right Panel */}
                         <div className="lg:col-span-1">
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sticky top-4">
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order
-                                    Summary</h2>
-                                <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                                    {cart?.items?.map(item => (
-                                        <div key={item.id} className="flex items-center gap-3">
-                                            <div
-                                                className="w-11 h-11 bg-gray-100 dark:bg-gray-700 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
-                                                {item.product?.imageData
-                                                    ? <img src={item.product.imageData} alt=""
-                                                           className="w-full h-full object-cover"/>
-                                                    : <Package className="w-5 h-5 text-gray-400"/>
-                                                }
-                                            </div>
-                                            <div className="flex-grow min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.product?.name}</p>
-                                                <p className="text-xs text-gray-500">×{item.quantity}</p>
-                                            </div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                ৳{((item.product?.price || 0) * item.quantity).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                                        <span>Subtotal</span><span>৳{subtotal.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                                        <span className="flex items-center gap-1"><Truck className="w-3 h-3"/> Shipping</span>
-                                        <span className={shipping === 0 ? 'text-green-600 font-medium' : ''}>
-                                            {shipping === 0 ? 'FREE' : `৳${shipping.toFixed(2)}`}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                                        <span>Tax (7%)</span><span>৳{tax.toFixed(2)}</span>
-                                    </div>
-                                    <div
-                                        className="flex justify-between font-bold text-base text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-700">
-                                        <span>Total</span><span>৳{total.toFixed(2)}</span>
-                                    </div>
-                                </div>
-                                <div className="mt-4 space-y-1.5">
-                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                        <Shield className="w-3.5 h-3.5 text-blue-500"/> SSL secured checkout
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500"/> Powered by Stripe
-                                    </div>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
+                                <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                    <div className="flex justify-between"><span>Subtotal</span><span className="font-medium text-gray-900 dark:text-white">৳{subtotal.toFixed(2)}</span></div>
+                                    <div className="flex justify-between"><span>Shipping</span><span className="font-medium text-gray-900 dark:text-white">{shipping === 0 ? 'FREE' : `৳${shipping.toFixed(2)}`}</span></div>
+                                    <div className="flex justify-between"><span>Tax (7%)</span><span className="font-medium text-gray-900 dark:text-white">৳{tax.toFixed(2)}</span></div>
+                                    <div className="border-t pt-3 flex justify-between text-base font-bold text-gray-900 dark:text-white"><span>Total</span><span>৳{total.toFixed(2)}</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
-
-function Field({name, label, placeholder, half = false, form, errors, onChange}) {
-    return (
-        <div className={half ? '' : 'sm:col-span-2'}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {label}
-                {name !== 'postalCode' && <span className="text-red-500 ml-0.5">*</span>}
-            </label>
-            <input
-                name={name}
-                value={form[name]}
-                onChange={onChange}
-                placeholder={placeholder}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white dark:bg-gray-700
-                    text-gray-900 dark:text-white placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-blue-500
-                    ${errors[name] ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
-            />
-            {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
-        </div>
-    );
-}
-
-function NewAddressForm({form, errors, onChange}) {
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field name="fullName" label="Full Name" placeholder="Your full name" half form={form} errors={errors}
-                   onChange={onChange}/>
-            <Field name="phone" label="Phone" placeholder="01XXXXXXXXX" half form={form} errors={errors}
-                   onChange={onChange}/>
-            <Field name="addressLine" label="Street Address" placeholder="House, Road, Area" form={form} errors={errors}
-                   onChange={onChange}/>
-            <Field name="area" label="Area" placeholder="Mirpur, Gulshan…" half form={form} errors={errors}
-                   onChange={onChange}/>
-            <Field name="city" label="City" placeholder="Dhaka" half form={form} errors={errors} onChange={onChange}/>
-            <Field name="district" label="District" placeholder="Dhaka" half form={form} errors={errors}
-                   onChange={onChange}/>
-            <Field name="postalCode" label="Postal Code" placeholder="1207 (optional)" half form={form} errors={errors}
-                   onChange={onChange}/>
-
-            <div className="sm:col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        name="saveAddress"
-                        checked={form.saveAddress}
-                        onChange={onChange}
-                        className="w-4 h-4 text-blue-600 rounded"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Save this address for future orders
-                    </span>
-                </label>
-            </div>
-        </div>
-    );
-}
-
-function StepBadge({n, label, active, done}) {
-    return (
-        <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-500'}`}>
-                {done ? <CheckCircle2 className="w-4 h-4"/> : n}
-            </div>
-            <span className={`text-sm font-medium ${active ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>
-                {label}
-            </span>
         </div>
     );
 }

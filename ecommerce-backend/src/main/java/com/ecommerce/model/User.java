@@ -45,6 +45,7 @@ public class User implements UserDetails {
     @Column(columnDefinition = "LONGBLOB")
     private byte[] profileImage;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 1")
     private boolean active = true;
 
@@ -71,6 +72,10 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Address> addresses;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

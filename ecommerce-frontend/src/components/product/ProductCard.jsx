@@ -1,10 +1,10 @@
-import {Star} from 'lucide-react';
-import {useState} from 'react';
-import {Link} from "react-router-dom";
+import { Star } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
 import { toast } from 'react-toastify';
 
-export default function ProductCard({product, showDiscount = false}) {
+export default function ProductCard({ product, showDiscount = false }) {
     const [imageError, setImageError] = useState(false);
     const [loading, setLoading] = useState(false);
     const { addToCart } = useCart();
@@ -12,6 +12,18 @@ export default function ProductCard({product, showDiscount = false}) {
     const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            if (user && user.active === false) {
+                toast.error("Your account is deactivated. You cannot add items to cart.", {
+                    position: "top-right",
+                    autoClose: 4000
+                });
+                return;
+            }
+        }
 
         setLoading(true);
 

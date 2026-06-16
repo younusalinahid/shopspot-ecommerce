@@ -29,6 +29,14 @@ public class CartService {
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
 
+    private void checkUserActive(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!user.isActive()) {
+            throw new RuntimeException("ACCOUNT_DEACTIVATED");
+        }
+    }
+
     @Transactional
     public CartDTO getCart(Long userId) {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
@@ -39,6 +47,7 @@ public class CartService {
 
     @Transactional
     public CartDTO addToCart(Long userId, AddToCartRequestDTO request) {
+        checkUserActive(userId);
         try {
             Product product = productRepository.findById(request.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found with ID: " + request.getProductId()));
@@ -129,6 +138,7 @@ public class CartService {
 
     @Transactional
     public CartDTO updateCartItem(Long userId, Long cartItemId, Integer quantity) {
+        checkUserActive(userId);
         CartItem cartItem = cartItemRepository.findByIdAndCartUserId(cartItemId, userId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
 

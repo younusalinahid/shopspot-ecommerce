@@ -119,4 +119,26 @@ public class EmailService {
 
         return html;
     }
+
+    @Async
+    public void sendAccountReportEmail(String userEmail, String userName, String message) {
+        try {
+            MimeMessage mail = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true, "UTF-8");
+
+            helper.setTo(fromEmail);
+            helper.setFrom(fromEmail);
+            helper.setSubject("Account Report from: " + userName);
+            helper.setText(
+                    "<h3>Account Report</h3>" +
+                            "<p><b>User:</b> " + userName + " (" + userEmail + ")</p>" +
+                            "<p><b>Message:</b></p><p>" + message + "</p>",
+                    true
+            );
+
+            mailSender.send(mail);
+        } catch (Exception e) {
+            log.error("Failed to send report email: {}", e.getMessage());
+        }
+    }
 }

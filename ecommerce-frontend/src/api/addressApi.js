@@ -1,4 +1,4 @@
-import axiosInstance from './axiosClient';
+import axiosInstance from './axiosConfig';
 
 const ADDR_API = '/api/user/addresses';
 

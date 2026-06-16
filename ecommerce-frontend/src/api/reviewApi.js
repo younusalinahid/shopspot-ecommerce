@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosClient";
+import axiosInstance from "./axiosConfig";
 
 export const addOrUpdateReview = (productId, reviewData) =>
     axiosInstance.post(`/api/user/reviews/product/${productId}`, reviewData);

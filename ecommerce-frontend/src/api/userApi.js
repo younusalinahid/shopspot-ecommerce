@@ -1,17 +1,17 @@
 import axios from "axios";
+import axiosInstance from "./axiosConfig";
 
 const PUBLIC_URL = "http://localhost:8080/api/user/profile";
 const ADMIN_URL = "http://localhost:8080/api/admin/users";
 
-
 const authConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) throw new Error("Not authenticated");
     return { headers: { Authorization: `Bearer ${token}` } };
 };
 
 const formDataConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) throw new Error("Not authenticated");
     return {
         headers: {
@@ -59,4 +59,8 @@ export const userApi = {
         await axios.delete(`${ADMIN_URL}/${id}`, authConfig());
     },
 
+    sendReport: async (reportData) => {
+        const response = await axios.post('http://localhost:8080/api/public/report', reportData);
+        return response.data;
+    }
 };

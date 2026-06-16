@@ -46,7 +46,7 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
 
         try {
             const response = await loginApi(email, password);
-
+            console.log("LOGIN RESPONSE:", response);
             if (!response?.success) {
                 const errMsg = response?.error || "Invalid email or password";
                 setError(errMsg);
@@ -56,13 +56,27 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
                 return;
             }
 
-            const {user, token} = response;
-            localStorage.setItem("user", JSON.stringify(user));
+            const { user, token } = response;
+
+            const normalizedUser = {
+                id:       user.id,
+                fullName: user.fullName || user.name || user.email,
+                email:    user.email,
+                role:     user.role,
+                active:   user.active,
+                phone:    user.phone || null,
+            };
+
             localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(normalizedUser));
+
             window.dispatchEvent(new Event('userLoggedIn'));
-            toast.success(`Welcome back, ${user.fullName || user.email}!`);
+            window.dispatchEvent(new StorageEvent('storage'));
+
+            toast.success(`Welcome back, ${normalizedUser.fullName}!`);
+
             if (onLoginSuccess) onLoginSuccess();
-            onClose();
+            if (onClose) onClose();
 
             if (user.role === Roles.ADMIN || user.role === "ADMIN") {
                 navigate("/admin");
@@ -72,6 +86,7 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
 
         } catch (err) {
             setError("Something went wrong. Please try again.");
+            toast.error("Login failed. Please try again.");
         } finally {
             setLoading(false);
         }

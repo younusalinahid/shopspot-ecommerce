@@ -8,17 +8,15 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserDashboard from "../components/user/UserDashboard";
 import ProductDetails from "../pages/product/ProductDetailsPage"
 import CategoryProducts from "../pages/product/CategoryProductsPage"
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
 import ProductList from "../components/product/ProductList";
 import OrderConfirmationPage from "../pages/order/OrderConfirmationPage";
 import OrdersPage from "../pages/order/OrdersPage";
 import ProfilePage from "../pages/user/ProfilePage";
-import SettingsPage from "../pages/user/SettingsPage";
 import {ProtectedRoute} from "../components/common/ProtectedRoute";
 import CheckoutPage from "../pages/cart/CheckoutPage";
 import CartPage from "../pages/cart/CartPage";
 import OAuth2CallbackPage from "../pages/auth/OAuth2CallbackPage";
+import SearchResultsPage from "../pages/product/SearchResultsPage";
 
 export default function AppRoutes() {
     return (
@@ -27,6 +25,7 @@ export default function AppRoutes() {
             {/* ================= USER PUBLIC ================= */}
             <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
+                <Route path="/search" element={<SearchResultsPage />} />
                 <Route path="/subcategory/:subCategoryId" element={<ProductList />} />
                 <Route path="/product/:productId" element={<ProductDetails />} />
                 <Route path="/category/:categoryId" element={<CategoryProducts />} />
@@ -36,13 +35,10 @@ export default function AppRoutes() {
                 <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
             </Route>
 
             {/* ================= AUTH ================= */}
             <Route element={<AuthLayout />}>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
                 <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
             </Route>
 

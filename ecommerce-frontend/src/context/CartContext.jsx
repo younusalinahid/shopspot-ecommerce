@@ -6,6 +6,7 @@ import {
     removeCartItem,
     clearCart
 } from '../api/cartApi';
+import {toast} from "react-toastify";
 
 const CartContext = createContext();
 
@@ -41,8 +42,19 @@ export const CartProvider = ({ children }) => {
         }
     }, [isLoggedIn]);
 
+    const isUserActive = () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            return user?.active !== false;
+        } catch { return true; }
+    };
+
     const handleAddToCart = async (productId, quantity = 1, size = null, color = null) => {
         if (!isLoggedIn()) return { success: false };
+        if (!isUserActive()) {
+            toast.error('Your account has been deactivated. Please contact support.');
+            return { success: false, deactivated: true };
+        }
         const result = await addToCart(productId, quantity, size, color);
         if (result.success) setCart(result.data);
         return result;

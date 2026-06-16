@@ -58,16 +58,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                     .fullName(finalName)
                     .password("")
                     .role(Role.USER)
+                    .active(true)
                     .build();
             return userRepository.save(newUser);
         });
 
-        if (!user.isActive()) {
-            response.sendRedirect("http://localhost:3000/?error=deactivated");
-            return;
-        }
-
         String token = jwtService.generateToken(user);
-        response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token);
+
+        if (!user.isActive()) {
+            response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token + "&isRestricted=true");
+        } else {
+            response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token);
+        }
     }
 }

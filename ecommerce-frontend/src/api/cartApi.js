@@ -1,4 +1,4 @@
-import axiosInstance from './axiosClient';
+import axiosInstance from './axiosConfig';
 
 const CART_API = '/api/user/cart';
 

@@ -8,6 +8,10 @@ const CartPage = () => {
     const {cart, updateCartItem, removeCartItem, clearCart} = useCart();
     const [updatingItems, setUpdatingItems] = useState({});
 
+    // 💡 লোকাল স্টোরেজ থেকে ইউজারের অ্যাক্টিভ স্ট্যাটাস চেক করা
+    const storedUser = localStorage.getItem("user");
+    const isDeactivated = storedUser ? JSON.parse(storedUser).active === false : false;
+
     const getProductImage = (item) => item.product?.imageData || null;
     const getProductName = (item) => item.product?.name || "Product Not Available";
     const getProductPrice = (item) => item.product?.price || 0;
@@ -287,12 +291,22 @@ const CartPage = () => {
 
                                 {/* Action Buttons */}
                                 <div className="space-y-3">
-                                    <Link
-                                        to="/checkout"
-                                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors"
-                                    >
-                                        Proceed to Checkout
-                                    </Link>
+                                    {/* 💡 ফিক্সড বাটন: ডিঅ্যাক্টিভেটেড হলে বাটন ডিজেবল হবে এবং মেসেজ পাল্টে যাবে */}
+                                    {isDeactivated ? (
+                                        <button
+                                            disabled
+                                            className="block w-full bg-gray-400 text-white py-3 px-6 rounded-lg font-semibold text-center cursor-not-allowed opacity-60"
+                                        >
+                                            ❌ Account Restricted
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            to="/checkout"
+                                            className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors"
+                                        >
+                                            Proceed to Checkout
+                                        </Link>
+                                    )}
 
                                     <Link
                                         to="/"
@@ -306,7 +320,6 @@ const CartPage = () => {
                     </div>
                 </div>
             </div>
-
         </div>
     );
 };
