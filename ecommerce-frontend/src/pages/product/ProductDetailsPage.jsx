@@ -48,18 +48,15 @@ const ProductDetailsPage = () => {
                 totalReviews: summary.totalReviews || 0
             });
         } catch (error) {
-            console.error('Error fetching review summary:', error);
             setReviewSummary({averageRating: 0, totalReviews: 0});
         }
     };
 
     useEffect(() => {
         checkAuthStatus();
-
         const handleAuthChange = () => {
             checkAuthStatus();
         };
-
         window.addEventListener('userLoggedIn', handleAuthChange);
         window.addEventListener('userLoggedOut', handleAuthChange);
 
@@ -94,7 +91,6 @@ const ProductDetailsPage = () => {
                 }
 
                 setProduct(productData);
-
                 await fetchReviewSummary();
             } catch (err) {
                 console.error('Error fetching product:', err);
@@ -204,7 +200,6 @@ const ProductDetailsPage = () => {
 
     const handleImageMouseMove = (e) => {
         if (!isZoomed) return;
-
         const {left, top, width, height} = e.currentTarget.getBoundingClientRect();
         const x = ((e.clientX - left) / width) * 100;
         const y = ((e.clientY - top) / height) * 100;
@@ -213,7 +208,6 @@ const ProductDetailsPage = () => {
 
     const increaseQuantity = () => {
         if (!product) return;
-
         const maxStock = parseInt(product.stock) || 0;
         const currentQty = parseInt(quantity) || 1;
 
@@ -229,7 +223,7 @@ const ProductDetailsPage = () => {
     const decreaseQuantity = () => {
         const currentQty = parseInt(quantity) || 1;
         if (currentQty > 1) {
-            setQuantity(prev => parseInt(prev) - 1);
+            setQuantity(prev => parseInt(prev) + 1);
         }
     };
 
@@ -241,13 +235,10 @@ const ProductDetailsPage = () => {
 
     const getStockStatus = () => {
         if (!product) return {hasStock: false, stockCount: 0, isUnlimited: false};
-
         const stockCount = parseInt(product.stock);
-
         if (isNaN(stockCount) || stockCount === 0) {
             return {hasStock: true, stockCount: 999, isUnlimited: true};
         }
-
         return {hasStock: stockCount > 0, stockCount: stockCount, isUnlimited: false};
     };
 
@@ -256,7 +247,7 @@ const ProductDetailsPage = () => {
             <div
                 className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
                 <div
-                    className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 dark:border-cyan-400 transition-colors duration-300"></div>
+                    className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 dark:border-cyan-400"></div>
             </div>
         );
     }
@@ -266,16 +257,10 @@ const ProductDetailsPage = () => {
             <div
                 className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 transition-colors duration-300">
-                        Product Not Found
-                    </h2>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4 transition-colors duration-300">
-                        {error || 'The product you are looking for does not exist.'}
-                    </p>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
-                    >
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Product Not Found</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">{error || 'The product you are looking for does not exist.'}</p>
+                    <button onClick={() => navigate('/')}
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg transition-all">
                         Go Back Home
                     </button>
                 </div>
@@ -283,7 +268,7 @@ const ProductDetailsPage = () => {
         );
     }
 
-    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    const hasDiscount = !!(product.originalPrice && product.originalPrice > product.price);
     const discountPercentage = hasDiscount
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
         : 0;
@@ -310,14 +295,13 @@ const ProductDetailsPage = () => {
 
             <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
                     {/* Product Images */}
                     <div className="space-y-6">
                         <div
-                            className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md dark:hover:shadow-cyan-500/20 transition-all duration-500 overflow-hidden group">
+                            className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm overflow-hidden group">
                             <div
-                                className={`relative overflow-hidden rounded-lg transition-all duration-500 ${
-                                    isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
-                                }`}
+                                className={`relative overflow-hidden rounded-lg ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
                                 onMouseEnter={() => setIsZoomed(true)}
                                 onMouseLeave={() => setIsZoomed(false)}
                                 onMouseMove={handleImageMouseMove}
@@ -327,150 +311,109 @@ const ProductDetailsPage = () => {
                                         <img
                                             src={mainImage}
                                             alt={product.name}
-                                            className={`w-full h-96 object-contain transition-all duration-700 ${
-                                                isZoomed ? 'scale-150' : 'scale-100 group-hover:scale-105'
-                                            }`}
-                                            style={{
-                                                transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center'
-                                            }}
+                                            className={`w-full h-96 object-contain transition-all duration-700 ${isZoomed ? 'scale-150' : 'scale-100 group-hover:scale-105'}`}
+                                            style={{transformOrigin: isZoomed ? `${zoomPosition.x}% ${zoomPosition.y}%` : 'center'}}
                                         />
                                         <div
-                                            className={`absolute top-4 right-4 bg-black/70 dark:bg-white/70 text-white dark:text-gray-900 p-2 rounded-full transition-all duration-300 ${
-                                                isZoomed ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
-                                            }`}>
+                                            className={`absolute top-4 right-4 bg-black/70 text-white p-2 rounded-full transition-all duration-300 ${isZoomed ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'}`}>
                                             <ZoomIn className="w-5 h-5"/>
                                         </div>
                                     </>
                                 ) : (
                                     <div
-                                        className="w-full h-96 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg transition-colors duration-300">
-                                        <span className="text-6xl text-gray-400 dark:text-gray-500 mb-4">📦</span>
+                                        className="w-full h-96 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                        <span className="text-6xl text-gray-400 mb-4">📦</span>
                                         <p className="text-gray-500 dark:text-gray-400 text-lg">No Image Available</p>
                                     </div>
                                 )}
                             </div>
-                            {hasDiscount && (
+                            {hasDiscount ? (
                                 <div
                                     className="absolute top-6 left-6 bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
                                     {discountPercentage}% OFF
                                 </div>
-                            )}
+                            ) : null}
                         </div>
-
-                        {productImages.length > 1 && (
-                            <div className="flex space-x-4 overflow-x-auto pb-4">
-                                {productImages.map((image, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => {
-                                            setSelectedImage(index);
-                                            setIsZoomed(false);
-                                        }}
-                                        className={`flex-shrink-0 relative group/thumb transition-all duration-300 ${
-                                            selectedImage === index
-                                                ? 'ring-4 ring-cyan-500 dark:ring-cyan-400 scale-105'
-                                                : 'ring-2 ring-gray-200 dark:ring-gray-600 hover:ring-cyan-300 dark:hover:ring-cyan-500'
-                                        } rounded-xl overflow-hidden`}
-                                    >
-                                        <img
-                                            src={image}
-                                            alt={`${product.name} ${index + 1}`}
-                                            className="w-20 h-20 object-cover transition-transform duration-300 group-hover/thumb:scale-110"
-                                        />
-                                        {selectedImage === index && (
-                                            <div
-                                                className="absolute inset-0 bg-cyan-500/20 dark:bg-cyan-400/20 border-2 border-cyan-500 dark:border-cyan-400 rounded-xl"></div>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
                     {/* Product Info */}
                     <div className="space-y-6">
-                        <div
-                            className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                             {product.subCategory && (
                                 <span
-                                    className="bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 text-cyan-700 dark:text-cyan-300 px-3 py-1 rounded-full font-medium transition-colors duration-300">
+                                    className="bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 px-3 py-1 rounded-full font-medium">
                                     {product.subCategory.name || 'Uncategorized'}
                                 </span>
                             )}
                             {product.brand && (
-                                <span
-                                    className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-colors duration-300">
+                                <span className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                                     {product.brand}
                                 </span>
                             )}
                         </div>
 
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight transition-colors duration-300">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight">
                             {product.name}
                         </h1>
 
+                        {/* Ratings */}
                         <div className="flex items-center space-x-4">
                             <div
-                                className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full transition-colors duration-300">
+                                className="flex items-center space-x-1 bg-amber-50 dark:bg-amber-900/20 px-3 py-1 rounded-full">
                                 {[...Array(5)].map((_, i) => (
                                     <Star
                                         key={i}
-                                        className={`w-5 h-5 ${
-                                            i < Math.round(reviewSummary.averageRating)
-                                                ? 'text-amber-400 fill-current'
-                                                : 'text-gray-300 dark:text-gray-600'
-                                        }`}
+                                        className={`w-5 h-5 ${i < Math.round(reviewSummary.averageRating) ? 'text-amber-400 fill-current' : 'text-gray-300 dark:text-gray-600'}`}
                                     />
                                 ))}
-                                <span
-                                    className="ml-2 text-gray-700 dark:text-amber-300 font-semibold transition-colors duration-300">
+                                <span className="ml-2 text-gray-700 dark:text-amber-300 font-semibold">
                                     {reviewSummary.averageRating > 0 ? reviewSummary.averageRating.toFixed(1) : 'No ratings'}
                                 </span>
                             </div>
-                            <span className="text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                            <span className="text-gray-500 dark:text-gray-400">
                                 ({reviewSummary.totalReviews} {reviewSummary.totalReviews === 1 ? 'review' : 'reviews'})
                             </span>
                         </div>
 
+                        {/* Price Block */}
                         <div className="space-y-2">
                             <div className="flex items-baseline space-x-3">
-                                <span
-                                    className="text-4xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
-                                    ৳{product.price?.toFixed(2)}
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    ৳ {product.price?.toFixed(2)}
                                 </span>
-                                {hasDiscount && (
+                                {hasDiscount ? (
                                     <>
-                                        <span
-                                            className="text-2xl text-gray-500 dark:text-gray-400 line-through transition-colors duration-300">
-                                            ৳{product.originalPrice.toFixed(2)}
+                                        <span className="text-lg text-gray-400 dark:text-gray-500 line-through">
+                                            ৳ {product.originalPrice?.toFixed(2)}
                                         </span>
                                         <span
-                                            className="bg-red-500 dark:bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold animate-bounce transition-colors duration-300">
+                                            className="bg-red-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold animate-bounce">
                                             {discountPercentage}% OFF
                                         </span>
                                     </>
-                                )}
+                                ) : null}
                             </div>
-                            {hasDiscount && (
-                                <p className="text-green-600 dark:text-green-400 font-medium flex items-center space-x-1 transition-colors duration-300">
+                            {hasDiscount ? (
+                                <p className="text-green-600 dark:text-green-400 font-medium flex items-center space-x-1">
                                     <span>🎉</span>
-                                    <span>You save ৳{(product.originalPrice - product.price).toFixed(2)}</span>
+                                    <span>You save ৳ {(product.originalPrice - product.price).toFixed(2)}</span>
                                 </p>
-                            )}
+                            ) : null}
                         </div>
 
-                        <div
-                            className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl transition-colors duration-300">
+                        {/* Stock Status */}
+                        <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
                             <div
-                                className={`w-3 h-3 rounded-full animate-pulse ${hasStock ? 'bg-green-500' : 'bg-red-500'} transition-colors duration-300`}></div>
+                                className={`w-3 h-3 rounded-full animate-pulse ${hasStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
                             <span
-                                className={hasStock ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold transition-colors duration-300'}>
+                                className={hasStock ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
                                 {isUnlimited ? 'In Stock (Unlimited)' : hasStock ? `${stockCount} items in stock` : 'Out of stock'}
                             </span>
                         </div>
 
+                        {/* Description */}
                         <div
-                            className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
+                            className="bg-blue-100 dark:bg-gray-800/50 p-4 rounded-xl shadow-sm border border-gray-200/50 transition-colors duration-300">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">
                                 Description
                             </h3>
@@ -479,88 +422,46 @@ const ProductDetailsPage = () => {
                             </p>
                         </div>
 
-                        {product.features && product.features.length > 0 && (
-                            <div
-                                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 transition-colors duration-300">
-                                    Key Features
-                                </h3>
-                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {product.features.map((feature, index) => (
-                                        <li key={index}
-                                            className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 group/feature transition-colors duration-300">
-                                            <div
-                                                className="w-2 h-2 bg-cyan-500 dark:bg-cyan-400 rounded-full group-hover/feature:scale-150 transition-transform duration-300"></div>
-                                            <span
-                                                className="group-hover/feature:text-cyan-700 dark:group-hover/feature:text-cyan-400 transition-colors duration-300">
-                                                {feature}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
                         {/* Quantity Selector */}
                         <div
-                            className="flex items-center space-x-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-colors duration-300">
-                            <span
-                                className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                                Quantity:
-                            </span>
+                            className="flex items-center space-x-4 bg-blue-100 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-200/60">
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Quantity:</span>
                             <div
-                                className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden transition-colors duration-300">
+                                className="flex items-center space-x-3 border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
                                 <button
                                     onClick={decreaseQuantity}
-                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                                     disabled={quantity <= 1}
                                 >
-                                    <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
+                                    <Minus className="w-4 h-4"/>
                                 </button>
-                                <span
-                                    className="px-6 py-3 font-semibold text-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
-                                    {quantity}
-                                </span>
+                                <span className="px-4 font-semibold text-gray-900 dark:text-white">{quantity}</span>
                                 <button
                                     onClick={increaseQuantity}
-                                    className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="p-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                                     disabled={!isUnlimited && quantity >= maxStock}
                                 >
-                                    <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400"/>
+                                    <Plus className="w-4 h-4"/>
                                 </button>
                             </div>
-                            {!isUnlimited && maxStock > 0 && (
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    Max: {maxStock}
-                                </span>
-                            )}
-                            {isUnlimited && (
-                                <span className="text-sm text-green-500 dark:text-green-400">
-                                    Unlimited Stock
-                                </span>
-                            )}
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex space-x-4">
+                        <div className="flex space-x-4 pt-2">
                             <button
                                 onClick={handleAddToCart}
                                 disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
-                                className="flex-1 bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
+                                className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-6 rounded-xl font-semibold transition-all flex items-center justify-center space-x-2 disabled:bg-gray-400"
                             >
-                                <ShoppingCart className="w-6 h-6"/>
-                                <span className="text-lg">
-                                    {!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}
-                                </span>
+                                <ShoppingCart className="w-5 h-5"/>
+                                <span>{!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}</span>
                             </button>
                             <button
                                 onClick={handleBuyNow}
                                 disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
-                                className="flex-1 bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl"
+                                className="flex-1 bg-gray-900 hover:bg-black text-white py-3 px-6 rounded-xl font-semibold transition-all flex items-center justify-center disabled:bg-gray-400"
                             >
-                                <span className="text-lg">
-                                    {!authState.isAuthenticated ? 'Login to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}
-                                </span>
+                                <span>{!authState.isAuthenticated ? 'Login to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}</span>
                             </button>
                         </div>
 
@@ -569,30 +470,29 @@ const ProductDetailsPage = () => {
                             <button
                                 onClick={handleWishlist}
                                 disabled={!authState.isAuthenticated}
-                                className={`flex items-center space-x-3 px-6 py-3 rounded-xl border transition-all duration-300 ${
+                                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl border text-sm transition-all ${
                                     isWishlisted
-                                        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
-                                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105'
-                                } ${!authState.isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        ? 'bg-red-50 dark:bg-red-900/20 border-red-200 text-red-600'
+                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                                }`}
                             >
-                                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current animate-pulse' : ''}`}/>
-                                <span className="font-medium">
-                                    {!authState.isAuthenticated ? 'Login for Wishlist' : isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
-                                </span>
+                                <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`}/>
+                                <span>{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
                             </button>
                             <button
                                 onClick={handleShare}
-                                className="flex items-center space-x-3 px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-300 font-medium"
+                                className="flex items-center space-x-2 px-4 py-2.5 rounded-xl border bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400"
                             >
-                                <Share2 className="w-5 h-5"/>
+                                <Share2 className="w-4 h-4"/>
                                 <span>Share</span>
                             </button>
                         </div>
 
+                        {/* Badges Info */}
                         <div
                             className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
                             <div
-                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl transition-colors duration-300">
+                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-200 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl transition-colors duration-300">
                                 <Truck className="w-10 h-10 text-cyan-600 dark:text-cyan-400"/>
                                 <div>
                                     <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">
@@ -604,7 +504,7 @@ const ProductDetailsPage = () => {
                                 </div>
                             </div>
                             <div
-                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl transition-colors duration-300">
+                                className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-200 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl transition-colors duration-300">
                                 <Shield className="w-10 h-10 text-green-600 dark:text-green-400"/>
                                 <div>
                                     <h4 className="font-semibold text-gray-900 dark:text-white transition-colors duration-300">
@@ -619,36 +519,16 @@ const ProductDetailsPage = () => {
                     </div>
                 </div>
 
-                {product.specifications && Object.keys(product.specifications).length > 0 && (
-                    <div
-                        className="mt-12 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center transition-colors duration-300">
-                            Product Specifications
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {Object.entries(product.specifications).map(([key, value]) => (
-                                <div key={key}
-                                     className="flex justify-between items-center py-4 px-6 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-cyan-50 dark:hover:bg-cyan-900/20 transition-colors duration-300 group">
-                                    <span
-                                        className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition-colors duration-300">
-                                        {key}
-                                    </span>
-                                    <span
-                                        className="text-gray-900 dark:text-white font-medium transition-colors duration-300">
-                                        {value}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-                {/* Reviews */}
-                <ReviewSection
-                    productId={product.id}
-                    currentUserEmail={authState.user?.email}
-                    currentUserName={authState.user?.fullName}
-                    onSummaryUpdate={handleReviewSummaryUpdate}
-                />
+                {/* ── 💡 REVIEW SECTION */}
+                <div className="mt-12">
+                    <ReviewSection
+                        productId={productId}
+                        currentUserEmail={authState.user?.email}
+                        currentUserName={authState.user?.fullName}
+                        onSummaryUpdate={handleReviewSummaryUpdate}
+                    />
+                </div>
+
             </div>
         </div>
     );
