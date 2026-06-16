@@ -15,7 +15,7 @@ const MainLayout = () => {
             <Footer />
 
             <ToastContainer
-                position="top-right"
+                position="top-left"
                 autoClose={1000}
                 theme="colored"
             />

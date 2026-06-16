@@ -23,7 +23,7 @@ export default function ProductCard({ product, showDiscount = false }) {
             const user = JSON.parse(storedUser);
             if (user && user.active === false) {
                 toast.error("Your account is deactivated. You cannot add items to cart.", {
-                    position: "top-right",
+                    position: "top-left",
                     autoClose: 4000
                 });
                 return;
@@ -35,7 +35,7 @@ export default function ProductCard({ product, showDiscount = false }) {
             const result = await addToCart(product.id, 1);
             if (result && result.success) {
                 toast.success('Product added to cart successfully!', {
-                    position: "top-right",
+                    position: "top-left",
                     autoClose: 3000
                 });
             }
