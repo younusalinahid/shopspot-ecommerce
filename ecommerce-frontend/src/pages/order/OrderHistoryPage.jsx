@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { orderApi } from "../api/orderApi";
+import { orderApi } from "../../api/orderApi";
 
 const statusColors = {
     PENDING: "bg-yellow-100 text-yellow-800",

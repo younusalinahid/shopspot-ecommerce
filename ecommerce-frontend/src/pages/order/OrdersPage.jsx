@@ -460,18 +460,6 @@ function OrderDetailsSidebar({order, onClose}) {
                         ))}
                     </div>
                 </div>
-
-                {/* Support Actions */}
-                <div className="flex gap-2 pt-2">
-                    <button className="flex-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300
-                        px-3 py-2 rounded-lg text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all">
-                        Need Help?
-                    </button>
-                    <button className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
-                        px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
-                        Download Invoice
-                    </button>
-                </div>
             </div>
         </div>
     );
