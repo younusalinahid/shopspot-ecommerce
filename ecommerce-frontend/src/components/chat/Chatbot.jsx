@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { chatApi } from "../../api/chatApi";
 
-const ChatWidget = () => {
+const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         {
@@ -168,4 +168,4 @@ const ChatWidget = () => {
     );
 };
 
-export default ChatWidget;
+export default Chatbot;
