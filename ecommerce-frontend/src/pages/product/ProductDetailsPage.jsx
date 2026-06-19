@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {Star, ShoppingCart, Heart, Share2, Truck, Shield, ArrowLeft, Plus, Minus, ZoomIn} from 'lucide-react';
 import {productService} from '../../api/productApi';
@@ -28,6 +28,14 @@ const ProductDetailsPage = () => {
         isAuthenticated: false,
         user: null
     });
+
+    useEffect(() => {
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'instant'
+        });
+    }, [productId]);
 
     const checkAuthStatus = () => {
         const authenticated = isAuthenticated();
@@ -129,12 +137,31 @@ const ProductDetailsPage = () => {
             const result = await addToCart(product.id, quantity);
             if (result) {
                 toast.success('Product added to cart successfully!');
+                triggerChatBotRecommendation();
             }
+            const event = new CustomEvent("cartItemAdded", {
+                detail: { productName: product.name }
+            });
+            window.dispatchEvent(event);
         } catch (error) {
             console.error('Error adding to cart:', error);
             toast.error('Failed to add product to cart');
         } finally {
             setAddingToCart(false);
+        }
+    };
+
+    const triggerChatBotRecommendation = () => {
+        try {
+            console.log("Triggering AI for product:", product.name);
+
+            const cartTriggerEvent = new CustomEvent("triggerAddToCartChat", {
+                detail: { productName: product.name }
+            });
+            window.dispatchEvent(cartTriggerEvent);
+
+        } catch (err) {
+            console.error('Failed to trigger AI bot:', err);
         }
     };
 
@@ -223,7 +250,7 @@ const ProductDetailsPage = () => {
     const decreaseQuantity = () => {
         const currentQty = parseInt(quantity) || 1;
         if (currentQty > 1) {
-            setQuantity(prev => parseInt(prev) + 1);
+            setQuantity(prev => parseInt(prev) - 1);
         }
     };
 

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import { chatApi } from "../../api/chatApi";
 
 const Chatbot = () => {
@@ -15,8 +16,91 @@ const Chatbot = () => {
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+        let cartTimer = null;
+        let lastAddedProduct = "";
+
+        const handleCartTrigger = (event) => {
+            const addedProductName = event.detail.productName;
+            lastAddedProduct = addedProductName;
+
+            if (cartTimer) {
+                clearTimeout(cartTimer);
+            }
+
+            cartTimer = setTimeout(async () => {
+                setIsOpen(true);
+                setLoading(true);
+
+                setMessages(prev => [...prev, {
+                    role: "user",
+                    content: `🛒 Added items to cart!`
+                }]);
+
+                const systemTriggerMessage = {
+                    role: "user",
+                    content: `SYSTEM_CART_TRIGGER:${lastAddedProduct}`
+                };
+
+                try {
+                    const response = await chatApi.sendMessage([systemTriggerMessage]);
+                    setMessages(prev => [...prev, {
+                        role: "assistant",
+                        content: response.message
+                    }]);
+                } catch {
+                    setMessages(prev => [...prev, {
+                        role: "assistant",
+                        content: "Could not fetch suggestions right now. 😔"
+                    }]);
+                } finally {
+                    setLoading(false);
+                }
+            }, 5000);
+        };
+
+        window.addEventListener("cartItemAdded", handleCartTrigger);
+
+        return () => {
+            window.removeEventListener("cartItemAdded", handleCartTrigger);
+            if (cartTimer) clearTimeout(cartTimer);
+        };
+    }, []);
+
+    const renderMessageContent = (content) => {
+        const regex = /\[([^\]]+)\]\(search:([^)]+)\)/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = regex.exec(content)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(content.substring(lastIndex, match.index));
+            }
+
+            const linkText = match[1];
+            const searchKeyword = match[2];
+
+            parts.push(
+                <Link
+                    key={match.index}
+                    to={`/search?q=${encodeURIComponent(searchKeyword.trim())}`}
+                    className="inline-flex items-center gap-1.5 mx-1 px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-sm transition-all text-xs"
+                    onClick={() => setIsOpen(false)}
+                >
+                    {linkText}
+                    <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+            );
+
+            lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < content.length) {
+            parts.push(content.substring(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : content;
+    };
 
     const handleSend = async () => {
         if (!input.trim() || loading) return;
@@ -102,7 +186,7 @@ const Chatbot = () => {
                                     ${msg.role === "user"
                                     ? "bg-cyan-500 text-white rounded-br-sm"
                                     : "bg-white text-gray-700 shadow-sm rounded-bl-sm"}`}>
-                                    {msg.content}
+                                    {msg.role === "assistant" ? renderMessageContent(msg.content) : msg.content}
                                 </div>
                             </div>
                         ))}

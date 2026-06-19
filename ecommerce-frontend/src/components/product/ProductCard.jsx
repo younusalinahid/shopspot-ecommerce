@@ -38,6 +38,11 @@ export default function ProductCard({ product, showDiscount = false }) {
                     position: "top-left",
                     autoClose: 3000
                 });
+
+                const event = new CustomEvent("cartItemAdded", {
+                    detail: { productName: product.name }
+                });
+                window.dispatchEvent(event);
             }
         } catch (error) {
             console.error("Cart error:", error);

@@ -33,7 +33,14 @@ public class ChatService {
                 userMessage = request.getMessages().get(request.getMessages().size() - 1).getContent();
             }
 
-            String storeContext = buildStoreContext(userMessage);
+            String storeContext;
+            if (userMessage.startsWith("SYSTEM_CART_TRIGGER:")) {
+                String productName = userMessage.replace("SYSTEM_CART_TRIGGER:", "").trim();
+                storeContext = buildCartSuggestionContext(productName);
+            } else {
+                storeContext = buildStoreContext(userMessage);
+            }
+
             List<Map<String, String>> messages = new ArrayList<>();
             messages.add(Map.of("role", "system", "content", storeContext));
 
@@ -78,10 +85,25 @@ public class ChatService {
         }
     }
 
-    private String buildStoreContext(String userMessage) {
+    private String buildCartSuggestionContext(String productName) {
+        String[] words = productName.split(" ");
+        String defaultKeyword = words.length > 0 ? words[0].toLowerCase() : "frock";
 
+        return "You are ShopSpot's AI Assistant.\n" +
+                "The user has just added '" + productName + "' to their cart.\n" +
+                "Your job is to politely acknowledge this and offer them a quick link to discover more items like this.\n\n" +
+                "Strict Language Rule: If the product name or user context has Bengali text, reply in Bengali. Otherwise, English.\n\n" +
+                "CRITICAL SEARCH LINKING RULE:\n" +
+                "- You MUST provide a single collection search link using this exact format: [Link Text](search:keyword).\n" +
+                "- Choose a single, relevant word for the keyword (e.g., for '" + productName + "', use '" + defaultKeyword + "' or 'sharara').\n" +
+                "- Example Response (English): 'Excellent choice! You can explore more options like this here: [View Collection](search:" + defaultKeyword + ")'.\n" +
+                "- Example Response (Bengali): 'চমৎকার পছন্দ! এই ধরণের আরও কালেকশন দেখতে পারেন এখানে: [পুরো কালেকশন দেখুন](search:" + defaultKeyword + ")'.\n" +
+                "- Keep the message sweet, concise, and exactly 1-2 sentences. Do not mention product IDs.";
+    }
+
+    private String buildStoreContext(String userMessage) {
         List<com.ecommerce.model.Product> matchedProducts = productRepository.findByActiveTrue().stream()
-                .limit(5)
+                .limit(20)
                 .collect(Collectors.toList());
 
         if (userMessage != null && !userMessage.isEmpty()) {
@@ -97,17 +119,16 @@ public class ChatService {
 
         String productsInfo = matchedProducts.stream()
                 .map(p -> {
-                    String info = p.getName() + " (Regular Price: " + p.getPrice() + " Tk)";
+                    String info = "Product: " + p.getName() + " (ID: " + p.getId() + ", Regular Price: " + p.getPrice() + " Tk)";
 
                     if (p.getDiscountPercent() > 0) {
                         int discountAmount = (p.getPrice() * p.getDiscountPercent()) / 100;
                         int finalPrice = p.getPrice() - discountAmount;
-
                         info += " [Discount: " + p.getDiscountPercent() + "% OFF! Current Price: " + finalPrice + " Tk]";
                     }
                     return info;
                 })
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining("; "));
 
         String categories = categoryRepository.findAll().stream()
                 .map(c -> c.getName())
@@ -125,6 +146,10 @@ public class ChatService {
                 "- Products Details: " + productsInfo + "\n" +
                 "- Delivery: 2-3 days\n" +
                 "- Policy: 7 days returns.\n\n" +
-                "Be brief and polite. If a product has a [Discount: X% OFF], always highlight the discount and tell the customer the final current price. Never make up discounts on your own.";
+                "PRODUCT LINKING RULE:\n" +
+                "- When recommending or mentioning any product available in the 'Products Details' above, you MUST create a link using this exact Markdown-style format: [Product Name](id).\n" +
+                "- Example: If recommending a product with ID 12, write: 'You can check out our [Premium Silk Saree](12)'.\n" +
+                "- NEVER use full URLs like http://localhost. Only use the format [Product Name](id).\n\n" +
+                "Be brief and polite. If a product has a discount, always highlight it. Never make up products or discounts on your own.";
     }
 }
