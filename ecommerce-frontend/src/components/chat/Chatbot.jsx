@@ -257,11 +257,11 @@ const Chatbot = () => {
 
             {/* ── Tooltip ── */}
             {!isOpen && showTooltip && (
-                <div className="absolute bottom-[72px] right-0 mb-1 animate-fadeIn">
+                <div className="absolute bottom-3 right-full mr-3 animate-fadeIn">
                     <div className="bg-gray-900 text-white text-xs font-medium px-3.5 py-2 rounded-xl
                         shadow-lg whitespace-nowrap relative">
                         Need help? Chat with us! 💬
-                        <div className="absolute -bottom-1.5 right-5 w-3 h-3 bg-gray-900 rotate-45" />
+                        <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-gray-900 rotate-45" />
                     </div>
                 </div>
             )}

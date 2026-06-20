@@ -1,27 +1,28 @@
+import React from "react";
+import {Outlet} from "react-router-dom";
+import {ToastContainer} from "react-toastify";
 import Navbar from "../components/common/Navbar";
 import Footer from "../components/common/Footer";
-import { Outlet } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
 import Chatbot from "../components/chat/Chatbot";
+import CompareFloatingButton from "../pages/product/CompareFloatingButton";
 
 const MainLayout = () => {
     return (
-        <>
-            <Navbar />
+        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
-            <main>
-                <Outlet />
+            <Navbar/>
+            <main className="flex-grow">
+                <Outlet/>
             </main>
-
-            <Footer />
-
+            <CompareFloatingButton/>
+            <Chatbot/>
+            <Footer/>
             <ToastContainer
                 position="top-left"
                 autoClose={1000}
                 theme="colored"
             />
-            <Chatbot />
-        </>
+        </div>
     );
 };
 

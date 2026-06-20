@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {Routes, Route, Navigate} from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import AdminLayout from "../layouts/AdminLayout";
@@ -6,8 +6,8 @@ import AuthLayout from "../layouts/AuthLayout";
 import Home from "../pages/home/HomePage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import UserDashboard from "../components/user/UserDashboard";
-import ProductDetails from "../pages/product/ProductDetailsPage"
-import CategoryProducts from "../pages/product/CategoryProductsPage"
+import ProductDetails from "../pages/product/ProductDetailsPage";
+import CategoryProducts from "../pages/product/CategoryProductsPage";
 import ProductList from "../components/product/ProductList";
 import OrderConfirmationPage from "../pages/order/OrderConfirmationPage";
 import OrdersPage from "../pages/order/OrdersPage";
@@ -18,28 +18,32 @@ import CartPage from "../pages/cart/CartPage";
 import OAuth2CallbackPage from "../pages/auth/OAuth2CallbackPage";
 import SearchResultsPage from "../pages/product/SearchResultsPage";
 
+
+import ProductComparePage from "../pages/product/ProductComparePage";
+
 export default function AppRoutes() {
     return (
         <Routes>
 
             {/* ================= USER PUBLIC ================= */}
-            <Route element={<MainLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/search" element={<SearchResultsPage />} />
-                <Route path="/subcategory/:subCategoryId" element={<ProductList />} />
-                <Route path="/product/:productId" element={<ProductDetails />} />
-                <Route path="/category/:categoryId" element={<CategoryProducts />} />
+            <Route element={<MainLayout/>}>
+                <Route path="/" element={<Home/>}/>
+                <Route path="/search" element={<SearchResultsPage/>}/>
+                <Route path="/subcategory/:subCategoryId" element={<ProductList/>}/>
+                <Route path="/product/:productId" element={<ProductDetails/>}/>
+                <Route path="/category/:categoryId" element={<CategoryProducts/>}/>
 
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/compare" element={<ProductComparePage/>}/>
+                <Route path="/cart" element={<CartPage/>}/>
+                <Route path="/checkout" element={<CheckoutPage/>}/>
+                <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage/>}/>
+                <Route path="/orders" element={<OrdersPage/>}/>
+                <Route path="/profile" element={<ProfilePage/>}/>
             </Route>
 
             {/* ================= AUTH ================= */}
-            <Route element={<AuthLayout />}>
-                <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
+            <Route element={<AuthLayout/>}>
+                <Route path="/oauth2/callback" element={<OAuth2CallbackPage/>}/>
             </Route>
 
             {/* ================= ADMIN ================= */}
@@ -48,7 +52,7 @@ export default function AppRoutes() {
                 element={
                     <ProtectedRoute role="ADMIN">
                         <AdminLayout>
-                            <AdminDashboard />
+                            <AdminDashboard/>
                         </AdminLayout>
                     </ProtectedRoute>
                 }
@@ -58,7 +62,7 @@ export default function AppRoutes() {
                 element={
                     <ProtectedRoute role="ADMIN">
                         <AdminLayout>
-                            <AdminDashboard />
+                            <AdminDashboard/>
                         </AdminLayout>
                     </ProtectedRoute>
                 }
@@ -69,12 +73,12 @@ export default function AppRoutes() {
                 path="/user"
                 element={
                     <ProtectedRoute role="USER">
-                        <UserDashboard />
+                        <UserDashboard/>
                     </ProtectedRoute>
                 }
             />
 
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/"/>}/>
 
         </Routes>
     );
