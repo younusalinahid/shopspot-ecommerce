@@ -5,6 +5,7 @@ import { chatApi } from "../../api/chatApi";
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
     const [messages, setMessages] = useState([
         {
             role: "assistant",
@@ -14,6 +15,19 @@ const Chatbot = () => {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, loading]);
+
+    useEffect(() => {
+        if (isOpen) return;
+        const interval = setInterval(() => {
+            setShowTooltip(true);
+            setTimeout(() => setShowTooltip(false), 3000);
+        }, 8000);
+        return () => clearInterval(interval);
+    }, [isOpen]);
 
     useEffect(() => {
         let cartTimer = null;
@@ -135,9 +149,15 @@ const Chatbot = () => {
         }
     };
 
+    const handleToggle = () => {
+        setIsOpen(!isOpen);
+        setShowTooltip(false);
+    };
+
     return (
         <div className="fixed bottom-6 right-6 z-50">
-            {/* Chat Window */}
+
+            {/* ── Chat Window ── */}
             {isOpen && (
                 <div className="mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
                      style={{ height: "500px" }}>
@@ -235,19 +255,44 @@ const Chatbot = () => {
                 </div>
             )}
 
-            {/* Toggle Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110
-                    ${isOpen
-                    ? "bg-gray-600 hover:bg-gray-700"
-                    : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"}`}
-            >
-                {isOpen
-                    ? <X className="w-6 h-6 text-white" />
-                    : <MessageCircle className="w-6 h-6 text-white" />
-                }
-            </button>
+            {/* ── Tooltip ── */}
+            {!isOpen && showTooltip && (
+                <div className="absolute bottom-[72px] right-0 mb-1 animate-fadeIn">
+                    <div className="bg-gray-900 text-white text-xs font-medium px-3.5 py-2 rounded-xl
+                        shadow-lg whitespace-nowrap relative">
+                        Need help? Chat with us! 💬
+                        <div className="absolute -bottom-1.5 right-5 w-3 h-3 bg-gray-900 rotate-45" />
+                    </div>
+                </div>
+            )}
+
+            {/* ── Toggle Button ── */}
+            <div className="relative">
+                {!isOpen && (
+                    <>
+                        <span className="absolute inset-0 rounded-full bg-cyan-400 opacity-75"
+                              style={{ animation: "chatPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite" }} />
+                        <span className="absolute inset-0 rounded-full bg-cyan-400 opacity-50"
+                              style={{ animation: "chatPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite", animationDelay: "1.25s" }} />
+                    </>
+                )}
+
+                <button
+                    onClick={handleToggle}
+                    onMouseEnter={() => !isOpen && setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center
+                        transition-all duration-300 hover:scale-110
+                        ${isOpen
+                        ? "bg-gray-600 hover:bg-gray-700"
+                        : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"}`}
+                >
+                    {isOpen
+                        ? <X className="w-6 h-6 text-white" />
+                        : <MessageCircle className="w-6 h-6 text-white" />
+                    }
+                </button>
+            </div>
         </div>
     );
 };

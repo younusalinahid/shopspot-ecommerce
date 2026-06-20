@@ -9,6 +9,7 @@ import ProductCard from "../../components/product/ProductCard";
 import {useProducts} from "../../hooks/useProducts";
 import {useCategoryProducts} from "../../hooks/useCategoryProducts";
 import {toast} from "react-toastify";
+import OfferPopup from "../../components/common/OfferPopup";
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -285,6 +286,7 @@ const HomePage = () => {
                     </div>
                 </div>
             </div>
+            <OfferPopup/>
         </div>
     );
 };
