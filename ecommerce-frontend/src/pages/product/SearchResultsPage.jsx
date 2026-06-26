@@ -1,30 +1,43 @@
 import {useEffect, useState} from 'react';
-import {useSearchParams, useNavigate} from 'react-router-dom';
+import {useSearchParams, useNavigate, useLocation} from 'react-router-dom';
 import {productService} from '../../api/productApi';
-import {Search, Package, Loader2, FolderOpen, Tag, ArrowUpDown} from 'lucide-react';
+import {Search, Package, Loader2, FolderOpen, Tag, ArrowUpDown, Sparkles} from 'lucide-react';
 import ProductCard from '../../components/product/ProductCard';
 
 export default function SearchResultsPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const query = searchParams.get('q') || '';
+    const location = useLocation();
+
+    const imageSearchResults = location.state?.imageSearchResults;
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState('ALL');
-
     const [sortBy, setSortBy] = useState('DEFAULT');
+    const [detectedKeywords, setDetectedKeywords] = useState('');
+
+    const isImageSearch = !!imageSearchResults;
 
     useEffect(() => {
+        if (imageSearchResults) {
+            setResults(imageSearchResults.products || []);
+            setDetectedKeywords(imageSearchResults.keywords || '');
+            setLoading(false);
+            return;
+        }
+
         if (!query || query.length < 2) return;
         fetchResults();
-    }, [query]);
+    }, [query, imageSearchResults]);
 
     const fetchResults = async () => {
         setLoading(true);
         try {
             const data = await productService.searchProducts(query);
             setResults(data || []);
+            setDetectedKeywords('');
         } catch (err) {
             console.error('Search error:', err);
             setResults([]);
@@ -75,17 +88,27 @@ export default function SearchResultsPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
             <div className="w-full mx-auto px-4 lg:px-8 max-w-[1600px]">
 
-                {/* Header */}
                 <div
                     className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
                     <div>
                         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-2">
-                            <Search className="w-4 h-4"/>
-                            <span>Search results for</span>
+                            {isImageSearch ? (
+                                <Sparkles className="w-4 h-4 text-amber-500 animate-pulse"/>
+                            ) : (
+                                <Search className="w-4 h-4"/>
+                            )}
+                            <span>{isImageSearch ? 'AI Visual Search Result' : 'Search results for'}</span>
                         </div>
+
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            "{query}"
+                            {isImageSearch ? (
+                                <span
+                                    className="text-cyan-600 dark:text-cyan-400">🤖 AI Detected: "{detectedKeywords}"</span>
+                            ) : (
+                                `"${query}"`
+                            )}
                         </h1>
+
                         {!loading && (
                             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
                                 {results.length} item{results.length !== 1 && 's'} listed here
@@ -93,7 +116,7 @@ export default function SearchResultsPage() {
                         )}
                     </div>
 
-                    {/* ── PRICE FILTER SECTION (ASCENDING / DESCENDING) ── */}
+                    {/* Price Sorting */}
                     {!loading && products.length > 0 && (filter === 'ALL' || filter === 'PRODUCT') && (
                         <div className="flex items-center gap-2 self-start md:self-auto">
                             <ArrowUpDown className="w-4 h-4 text-gray-500 dark:text-gray-400"/>
@@ -113,15 +136,20 @@ export default function SearchResultsPage() {
                 {/* Filter tabs */}
                 <div className="flex gap-2 flex-wrap mb-6">
                     {FILTERS.map(f => (
-                        <button key={f.key} onClick={() => setFilter(f.key)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all
+                        <button
+                            key={f.key}
+                            onClick={() => setFilter(f.key)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all
                                 ${filter === f.key
-                                    ? 'bg-cyan-500 text-white shadow-sm'
-                                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}>
+                                ? 'bg-cyan-500 text-white shadow-sm'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                            }`}
+                        >
                             {f.label}
                             {f.count > 0 && (
                                 <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full
-                                    ${filter === f.key ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}>
+                                    ${filter === f.key ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}`}
+                                >
                                     {f.count}
                                 </span>
                             )}
@@ -129,27 +157,27 @@ export default function SearchResultsPage() {
                     ))}
                 </div>
 
-                {/* Loading */}
+                {/* Loading State */}
                 {loading && (
                     <div className="flex items-center justify-center py-20">
                         <Loader2 className="w-10 h-10 animate-spin text-cyan-500"/>
                     </div>
                 )}
 
-                {/* Empty */}
+                {/* Empty State */}
                 {!loading && results.length === 0 && (
                     <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
                         <Search className="w-12 h-12 text-gray-300 mx-auto mb-4"/>
                         <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                            No results found
+                            No matching products found
                         </h3>
                         <p className="text-gray-500 text-sm">
-                            Try different keywords or browse our categories
+                            {isImageSearch ? "AI tried its best, but couldn't find matching catalog items. Try uploading a clearer picture!" : "Try different keywords or browse our categories"}
                         </p>
                     </div>
                 )}
 
-                {/* Products grid */}
+                {/* Products Grid */}
                 {!loading && (filter === 'ALL' || filter === 'PRODUCT') && products.length > 0 && (
                     <section className="mb-10">
                         {filter === 'ALL' && (
@@ -171,7 +199,7 @@ export default function SearchResultsPage() {
                     </section>
                 )}
 
-                {/* Categories */}
+                {/* Categories Section */}
                 {!loading && (filter === 'ALL' || filter === 'CATEGORY') && categories.length > 0 && (
                     <section className="mb-10">
                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -180,10 +208,11 @@ export default function SearchResultsPage() {
                         </h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {categories.map(cat => (
-                                <button key={cat.id} onClick={() => handleItemClick(cat)}
-                                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-                                        rounded-xl p-4 text-left hover:border-cyan-400 hover:shadow-md
-                                        transition-all group">
+                                <button
+                                    key={cat.id}
+                                    onClick={() => handleItemClick(cat)}
+                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:border-cyan-400 hover:shadow-md transition-all group"
+                                >
                                     <span className="text-2xl mb-2 block">{cat.icon || '📁'}</span>
                                     <p className="font-medium text-gray-900 dark:text-white group-hover:text-cyan-600">
                                         {cat.name}
@@ -198,7 +227,7 @@ export default function SearchResultsPage() {
                     </section>
                 )}
 
-                {/* SubCategories */}
+                {/* Subcategories Section */}
                 {!loading && (filter === 'ALL' || filter === 'SUBCATEGORY') && subCategories.length > 0 && (
                     <section>
                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -207,10 +236,11 @@ export default function SearchResultsPage() {
                         </h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {subCategories.map(sub => (
-                                <button key={sub.id} onClick={() => handleItemClick(sub)}
-                                        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-                                        rounded-xl p-4 text-left hover:border-purple-400 hover:shadow-md
-                                        transition-all group">
+                                <button
+                                    key={sub.id}
+                                    onClick={() => handleItemClick(sub)}
+                                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left hover:border-purple-400 hover:shadow-md transition-all group"
+                                >
                                     <p className="font-medium text-gray-900 dark:text-white group-hover:text-purple-600">
                                         {sub.name}
                                     </p>

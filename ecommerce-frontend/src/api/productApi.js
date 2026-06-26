@@ -119,4 +119,21 @@ export const productService = {
             throw error;
         }
     },
+
+    searchByImage: async (imageFile) => {
+        try {
+            const formData = new FormData();
+            formData.append("image", imageFile);
+
+            const response = await axios.post(
+                "http://localhost:8080/api/public/search/image",
+                formData,
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
+            return response.data;
+        } catch (error) {
+            console.error("Image search error:", error);
+            throw error;
+        }
+    },
 };

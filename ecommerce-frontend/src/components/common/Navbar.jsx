@@ -1,6 +1,7 @@
-import React, {useEffect, useState} from "react";
-import {Search, ShoppingCart, User, Moon, Sun, Menu, X} from "lucide-react";
-import {Link, useNavigate, useLocation} from "react-router-dom";
+import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera} from "lucide-react";
+import {useEffect, useState, useRef} from 'react';
+import {useNavigate, useLocation, Link} from 'react-router-dom';
+import {productService} from '../../api/productApi';
 import logo from "../../assets/logo/logo-6.png";
 import playStoreButton from "../../assets/images/get-play-store-icon.png";
 import AuthPage from "../../pages/auth/AuthPage";
@@ -8,7 +9,6 @@ import {useTheme} from "../../context/ThemeContext";
 import UserMenu from "../user/UserMenu";
 import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
-import {productService} from "../../api/productApi";
 
 export default function Navbar() {
     const [showAuthPage, setShowAuthPage] = useState(false);
@@ -22,6 +22,9 @@ export default function Navbar() {
     const [isSearching, setIsSearching] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("user"));
+    const [imageSearchLoading, setImageSearchLoading] = useState(false);
+    const desktopImageInputRef = useRef(null);
+    const mobileImageInputRef = useRef(null);
 
     useEffect(() => {
         const handleStorageChange = () => {
@@ -58,6 +61,27 @@ export default function Navbar() {
             navigate("/cart");
         } else {
             toast.warning("Please log in to view your cart!");
+        }
+    };
+
+    const handleImageSearch = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setImageSearchLoading(true);
+        toast.info("AI is analyzing the image...");
+        try {
+            const result = await productService.searchByImage(file);
+
+            setIsMobileMenuOpen(false);
+            navigate('/search?mode=image', {
+                state: {imageSearchResults: result}
+            });
+        } catch (error) {
+            toast.error("Image search failed. Please try again.");
+        } finally {
+            setImageSearchLoading(false);
+            e.target.value = '';
         }
     };
 
@@ -224,12 +248,11 @@ export default function Navbar() {
 
     return (
         <>
-            {/* Main Navbar */}
             <nav
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
                 <div className="w-full px-4 lg:px-8">
                     <div className="flex justify-between items-center">
-                        {/* Left Section - Logo */}
+                        {/* Logo */}
                         <div className="flex items-center flex-shrink-0">
                             <Link to="/" className="flex items-center space-x-1 lg:space-x-2">
                                 <img src={logo} alt="ShopSpot Logo" className="w-20 h-20 lg:w-24 lg:h-24"/>
@@ -238,7 +261,7 @@ export default function Navbar() {
                             </Link>
                         </div>
 
-                        {/* Center Section - Search Bar (Desktop) */}
+                        {/* Search Bar (Desktop) */}
                         <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
                             <form onSubmit={handleSearchSubmit} className="relative w-full">
                                 <input
@@ -246,25 +269,37 @@ export default function Navbar() {
                                     value={searchQuery}
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSearchSubmit(e);
-                                        }
-                                    }}
                                     placeholder="Search products, brands, and categories..."
-                                    className="w-full px-6 py-3 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/50 text-gray-800 text-lg shadow-lg transition-all duration-300"
+                                    className="w-full pl-6 pr-16 py-3 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/50 text-gray-800 text-lg shadow-lg transition-all duration-300"
                                 />
                                 {renderSearchResults()}
+
+                                {/* Desktop Camera button */}
                                 <button
-                                    type="submit"
-                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-500 hover:bg-green-600 p-3 rounded-full transition-colors shadow-lg"
+                                    type="button"
+                                    onClick={() => desktopImageInputRef.current?.click()}
+                                    disabled={imageSearchLoading}
+                                    className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-cyan-500 transition-colors p-1"
+                                    title="AI Image Searching"
                                 >
-                                    <Search className="text-white" size={24}/>
+                                    {imageSearchLoading ? (
+                                        <div
+                                            className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"/>
+                                    ) : (
+                                        <Camera size={22}/>
+                                    )}
                                 </button>
+                                <input
+                                    ref={desktopImageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageSearch}
+                                />
                             </form>
                         </div>
 
-                        {/* Right Section - Actions */}
+                        {/* Actions (Cart, Profile, Theme) */}
                         <div className="flex items-center space-x-4 lg:space-x-6">
                             <img
                                 src={playStoreButton}
@@ -304,22 +339,16 @@ export default function Navbar() {
                                 className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-lg"
                                 aria-label="Toggle theme"
                             >
-                                {isDark ? (
-                                    <Sun className="text-yellow-400" size={24}/>
-                                ) : (
-                                    <Moon className="text-white" size={24}/>
-                                )}
+                                {isDark ? <Sun className="text-yellow-400" size={24}/> :
+                                    <Moon className="text-white" size={24}/>}
                             </button>
 
                             <button
                                 className="lg:hidden p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             >
-                                {isMobileMenuOpen ? (
-                                    <X className="text-white" size={28}/>
-                                ) : (
-                                    <Menu className="text-white" size={28}/>
-                                )}
+                                {isMobileMenuOpen ? <X className="text-white" size={28}/> :
+                                    <Menu className="text-white" size={28}/>}
                             </button>
                         </div>
                     </div>
@@ -332,21 +361,38 @@ export default function Navbar() {
                                 value={searchQuery}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        handleSearchSubmit(e);
-                                    }
-                                }}
                                 placeholder="Search products..."
-                                className="w-full px-4 py-3 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white text-gray-800 shadow-lg"
+                                className="w-full pl-4 pr-24 py-3 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white text-gray-800 shadow-lg"
                             />
                             {renderSearchResults()}
-                            <button
-                                type="submit"
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-500 hover:bg-green-600 p-2 rounded-full"
-                            >
-                                <Search className="text-white" size={20}/>
-                            </button>
+
+                            <div
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                                {/* Mobile Camera Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => mobileImageInputRef.current?.click()}
+                                    disabled={imageSearchLoading}
+                                    className="text-gray-400 hover:text-green-500 transition-colors p-2"
+                                >
+                                    {imageSearchLoading ? (
+                                        <div
+                                            className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"/>
+                                    ) : (
+                                        <Camera size={20}/>
+                                    )}
+                                </button>
+                                <input
+                                    ref={mobileImageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageSearch}
+                                />
+                                <button type="submit" className="bg-green-500 hover:bg-green-600 p-2 rounded-full">
+                                    <Search className="text-white" size={18}/>
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -371,28 +417,17 @@ export default function Navbar() {
                         )}
 
                         <div className="flex justify-center">
-                            <img
-                                src={playStoreButton}
-                                alt="Google Play"
-                                className="w-40 h-auto cursor-pointer hover:scale-105 transition-transform duration-200"
-                            />
+                            <img src={playStoreButton} alt="Google Play"
+                                 className="w-40 h-auto cursor-pointer hover:scale-105 transition-transform duration-200"/>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <Link
-                                to="/categories"
-                                className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Categories
-                            </Link>
-                            <Link
-                                to="/deals"
-                                className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Hot Deals
-                            </Link>
+                            <Link to="/categories"
+                                  className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                  onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
+                            <Link to="/deals"
+                                  className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                  onClick={() => setIsMobileMenuOpen(false)}>Hot Deals</Link>
                         </div>
                     </div>
                 </div>

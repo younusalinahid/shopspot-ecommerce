@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatService {
 
-    @Value("${openrouter.api.key}")
+    @Value("${groq.api.key}")
     private String apiKey;
 
     private final ProductRepository productRepository;
@@ -54,7 +54,8 @@ public class ChatService {
             }
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "llama-3.3-70b-versatile");
+//            requestBody.put("model", "llama-3.3-70b-versatile");
+            requestBody.put("model", "openai/gpt-oss-120b");
             requestBody.put("messages", messages);
             requestBody.put("max_tokens", 500);
 

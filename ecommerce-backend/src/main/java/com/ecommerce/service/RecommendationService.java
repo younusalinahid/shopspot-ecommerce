@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RecommendationService {
 
-    @Value("${openrouter.api.key}")
+    @Value("${groq.api.key}")
     private String apiKey;
 
     private final OrderRepository orderRepository;
@@ -41,29 +41,29 @@ public class RecommendationService {
                 .stream().map(SearchHistory::getQuery).collect(Collectors.toList());
 
         List<Product> availableProducts = productRepository.findByActiveTrue()
-                .stream().limit(100).toList();
+                .stream().limit(25).toList();
 
         String productList = availableProducts.stream()
                 .map(p -> p.getId() + ": " + p.getName())
                 .collect(Collectors.joining(", "));
 
         String prompt = String.format("""
-        You are a smart e-commerce recommendation engine.
-        Analyze the user data below to pick exactly 4 distinct product IDs.
-        
-        User Context:
-        - Recently purchased: [%s]
-        - Wishlist items: [%s]
-        - Recent searches: [%s]
-        
-        Available catalog (ID:Name): %s
-        
-        STRICT BALANCING RULES:
-        1. Do NOT focus only on recent search queries. You MUST provide a balanced mix.
-        2. Pick at least 1-2 products related to the purchased items style/category, 1 product from wishlist category, and 1-2 from recent search colors/keywords.
-        3. Even if searches are dominated by one color, ensure the final 4 IDs represent different colors or categories based on the total context.
-        4. Output exactly 4 recommended product IDs as a plain comma-separated list inside square brackets, like [5,12,22,8]. No prose.
-        """,
+                        You are a smart e-commerce recommendation engine.
+                        Analyze the user data below to pick exactly 4 distinct product IDs.
+                                
+                        User Context:
+                        - Recently purchased: [%s]
+                        - Wishlist items: [%s]
+                        - Recent searches: [%s]
+                                
+                        Available catalog (ID:Name): %s
+                                
+                        STRICT BALANCING RULES:
+                        1. Do NOT focus only on recent search queries. You MUST provide a balanced mix.
+                        2. Pick at least 1-2 products related to the purchased items style/category, 1 product from wishlist category, and 1-2 from recent search colors/keywords.
+                        3. Even if searches are dominated by one color, ensure the final 4 IDs represent different colors or categories based on the total context.
+                        4. Output exactly 4 recommended product IDs as a plain comma-separated list inside square brackets, like [5,12,22,8]. No prose.
+                        """,
                 String.join(", ", purchasedProducts), String.join(", ", wishlistProducts), String.join(", ", searchQueries), productList
         );
 
@@ -86,8 +86,6 @@ public class RecommendationService {
             Map choice = (Map) choices.get(0);
             Map message = (Map) choice.get("message");
             String content = (String) message.get("content");
-
-            System.out.println("Groq AI Recommendation Response: " + content);
 
             if (content.contains("[") && content.contains("]")) {
                 content = content.substring(content.indexOf("[") + 1, content.indexOf("]"));
