@@ -10,6 +10,8 @@ import {useProducts} from "../../hooks/useProducts";
 import {useCategoryProducts} from "../../hooks/useCategoryProducts";
 import {toast} from "react-toastify";
 import OfferPopup from "../../components/common/OfferPopup";
+import { useRecommendations } from "../../hooks/useRecommendations";
+import { isAuthenticated } from "../../api/authApi";
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -19,6 +21,7 @@ const HomePage = () => {
     const [banners, setBanners] = useState([]);
     const [isLoadingBanners, setIsLoadingBanners] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
+    const { recommendations, loading: recLoading } = useRecommendations();
 
     useEffect(() => {
         const error = searchParams.get("error");
@@ -183,6 +186,32 @@ const HomePage = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Recommended For You */}
+                            {isAuthenticated() && (
+                                <div className="px-6 py-8">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">✨</span>
+                                            <h2 className="font-bold text-gray-900 dark:text-white text-2xl">
+                                                Recommended For You
+                                            </h2>
+                                        </div>
+                                    </div>
+
+                                    {recLoading ? (
+                                        <div className="flex justify-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"/>
+                                        </div>
+                                    ) : recommendations.length === 0 ? null : (
+                                        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                            {recommendations.map(product => (
+                                                <ProductCard key={product.id} product={product}/>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Featured Products */}
                             <div className="px-6 py-8">

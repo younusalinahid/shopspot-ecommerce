@@ -82,7 +82,7 @@ export default function Navbar() {
         }
     };
 
-    const handleSearchSubmit = (e) => {
+    const handleSearchSubmit = async (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -97,6 +97,12 @@ export default function Navbar() {
         setSearchResults([]);
         setIsSearching(false);
         setIsMobileMenuOpen(false);
+
+        try {
+            await productService.searchProducts(searchQuery.trim());
+        } catch (error) {
+            console.error("Silent search sync failed", error);
+        }
 
         navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
 

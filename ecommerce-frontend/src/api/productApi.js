@@ -49,7 +49,7 @@ export const productService = {
 
     searchProducts: async (query) => {
         try {
-            const response = await axios.get(`${PUBLIC_BASE_URL}/search?query=${query}`);
+            const response = await axios.get(`${PUBLIC_BASE_URL}/search?query=${query}`, getAuthConfig());
             return response.data;
         } catch (error) {
             console.error('Error searching products:', error);
@@ -87,7 +87,6 @@ export const productService = {
         }
     },
 
-
     createProduct: async (formData) => {
         try {
             const response = await axios.post(ADMIN_BASE_URL, formData, getFormDataConfig());
@@ -97,7 +96,6 @@ export const productService = {
             throw error;
         }
     },
-
 
     updateProduct: async (productId, formData) => {
         try {

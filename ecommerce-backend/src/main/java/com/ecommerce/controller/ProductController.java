@@ -2,10 +2,12 @@ package com.ecommerce.controller;
 
 import com.ecommerce.dto.ProductDTO;
 import com.ecommerce.dto.ProductWithCategoryDTO;
-import com.ecommerce.dto.SearchResultDTO;
+import com.ecommerce.model.User;
 import com.ecommerce.service.ProductService;
+import com.ecommerce.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
@@ -28,8 +32,13 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SearchResultDTO>> searchProducts(
-            @RequestParam(name = "query") String query) {
+    public ResponseEntity<?> search(
+            @RequestParam String query,
+            @AuthenticationPrincipal User user) {
+
+        if (user != null) {
+            recommendationService.saveSearchHistory(user.getId(), query);
+        }
         return ResponseEntity.ok(productService.universalSearch(query));
     }
 
