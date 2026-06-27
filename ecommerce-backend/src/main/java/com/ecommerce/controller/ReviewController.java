@@ -2,7 +2,9 @@ package com.ecommerce.controller;
 
 import com.ecommerce.dto.ReviewDTO;
 import com.ecommerce.dto.ReviewRequestDTO;
+import com.ecommerce.dto.SentimentResultDTO;
 import com.ecommerce.service.ReviewService;
+import com.ecommerce.service.SentimentAnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final SentimentAnalysisService sentimentService;
 
     @PostMapping("/user/reviews/product/{productId}")
     public ResponseEntity<ReviewDTO> addOrUpdateReview(
@@ -56,5 +59,12 @@ public class ReviewController {
         boolean canReview = reviewService.canUserReview(
                 productId, userDetails.getUsername());
         return ResponseEntity.ok(Map.of("canReview", canReview));
+    }
+
+    @GetMapping("/public/reviews/product/{productId}/sentiment")
+    public ResponseEntity<SentimentResultDTO> getSentiment(
+            @PathVariable(name = "productId") Long productId) {
+        return ResponseEntity.ok(
+                sentimentService.analyzeProductReviews(productId));
     }
 }

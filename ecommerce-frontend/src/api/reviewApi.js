@@ -22,3 +22,15 @@ export const canUserReview = async (productId) => {
         return false;
     }
 };
+
+export const getProductSentiment = async (productId) => {
+    try {
+        const res = await axiosInstance.get(
+            `/api/public/reviews/product/${productId}/sentiment`
+        );
+        return res.data;
+    } catch (err) {
+        console.error("Sentiment fetch error:", err);
+        return null;
+    }
+};

@@ -7,6 +7,8 @@ import {
     deleteReview,
     canUserReview
 } from "../../api/reviewApi";
+import { getProductSentiment } from '../../api/reviewApi';
+import { Sparkles, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
 
 const StarRating = ({ value, onChange, readonly = false }) => {
     const [hovered, setHovered] = useState(0);
@@ -39,6 +41,8 @@ const ReviewSection = ({ productId, currentUserEmail, currentUserName, onSummary
     const [error, setError] = useState("");
     const [canReview, setCanReview] = useState(false);
     const [checkingPurchase, setCheckingPurchase] = useState(false);
+    const [sentiment,        setSentiment]        = useState(null);
+    const [sentimentLoading, setSentimentLoading] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -51,6 +55,12 @@ const ReviewSection = ({ productId, currentUserEmail, currentUserName, onSummary
             setSummary(newSummary);
             if (onSummaryUpdate && newSummary) {
                 onSummaryUpdate(newSummary);
+            }
+            if (reviewRes.data?.length >= 3) {
+                setSentimentLoading(true);
+                getProductSentiment(productId)
+                    .then(data => setSentiment(data))
+                    .finally(() => setSentimentLoading(false));
             }
         } catch {
             console.error("Failed to load reviews");
@@ -261,6 +271,119 @@ const ReviewSection = ({ productId, currentUserEmail, currentUserName, onSummary
                         Please SignIn
                         to write a review.
                     </p>
+                </div>
+            )}
+
+            {/* ── AI Sentiment Analysis Card ── */}
+            {sentimentLoading && (
+                <div className="mb-8 p-5 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800 rounded-2xl flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 text-purple-500 animate-spin flex-shrink-0" />
+                    <span className="text-sm text-purple-600 dark:text-purple-400">
+            AI is analyzing reviews...
+        </span>
+                </div>
+            )}
+
+            {sentiment && !sentimentLoading && (
+                <div className="mb-8 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/10
+        border border-purple-200 dark:border-purple-800 rounded-2xl p-6">
+
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-4">
+                        <Sparkles className="w-5 h-5 text-purple-500" />
+                        <h3 className="font-bold text-gray-900 dark:text-white">
+                            AI Review Analysis
+                        </h3>
+                        <span className="text-xs text-gray-400 ml-auto">
+                Based on {sentiment.totalReviews} reviews
+            </span>
+                    </div>
+
+                    {/* Score bar */}
+                    <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-1">
+                <span className={`font-semibold
+                    ${sentiment.sentiment === 'POSITIVE' ? 'text-green-600' :
+                    sentiment.sentiment === 'NEGATIVE' ? 'text-red-600' :
+                        'text-amber-600'}`}>
+                    {sentiment.sentiment === 'POSITIVE' ? '😊 Mostly Positive' :
+                        sentiment.sentiment === 'NEGATIVE' ? '😞 Mostly Negative' :
+                            '😐 Mixed Reviews'}
+                </span>
+                            <span className="font-bold text-gray-700 dark:text-gray-300">
+                    {sentiment.score}%
+                </span>
+                        </div>
+                        <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-700
+                        ${sentiment.sentiment === 'POSITIVE' ? 'bg-green-500' :
+                                    sentiment.sentiment === 'NEGATIVE' ? 'bg-red-500' :
+                                        'bg-amber-500'}`}
+                                style={{ width: `${sentiment.score}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Pros & Cons */}
+                    {(sentiment.pros?.length > 0 || sentiment.cons?.length > 0) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            {sentiment.pros?.length > 0 && (
+                                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3">
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                        <ThumbsUp className="w-4 h-4 text-green-600" />
+                                        <span className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wide">
+                                Pros
+                            </span>
+                                    </div>
+                                    <ul className="space-y-1">
+                                        {sentiment.pros.map((pro, i) => (
+                                            <li key={i} className="text-sm text-green-800 dark:text-green-300 flex items-start gap-1.5">
+                                                <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span>
+                                                {pro}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {sentiment.cons?.length > 0 && (
+                                <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                        <ThumbsDown className="w-4 h-4 text-red-600" />
+                                        <span className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wide">
+                                Cons
+                            </span>
+                                    </div>
+                                    <ul className="space-y-1">
+                                        {sentiment.cons.map((con, i) => (
+                                            <li key={i} className="text-sm text-red-800 dark:text-red-300 flex items-start gap-1.5">
+                                                <span className="text-red-500 mt-0.5 flex-shrink-0">✗</span>
+                                                {con}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Summary */}
+                    {sentiment.summary && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
+                            {sentiment.summary}
+                        </p>
+                    )}
+
+                    {/* Recommendation */}
+                    {sentiment.recommendation && (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-2.5 flex items-start gap-2">
+                            <span className="text-lg flex-shrink-0">💡</span>
+                            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                {sentiment.recommendation}
+                            </p>
+                        </div>
+                    )}
                 </div>
             )}
 
