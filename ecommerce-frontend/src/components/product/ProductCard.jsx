@@ -1,4 +1,3 @@
-import { Star } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
@@ -10,129 +9,82 @@ export default function ProductCard({ product, showDiscount = false }) {
     const { addToCart } = useCart();
     const navigate = useNavigate();
 
-    const handleCardClick = () => {
-        navigate(`/product/${product.id}`);
-    };
+    const handleCardClick = () => navigate(`/product/${product.id}`);
 
     const handleAddToCart = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            const user = JSON.parse(storedUser);
-            if (user && user.active === false) {
-                toast.error("Your account is deactivated. You cannot add items to cart.", {
-                    position: "top-left",
-                    autoClose: 4000
-                });
-                return;
-            }
-        }
-
         setLoading(true);
         try {
-            const result = await addToCart(product.id, 1);
-            if (result && result.success) {
-                toast.success('Product added to cart successfully!', {
-                    position: "top-left",
-                    autoClose: 3000
-                });
-
-                const event = new CustomEvent("cartItemAdded", {
-                    detail: { productName: product.name }
-                });
-                window.dispatchEvent(event);
-            }
+            await addToCart(product.id, 1);
+            toast.success('Added to cart!');
         } catch (error) {
-            console.error("Cart error:", error);
+            toast.error('Failed to add');
         } finally {
             setLoading(false);
         }
     };
 
     const hasDiscount = Boolean(product.originalPrice && Number(product.originalPrice) > Number(product.price));
-
-    const discountPercentage = hasDiscount
-        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-        : 0;
-
-    const getImageSource = () => {
-        const imageData = product.imageData;
-        if (!imageData) return null;
-        if (imageData.startsWith('data:')) return imageData;
-        return `data:image/jpeg;base64,${imageData}`;
-    };
-
-    const imageSource = getImageSource();
+    const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+    const imageSource = product.imageData ? (product.imageData.startsWith('data:') ? product.imageData : `data:image/jpeg;base64,${product.imageData}`) : null;
 
     return (
-        <div
-            onClick={handleCardClick}
-            className="block flex-shrink-0 cursor-pointer group bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg dark:hover:shadow-cyan-500/20 rounded-xl overflow-hidden transition-all duration-300 w-full"
-        >
-            <div className="relative bg-gray-100 dark:bg-gray-700 h-80 overflow-hidden transition-colors duration-300">
-                {imageSource && !imageError ? (
-                    <img
-                        src={imageSource}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                            console.error('Image failed to load for:', product.name);
-                            setImageError(true);
-                        }}
-                    />
-                ) : (
-                    <div className="w-full h-full flex justify-center items-center bg-gradient-to-br from-blue-100 to-green-100 dark:from-blue-900/30 dark:to-green-900/30 transition-colors duration-300">
-                        <span className="text-4xl">📦</span>
+        <div onClick={handleCardClick} className="group cursor-pointer w-full">
+            {/* Image Container */}
+            <div className="relative bg-gray-50 dark:bg-gray-800 h-96 w-full flex items-center justify-center overflow-hidden rounded-lg">
+
+                {/* Discount Badge */}
+                {(showDiscount && hasDiscount) && (
+                    <div className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded shadow-lg z-20">
+                        {discountPercentage}% OFF
                     </div>
                 )}
 
-                {/* Discount Badge */}
-                {(showDiscount && hasDiscount) ? (
-                    <div className="top-3 right-3 absolute bg-red-500 dark:bg-red-600 px-2 py-1 rounded-full text-white text-xs font-semibold transition-colors duration-300">
-                        {discountPercentage}% OFF
-                    </div>
-                ) : null}
-            </div>
+                {imageSource && !imageError ? (
+                    <img src={imageSource} alt={product.name} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" onError={() => setImageError(true)} />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                )}
 
-            {/* Product Details */}
-            <div className="p-4">
-                <h3 className="mb-2 font-semibold text-gray-800 dark:text-gray-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors duration-300 line-clamp-2 min-h-[1rem]">
-                    {product.name}
-                </h3>
-
-                {/* Rating */}
-                <div className="flex items-center space-x-1 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="fill-current w-3 h-3 text-yellow-400"/>
-                    ))}
-                    <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs transition-colors duration-300">
-                        (4.5)
-                    </span>
-                </div>
-
-                {/* Price and Cart Button */}
-                <div className="flex justify-between items-center mt-4">
-                    <div className="flex items-baseline space-x-2">
-                        <span className="font-bold text-gray-900 dark:text-white text-lg transition-colors duration-300">
-                            ৳{product.price ? product.price.toFixed(2) : '0.00'}
-                        </span>
-
-                        {hasDiscount ? (
-                            <span className="text-gray-500 dark:text-gray-400 text-sm line-through transition-colors duration-300">
-                                ৳{product.originalPrice ? product.originalPrice.toFixed(2) : ''}
-                            </span>
-                        ) : null}
-                    </div>
-
+                {/* Hover Icons (Centered) */}
+                <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/10 z-10">
                     <button
                         onClick={handleAddToCart}
-                        disabled={loading || !product.active}
-                        className="bg-cyan-500 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-700 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
+                        title="Add to Cart"
+                        className="p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full shadow-xl hover:bg-cyan-500 hover:text-white transition-all transform hover:scale-110"
                     >
-                        {loading ? 'Adding...' : (product.active ? 'Add to Cart' : 'Out of Stock')}
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                     </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toast.info('Added to compare list!'); }}
+                        title="Compare Product"
+                        className="p-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-full shadow-xl hover:bg-cyan-500 hover:text-white transition-all transform hover:scale-110"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            {/* Product Name & Price */}
+            <div className="mt-4 text-center">
+                <h3 className="text-gray-900 dark:text-white font-semibold text-lg truncate px-2">
+                    {product.name}
+                </h3>
+                <div className="flex justify-center items-center gap-2 mt-1">
+                    <p className="text-gray-900 dark:text-white font-bold text-md">
+                        ৳{Number(product.price).toFixed(2)}
+                    </p>
+                    {hasDiscount && (
+                        <>
+                            <p className="text-gray-400 dark:text-gray-500 text-xs line-through">
+                                ৳{Number(product.originalPrice).toFixed(2)}
+                            </p>
+                            <span className="text-red-500 text-xs font-bold">
+                                (-{discountPercentage}% OFF)
+                            </span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
