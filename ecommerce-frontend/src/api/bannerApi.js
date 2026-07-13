@@ -6,7 +6,7 @@ const PUBLIC_API = `${PUBLIC_URL}/banners`;
 const ADMIN_API = `${ADMIN_URL}/banners`;
 
 const authConfig = () => {
-    const token = getToken(); // FIXED
+    const token = getToken();
     if (!token) throw new Error("Not authenticated");
 
     return {

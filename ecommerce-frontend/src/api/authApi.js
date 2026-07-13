@@ -143,7 +143,7 @@ export const getCurrentUser = () => {
 };
 
 export const getToken = () => {
-    return localStorage.getItem("accessToken");
+    return localStorage.getItem("token");
 };
 
 export const getUserRole = () => {

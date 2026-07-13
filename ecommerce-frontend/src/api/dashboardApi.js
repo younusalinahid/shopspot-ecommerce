@@ -8,7 +8,7 @@ const authConfig = () => ({
 
 export const dashboardApi = {
     getDashboard: async () => {
-        const res = await axios.get(ADMIN_URL, authConfig());
+        const res = await axios.get(`${ADMIN_URL}/dashboard`, authConfig());
         return res.data;
     }
 };

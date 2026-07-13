@@ -8,12 +8,12 @@ const authConfig = () => ({
 
 export const analyticsApi = {
     getAnalytics: async () => {
-        const res = await axios.get(ADMIN_URL, authConfig());
+        const res = await axios.get(`${ADMIN_URL}/analytics`, authConfig());
         return res.data;
     },
 
     getMonthlyDetail: async (year, month) => {
-        const res = await axios.get(`${ADMIN_URL}/monthly-detail`, {
+        const res = await axios.get(`${ADMIN_URL}/analytics/monthly-detail`, {
             ...authConfig(),
             params: { year, month }
         });
