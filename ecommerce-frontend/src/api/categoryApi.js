@@ -1,7 +1,5 @@
 import axios from "axios";
-
-const PUBLIC_URL = "http://localhost:8080/api/public";
-const ADMIN_URL = "http://localhost:8080/api/admin";
+import {ADMIN_URL, PUBLIC_URL} from "./config";
 
 const authConfig = () => {
     const token = localStorage.getItem("token");

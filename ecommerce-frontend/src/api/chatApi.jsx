@@ -1,10 +1,9 @@
 import axios from "axios";
-
-const BASE_URL = "http://localhost:8080/api/public/chat";
+import {PUBLIC_URL} from "./config";
 
 export const chatApi = {
     sendMessage: async (messages) => {
-        const res = await axios.post(BASE_URL, { messages });
+        const res = await axios.post(PUBLIC_URL, { messages });
         return res.data;
     }
 };

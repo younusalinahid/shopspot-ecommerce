@@ -1,6 +1,8 @@
 import axios from "axios";
+import {USER_URL} from "./config";
 
-const BASE_URL = "http://localhost:8080/api/user/wishlist";
+const BASE_URL = `${USER_URL}/wishlist`;
+
 
 const authConfig = () => {
     const token = localStorage.getItem("token");

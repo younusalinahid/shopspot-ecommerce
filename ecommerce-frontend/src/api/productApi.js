@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { toast } from "react-toastify";
+import {ADMIN_URL, PUBLIC_URL} from "./config";
 
-const PUBLIC_BASE_URL = 'http://localhost:8080/api/public/products';
-const ADMIN_BASE_URL = 'http://localhost:8080/api/admin/products';
+const PUBLIC_BASE_URL = `${PUBLIC_URL}/products`;
+const ADMIN_BASE_URL = `${ADMIN_URL}/products`;
 
 const getAuthConfig = () => {
     const token = localStorage.getItem("token");

@@ -1,7 +1,8 @@
 import axiosInstance from './axiosConfig';
+import {ADMIN_URL, USER_URL} from "./config";
 
-const ORDER_API = '/api/user/orders';
-const ADMIN_ORDER = '/api/admin/orders';
+const ORDER_API = `${USER_URL}/orders`;
+const ADMIN_ORDER = `${ADMIN_URL}/orders`;
 
 export const orderApi = {
 

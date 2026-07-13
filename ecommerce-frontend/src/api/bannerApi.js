@@ -1,8 +1,9 @@
 import axios from "axios";
-import { getToken } from "./authApi";
+import {getToken} from "./authApi";
+import {ADMIN_URL, PUBLIC_URL} from "./config";
 
-const PUBLIC_API = "http://localhost:8080/api/public/banners";
-const ADMIN_API = "http://localhost:8080/api/admin/banners";
+const PUBLIC_API = `${PUBLIC_URL}/banners`;
+const ADMIN_API = `${ADMIN_URL}/banners`;
 
 const authConfig = () => {
     const token = getToken(); // FIXED

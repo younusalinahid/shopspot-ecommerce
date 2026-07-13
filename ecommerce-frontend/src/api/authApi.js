@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PUBLIC_API = 'http://localhost:8080/api/public/auth';
+import { PUBLIC_URL } from "./config";
 
 const decodeTokenRole = (token) => {
     try {
@@ -23,7 +23,7 @@ const decodeTokenRole = (token) => {
 
 export const login = async (email, password) => {
     try {
-        const response = await axios.post(`${PUBLIC_API}/login`, { email, password });
+        const response = await axios.post(`${PUBLIC_URL}/login`, { email, password });
         const { accessToken, refreshToken, userId, email: userEmail,
             fullName, role, active } = response.data;
 
@@ -55,7 +55,7 @@ export const login = async (email, password) => {
 
 export const register = async (fullName, email, password) => {
     try {
-        const response = await axios.post(`${PUBLIC_API}/register`, {
+        const response = await axios.post(`${PUBLIC_URL}/register`, {
             fullName, email, password, confirmPassword: password
         });
         const { accessToken, refreshToken, userId,
@@ -92,7 +92,7 @@ export const logout = async () => {
     try {
         const storedRefresh = localStorage.getItem('refreshToken');
         if (storedRefresh) {
-            await axios.post(`${PUBLIC_API}/logout`, { refreshToken: storedRefresh });
+            await axios.post(`${PUBLIC_URL}/logout`, { refreshToken: storedRefresh });
         }
     } catch (error) {
         console.error("Logout error:", error);
@@ -112,7 +112,7 @@ export const refreshToken = async () => {
         const stored = localStorage.getItem('refreshToken');
         if (!stored) throw new Error("No refresh token");
 
-        const response = await axios.post(`${PUBLIC_API}/refresh`, {
+        const response = await axios.post(`${PUBLIC_URL}/refresh`, {
             refreshToken: stored
         });
 

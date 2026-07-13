@@ -1,13 +1,13 @@
 import axios from "axios";
-import axiosInstance from "./axiosConfig";
+import {PUBLIC_URL, ADMIN_URL, USER_URL} from "./config";
 
-const PUBLIC_URL = "http://localhost:8080/api/user/profile";
-const ADMIN_URL = "http://localhost:8080/api/admin/users";
+const PROFILE_URL = `${USER_URL}/profile`;
+const ADMIN_USERS_URL = `${ADMIN_URL}/users`;
 
 const authConfig = () => {
     const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) throw new Error("Not authenticated");
-    return { headers: { Authorization: `Bearer ${token}` } };
+    return {headers: {Authorization: `Bearer ${token}`}};
 };
 
 const formDataConfig = () => {
@@ -24,43 +24,43 @@ const formDataConfig = () => {
 export const userApi = {
 
     getProfile: async () => {
-        const res = await axios.get(PUBLIC_URL, authConfig());
+        const res = await axios.get(PROFILE_URL, authConfig());
         return res.data;
     },
 
     updateProfile: async (data) => {
-        const res = await axios.put(PUBLIC_URL, data, authConfig());
+        const res = await axios.put(PROFILE_URL, data, authConfig());
         return res.data;
     },
 
     updateProfileImage: async (imageFile) => {
         const formData = new FormData();
         formData.append("imageFile", imageFile);
-        const res = await axios.put(`${PUBLIC_URL}/image`, formData, formDataConfig());
+        const res = await axios.put(`${PROFILE_URL}/image`, formData, formDataConfig());
         return res.data;
     },
 
     changePassword: async (currentPassword, newPassword) => {
-        await axios.put(`${PUBLIC_URL}/change-password`,
-            { currentPassword, newPassword },
+        await axios.put(`${PROFILE_URL}/change-password`,
+            {currentPassword, newPassword},
             authConfig()
         );
     },
 
     getAllUsers: async () => {
-        const res = await axios.get(ADMIN_URL, authConfig());
+        const res = await axios.get(ADMIN_USERS_URL, authConfig());
         return res.data;
     },
 
     toggleStatus: async (id) => {
-        await axios.put(`${ADMIN_URL}/${id}/toggle-status`, {}, authConfig());
+        await axios.put(`${ADMIN_USERS_URL}/${id}/toggle-status`, {}, authConfig());
     },
     deleteUser: async (id) => {
-        await axios.delete(`${ADMIN_URL}/${id}`, authConfig());
+        await axios.delete(`${ADMIN_USERS_URL}/${id}`, authConfig());
     },
 
     sendReport: async (reportData) => {
-        const response = await axios.post('http://localhost:8080/api/public/report', reportData);
+        const response = await axios.post(`${PUBLIC_URL}/report`, reportData);
         return response.data;
     }
 };

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080/api/admin/analytics";
+import { ADMIN_URL } from "./config";
 
 const authConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
@@ -8,12 +8,12 @@ const authConfig = () => ({
 
 export const analyticsApi = {
     getAnalytics: async () => {
-        const res = await axios.get(BASE_URL, authConfig());
+        const res = await axios.get(ADMIN_URL, authConfig());
         return res.data;
     },
 
     getMonthlyDetail: async (year, month) => {
-        const res = await axios.get(`${BASE_URL}/monthly-detail`, {
+        const res = await axios.get(`${ADMIN_URL}/monthly-detail`, {
             ...authConfig(),
             params: { year, month }
         });
