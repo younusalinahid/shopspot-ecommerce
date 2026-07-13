@@ -23,7 +23,7 @@ const decodeTokenRole = (token) => {
 
 export const login = async (email, password) => {
     try {
-        const response = await axios.post(`${PUBLIC_URL}/login`, { email, password });
+        const response = await axios.post(`${PUBLIC_URL}/auth/login`, { email, password });
         const { accessToken, refreshToken, userId, email: userEmail,
             fullName, role, active } = response.data;
 
@@ -55,7 +55,7 @@ export const login = async (email, password) => {
 
 export const register = async (fullName, email, password) => {
     try {
-        const response = await axios.post(`${PUBLIC_URL}/register`, {
+        const response = await axios.post(`${PUBLIC_URL}/auth/register`, {
             fullName, email, password, confirmPassword: password
         });
         const { accessToken, refreshToken, userId,
