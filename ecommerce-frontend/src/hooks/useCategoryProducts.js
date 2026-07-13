@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PUBLIC_URL } from '../api/config';
 
 export const useCategoryProducts = (productsPerCategory = 4) => {
     const [categoryProducts, setCategoryProducts] = useState([]);
@@ -10,7 +11,7 @@ export const useCategoryProducts = (productsPerCategory = 4) => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `http://localhost:8080/api/public/categories/with-products?productsPerCategory=${productsPerCategory}`
+                    `${PUBLIC_URL}/categories/with-products?productsPerCategory=${productsPerCategory}`
                 );
 
                 if (!response.ok) {

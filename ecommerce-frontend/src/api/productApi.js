@@ -4,6 +4,7 @@ import {ADMIN_URL, PUBLIC_URL} from "./config";
 
 const PUBLIC_BASE_URL = `${PUBLIC_URL}/products`;
 const ADMIN_BASE_URL = `${ADMIN_URL}/products`;
+const SEARCH_URL = `${PUBLIC_URL}/search`;
 
 const getAuthConfig = () => {
     const token = localStorage.getItem("token");
@@ -127,7 +128,7 @@ export const productService = {
             formData.append("image", imageFile);
 
             const response = await axios.post(
-                "http://localhost:8080/api/public/search/image",
+                `${SEARCH_URL}/image`,
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );

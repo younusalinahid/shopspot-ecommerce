@@ -98,7 +98,8 @@ const LoginPage = ({isOpen, onClose, onSwitchToRegister, onLoginSuccess}) => {
 
     const handleSocialLogin = (provider) => {
         const providerKey = provider.toLowerCase();
-        window.location.href = `http://localhost:8080/oauth2/authorization/${providerKey}`;
+        const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:8080";
+        window.location.href = `${baseUrl}/oauth2/authorization/${providerKey}`;
     };
 
     return (

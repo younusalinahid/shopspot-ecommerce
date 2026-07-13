@@ -58,7 +58,7 @@ const OAuth2CallbackPage = () => {
                         fullName: payload.name || payload.fullName || (payload.sub ? payload.sub.split('@')[0] : "OAuth User"),
                         email:    payload.sub || payload.email || "OAuth Account",
                         role:     payload.roles?.[0]?.replace('ROLE_', '') || "CUSTOMER",
-                        active:   !apiDeactivated, // false সেট হবে
+                        active:   !apiDeactivated,
                         phone:    payload.phone || null,
                     };
 

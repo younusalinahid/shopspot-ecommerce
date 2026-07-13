@@ -5,6 +5,7 @@ import com.ecommerce.model.type.Role;
 import com.ecommerce.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -20,6 +21,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     public OAuth2AuthenticationSuccessHandler(
             @Lazy JwtService jwtService,
@@ -66,9 +70,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String token = jwtService.generateToken(user);
 
         if (!user.isActive()) {
-            response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token + "&isRestricted=true");
+            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token + "&isRestricted=true");
         } else {
-            response.sendRedirect("http://localhost:3000/oauth2/callback?token=" + token);
+            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token);
         }
     }
 }

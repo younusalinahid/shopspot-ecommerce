@@ -23,6 +23,9 @@ public class ImageSearchService {
     @Value("${openrouter.api.key}")
     private String apiKey;
 
+    @Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     private final ProductRepository productRepository;
     private final ProductMapper     productMapper;
     private final RestTemplate      restTemplate = new RestTemplate();
@@ -73,7 +76,7 @@ public class ImageSearchService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + apiKey.trim());
 
-            headers.set("HTTP-Referer", "http://localhost:8080");
+            headers.set("HTTP-Referer", backendUrl);
             headers.set("X-Title", "ShopSpot ECommerce");
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
