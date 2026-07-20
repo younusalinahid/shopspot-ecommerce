@@ -12,8 +12,9 @@ import AnalyticsPage from "../../pages/admin/AnalyticsPage";
 import {dashboardApi} from "../../api/dashboardApi";
 import {useNavigate, useLocation} from 'react-router-dom';
 import {
-    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign
+    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles
 } from 'lucide-react';
+import InventoryAlerts from "./InventoryAlerts";
 
 export default function AdminDashboard() {
     const location = useLocation();
@@ -69,7 +70,8 @@ export default function AdminDashboard() {
         {id: 'products', icon: Package, label: 'Products'},
         {id: 'orders', icon: ShoppingBag, label: 'Orders'},
         {id: 'customers', icon: Users, label: 'Customers'},
-        {id: 'analytics', icon: BarChart3, label: 'Analytics'}
+        {id: 'analytics', icon: BarChart3, label: 'Analytics'},
+        {id: 'inventory-alerts', icon: Sparkles, label: 'AI Stock Alerts'}
     ];
 
     const stats = dashboardData ? [
@@ -248,15 +250,8 @@ export default function AdminDashboard() {
                 return <CustomerManagementPage/>;
             case 'analytics':
                 return <AnalyticsPage/>;
-                return (
-                    <div className="bg-white rounded-lg shadow-sm p-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Settings</h2>
-                        <p className="text-gray-500">Configure your store settings.</p>
-                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <p className="text-gray-700">Settings section coming soon...</p>
-                        </div>
-                    </div>
-                );
+            case 'inventory-alerts':
+                return <InventoryAlerts/>;
             default:
                 return null;
         }
