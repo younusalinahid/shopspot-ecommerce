@@ -81,6 +81,11 @@ const Chatbot = () => {
     }, []);
 
     const renderMessageContent = (content) => {
+        // Prevent undefined/null content from causing errors
+        if (!content) {
+            return "";
+        }
+
         const regex = /\[([^\]]+)\]\(search:([^)]+)\)/g;
         const parts = [];
         let lastIndex = 0;
