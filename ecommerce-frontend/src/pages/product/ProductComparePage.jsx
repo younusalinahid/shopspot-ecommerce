@@ -5,12 +5,15 @@ import { toast } from 'react-toastify';
 
 const ProductComparePage = () => {
     const navigate = useNavigate();
-    const [compareList, setCompareList] = useState(() => {
-        const savedList = localStorage.getItem('productCompareList');
-        return savedList ? JSON.parse(savedList) : [];
-    });
+    const [compareList, setCompareList] = useState([]);
 
-    useEffect(() => { window.scrollTo(0, 0); }, []);
+    useEffect(() => {
+        const savedList = localStorage.getItem('productCompareList');
+        if (savedList) {
+            setCompareList(JSON.parse(savedList));
+        }
+        window.scrollTo(0, 0);
+    }, []);
 
     const removeFromCompare = (productId) => {
         const updatedList = compareList.filter(item => (item.id || item._id) !== productId);
@@ -79,12 +82,12 @@ const ProductComparePage = () => {
                             {/* Price */}
                             <tr>
                                 <td className="p-6 font-black text-slate-600 dark:text-slate-400 text-sm">Price</td>
-                                {compareList.map(item => <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 font-bold text-sky-600">৳{Math.round(item.price)}</td>)}
+                                {compareList.map(item => <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 font-bold text-sky-600">৳{Math.round(item.price)}</td>)}
                             </tr>
                             {/* Category */}
                             <tr>
                                 <td className="p-6 font-black text-slate-600 dark:text-slate-400 text-sm">Category</td>
-                                {compareList.map(item => <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{item.displayCategoryName || item.subCategory?.name || item.category?.name || "Standard Item"}</td>)}
+                                {compareList.map(item => <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{item.displayCategoryName || item.subCategory?.name || item.category?.name || "Standard Item"}</td>)}
                             </tr>
                             {/* Fabric */}
                             <tr>
@@ -98,13 +101,13 @@ const ProductComparePage = () => {
                                         else if (price >= 5000) detectedFabric = nameLower.includes('cotton') ? 'Soft Cotton' : 'Fine Georgette';
                                         else detectedFabric = 'Standard Cotton';
                                     }
-                                    return <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{detectedFabric}</td>
+                                    return <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{detectedFabric}</td>
                                 })}
                             </tr>
                             {/* Quality */}
                             <tr>
                                 <td className="p-6 font-black text-slate-600 dark:text-slate-400 text-sm">Quality</td>
-                                {compareList.map(item => <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{item.quality || (parseFloat(item.price) >= 20000 ? 'Premium Quality ✨' : 'Standard Quality 👍')}</td>)}
+                                {compareList.map(item => <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">{item.quality || (parseFloat(item.price) >= 20000 ? 'Premium Quality ✨' : 'Standard Quality 👍')}</td>)}
                             </tr>
                             {/* Stock */}
                             <tr>
@@ -112,18 +115,18 @@ const ProductComparePage = () => {
                                 {compareList.map(item => {
                                     const sCount = parseInt(item.stock);
                                     const isUnlim = isNaN(sCount) || sCount === 0;
-                                    return <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-bold">
+                                    return <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-bold">
                                             <span className={isUnlim || sCount > 0 ? "text-emerald-600" : "text-rose-600"}>
                                                 {isUnlim ? "In Stock" : sCount > 0 ? `${sCount} left` : "Out of Stock"}
                                             </span>
                                     </td>
                                 })}
                             </tr>
-                            {/* Action Button - Black Style */}
+                            {/* Action Button */}
                             <tr>
                                 <td className="p-6 font-black text-slate-600 dark:text-slate-400 text-sm">Action</td>
                                 {compareList.map(item => (
-                                    <td key={item.id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800">
+                                    <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800">
                                         <button onClick={() => navigate(`/product/${item.id || item._id}`)}
                                                 className="bg-black dark:bg-white text-white dark:text-black px-8 py-2 rounded-xl text-xs font-bold hover:opacity-90 shadow-md transition-all">
                                             View

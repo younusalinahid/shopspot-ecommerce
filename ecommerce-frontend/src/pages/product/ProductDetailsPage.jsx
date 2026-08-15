@@ -30,6 +30,7 @@ const ProductDetailsPage = () => {
         const saved = localStorage.getItem('productCompareList');
         return saved ? JSON.parse(saved) : [];
     });
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
 
     const checkAuthStatus = () => {
         setAuthState({isAuthenticated: isAuthenticated(), user: getCurrentUser()});
@@ -124,6 +125,24 @@ const ProductDetailsPage = () => {
     }, [productId]);
 
     useEffect(() => { if (product) setQuantity(1); }, [product]);
+
+    useEffect(() => {
+        if (!product) return;
+        const pId = product.id || product._id;
+        const saved = localStorage.getItem('recentlyViewedProducts');
+        let list = saved ? JSON.parse(saved) : [];
+        list = list.filter((item) => (item.id || item._id) !== pId);
+        list.unshift({
+            id: pId,
+            name: product.name,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            imageData: product.imageData,
+        });
+        list = list.slice(0, 10);
+        localStorage.setItem('recentlyViewedProducts', JSON.stringify(list));
+        setRecentlyViewed(list.filter((item) => (item.id || item._id) !== pId));
+    }, [product]);
 
     const handleAddToCart = async () => {
         if (addingToCart || !product) return;
@@ -475,6 +494,51 @@ const ProductDetailsPage = () => {
                     </div>
 
                 </div>
+
+                {/* Recently Viewed Products */}
+                {recentlyViewed.length > 0 && (
+                    <div className="mt-10 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5">Recently Viewed</h2>
+                        <div className="flex space-x-4 overflow-x-auto pb-2 custom-scrollbar">
+                            {recentlyViewed.map((item) => {
+                                const itemId = item.id || item._id;
+                                const itemHasDiscount = !!(item.originalPrice && item.originalPrice > item.price);
+                                return (
+                                    <div
+                                        key={itemId}
+                                        onClick={() => navigate(`/product/${itemId}`)}
+                                        className="flex-shrink-0 w-40 cursor-pointer group"
+                                    >
+                                        <div className="relative bg-gray-50 dark:bg-gray-900 rounded-lg h-32 flex items-center justify-center overflow-hidden mb-2">
+                                            {item.imageData ? (
+                                                <img
+                                                    src={getImageSource(item.imageData)}
+                                                    alt={item.name}
+                                                    className="max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                                />
+                                            ) : (
+                                                <span className="text-3xl">📦</span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-cyan-500 transition-colors">
+                                            {item.name}
+                                        </p>
+                                        <div className="flex items-center space-x-1.5 mt-1">
+                                            <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                                ৳ {Number(item.price).toFixed(2)}
+                                            </span>
+                                            {itemHasDiscount && (
+                                                <span className="text-[10px] text-gray-400 line-through">
+                                                    ৳ {Number(item.originalPrice).toFixed(2)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
