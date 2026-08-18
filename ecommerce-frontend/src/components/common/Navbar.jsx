@@ -64,25 +64,17 @@ export default function Navbar() {
         }
     };
 
-    const handleImageSearch = async (e) => {
+    const handleImageSearch = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setImageSearchLoading(true);
-        toast.info("AI is analyzing the image...");
-        try {
-            const result = await productService.searchByImage(file);
+        setIsMobileMenuOpen(false);
 
-            setIsMobileMenuOpen(false);
-            navigate('/search?mode=image', {
-                state: {imageSearchResults: result}
-            });
-        } catch (error) {
-            toast.error("Image search failed. Please try again.");
-        } finally {
-            setImageSearchLoading(false);
-            e.target.value = '';
-        }
+        navigate('/search?mode=image', {
+            state: { imageFile: file }
+        });
+
+        e.target.value = '';
     };
 
     const handleSearch = async (query) => {

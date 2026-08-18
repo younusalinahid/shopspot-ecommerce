@@ -88,12 +88,16 @@ function CheckoutContent() {
     useEffect(() => {
         addressApi.getAll()
             .then(data => {
-                setAddresses(data);
-                const def = data.find(a => a.isDefault);
+                const list = Array.isArray(data) ? data : (data?.data || []);
+                setAddresses(list);
+                const def = list.find(a => a.isDefault);
                 if (def) setSelectedAddr(def.id);
-                else if (data.length === 0) setShowNewForm(true);
+                else if (list.length === 0) setShowNewForm(true);
             })
-            .catch(() => setShowNewForm(true))
+            .catch(() => {
+                setAddresses([]);
+                setShowNewForm(true);
+            })
             .finally(() => setAddrLoading(false));
     }, []);
 
