@@ -1,19 +1,15 @@
 import axios from 'axios';
-
 import { PUBLIC_URL } from "./config";
 
 const decodeTokenRole = (token) => {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-
         if (payload.roles && Array.isArray(payload.roles)) {
             return payload.roles[0].replace('ROLE_', '');
         }
-
         if (payload.role) {
             return payload.role;
         }
-
         return "USER";
     } catch (e) {
         console.error("Token decode error:", e);
@@ -24,18 +20,20 @@ const decodeTokenRole = (token) => {
 export const login = async (email, password) => {
     try {
         const response = await axios.post(`${PUBLIC_URL}/auth/login`, { email, password });
-        const { accessToken, refreshToken, userId, email: userEmail,
-            fullName, role, active } = response.data;
+        const {
+            accessToken, refreshToken, userId, email: userEmail,
+            fullName, role, active
+        } = response.data;
 
         if (!accessToken) throw new Error("No access token received");
 
         const user = {
-            id:       userId,
-            email:    userEmail,
+            id: userId,
+            email: userEmail,
             fullName,
-            role:     role || decodeTokenRole(accessToken),
-            active:   active ?? true,
-            phone:    null,
+            role: role || decodeTokenRole(accessToken),
+            active: active ?? true,
+            phone: null,
         };
 
         localStorage.setItem("token", accessToken);
@@ -48,7 +46,7 @@ export const login = async (email, password) => {
 
         return { success: true, token: accessToken, user };
     } catch (err) {
-        const backendMsg = err.response?.data?.message || err.message || "";
+        const backendMsg = err.response?.data?.message || err.response?.data?.error || err.message || "";
         return { success: false, error: backendMsg || "Invalid email or password" };
     }
 };
@@ -58,21 +56,23 @@ export const register = async (fullName, email, password) => {
         const response = await axios.post(`${PUBLIC_URL}/auth/register`, {
             fullName, email, password, confirmPassword: password
         });
-        const { accessToken, refreshToken, userId,
-            email: userEmail, fullName: userName, role } = response.data;
+        const {
+            accessToken, refreshToken, userId,
+            email: userEmail, fullName: userName, role
+        } = response.data;
 
         if (!accessToken) throw new Error("No access token received");
 
         const user = {
-            id:       userId,
-            email:    userEmail,
+            id: userId,
+            email: userEmail,
             fullName: userName,
-            role:     role || decodeTokenRole(accessToken),
-            active:   true,
+            role: role || decodeTokenRole(accessToken),
+            active: true,
         };
 
         localStorage.setItem("token", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("refreshToken", refreshToken);  // MUST
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", user.role);
 
@@ -91,8 +91,18 @@ export const register = async (fullName, email, password) => {
 export const logout = async () => {
     try {
         const storedRefresh = localStorage.getItem('refreshToken');
+        const accessToken = localStorage.getItem('token');
+
         if (storedRefresh) {
-            await axios.post(`${PUBLIC_URL}/logout`, { refreshToken: storedRefresh });
+            await axios.post(
+                `${PUBLIC_URL}/auth/logout`,
+                { refreshToken: storedRefresh },
+                {
+                    headers: accessToken
+                        ? { Authorization: `Bearer ${accessToken}` }
+                        : {}
+                }
+            );
         }
     } catch (error) {
         console.error("Logout error:", error);
@@ -112,15 +122,21 @@ export const refreshToken = async () => {
         const stored = localStorage.getItem('refreshToken');
         if (!stored) throw new Error("No refresh token");
 
-        const response = await axios.post(`${PUBLIC_URL}/refresh`, {
+        const response = await axios.post(`${PUBLIC_URL}/auth/refresh`, {
             refreshToken: stored
         });
 
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+        if (!accessToken) throw new Error("No access token in refresh response");
+
         localStorage.setItem("token", accessToken);
         localStorage.setItem("accessToken", accessToken);
+        if (newRefreshToken) {
+            localStorage.setItem("refreshToken", newRefreshToken);
+        }
 
-        return { success: true, token: accessToken };
+        return { success: true, token: accessToken, refreshToken: newRefreshToken };
     } catch (error) {
         return { success: false, error: "Session expired" };
     }
@@ -161,7 +177,6 @@ export const getUserFromToken = () => {
 
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-
         return {
             email: payload.sub,
             role: decodeTokenRole(token),
