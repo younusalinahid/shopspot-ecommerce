@@ -30,6 +30,13 @@ public class OrderController {
         return ResponseEntity.ok(orderService.confirmPayment(user.getId(), request));
     }
 
+    @PostMapping("/{orderId}/confirm-cod")
+    public ResponseEntity<OrderDTO> confirmCOD(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.confirmCODOrder(user.getId(), orderId));
+    }
+
     @GetMapping
     public ResponseEntity<List<OrderDTO>> getUserOrders(
             @AuthenticationPrincipal User user) {

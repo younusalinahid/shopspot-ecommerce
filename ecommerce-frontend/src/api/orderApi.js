@@ -1,5 +1,5 @@
 import axiosInstance from './axiosConfig';
-import {ADMIN_URL, USER_URL} from "./config";
+import { ADMIN_URL, USER_URL } from "./config";
 
 const ORDER_API = `${USER_URL}/orders`;
 const ADMIN_ORDER = `${ADMIN_URL}/orders`;
@@ -19,6 +19,11 @@ export const orderApi = {
         return res.data;
     },
 
+    confirmCODOrder: async (orderId) => {
+        const res = await axiosInstance.post(`${ORDER_API}/${orderId}/confirm-cod`);
+        return res.data;
+    },
+
     getUserOrders: async () => {
         const res = await axiosInstance.get(ORDER_API);
         return res.data;
@@ -30,10 +35,11 @@ export const orderApi = {
     },
 
     cancelOrder: async (id) => {
-        const res = await axiosInstance.put(`${ORDER_API}/${id}/cancel`)
+        const res = await axiosInstance.put(`${ORDER_API}/${id}/cancel`);
         return res.data;
     },
 
+    // ── Admin ──────────────────────────────────────────────
     getAllOrders: async () => {
         const res = await axiosInstance.get(ADMIN_ORDER);
         return res.data;
@@ -43,7 +49,22 @@ export const orderApi = {
         const res = await axiosInstance.put(
             `${ADMIN_ORDER}/${orderId}/status`,
             null,
-            {params: {status}}
+            { params: { status } }
+        );
+        return res.data;
+    },
+
+    getOrdersByPaymentMethod: async (paymentMethod) => {
+        const res = await axiosInstance.get(
+            `${ADMIN_ORDER}/filter`,
+            { params: { paymentMethod } }
+        );
+        return res.data;
+    },
+
+    markCODCollected: async (orderId) => {
+        const res = await axiosInstance.put(
+            `${ADMIN_ORDER}/${orderId}/mark-cod-collected`
         );
         return res.data;
     },

@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import {
     Search, ChevronDown, ChevronUp, RefreshCw,
     Package, MapPin, Loader2, Clock, CreditCard,
-    CheckCircle2, Truck, XCircle, ShoppingBag
+    CheckCircle2, Truck, XCircle, ShoppingBag,
+    Banknote, Wallet, BadgeCheck
 } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import { toast } from 'react-toastify';
 
-// ─── Config ───────────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
     PENDING:    { label: 'Pending',    color: 'bg-yellow-100 text-yellow-800', icon: Clock        },
+    CONFIRMED:  { label: 'Confirmed',  color: 'bg-teal-100   text-teal-800',   icon: BadgeCheck   },
     PAID:       { label: 'Paid',       color: 'bg-blue-100   text-blue-800',   icon: CreditCard   },
     PROCESSING: { label: 'Processing', color: 'bg-purple-100 text-purple-800', icon: RefreshCw    },
     SHIPPED:    { label: 'Shipped',    color: 'bg-indigo-100 text-indigo-800', icon: Truck        },
@@ -19,6 +20,7 @@ const STATUS_CONFIG = {
 
 const STATUS_TRANSITIONS = {
     PENDING:    ['PROCESSING', 'CANCELLED'],
+    CONFIRMED:  ['PROCESSING', 'CANCELLED'],
     PAID:       ['PROCESSING', 'CANCELLED'],
     PROCESSING: ['SHIPPED',    'CANCELLED'],
     SHIPPED:    ['DELIVERED'],
@@ -26,15 +28,22 @@ const STATUS_TRANSITIONS = {
     CANCELLED:  [],
 };
 
-const FILTERS = ['ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+const FILTERS = ['ALL', 'PENDING', 'CONFIRMED', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+
+const PAYMENT_CONFIG = {
+    CARD: { label: 'Card',             color: 'bg-blue-50 text-blue-700 border-blue-200',   icon: CreditCard },
+    COD:  { label: 'Cash on Delivery', color: 'bg-green-50 text-green-700 border-green-200', icon: Banknote   },
+};
 
 export default function OrderManagementPage() {
-    const [orders,     setOrders]     = useState([]);
-    const [loading,    setLoading]    = useState(true);
-    const [filter,     setFilter]     = useState('ALL');
-    const [search,     setSearch]     = useState('');
-    const [expandedId, setExpandedId] = useState(null);
-    const [updating,   setUpdating]   = useState(null);
+    const [orders,        setOrders]        = useState([]);
+    const [loading,       setLoading]       = useState(true);
+    const [filter,        setFilter]        = useState('ALL');
+    const [paymentFilter, setPaymentFilter] = useState('ALL');
+    const [search,        setSearch]        = useState('');
+    const [expandedId,    setExpandedId]    = useState(null);
+    const [updating,      setUpdating]      = useState(null);
+    const [markingId,     setMarkingId]     = useState(null);
 
     useEffect(() => { fetchOrders(); }, []);
 
@@ -65,9 +74,27 @@ export default function OrderManagementPage() {
         }
     };
 
+    // ✨ Mark COD money as collected
+    const handleMarkCODCollected = async (orderId) => {
+        if (!window.confirm('Confirm that you have collected the cash from this delivery?'))
+            return;
+        setMarkingId(orderId);
+        try {
+            const updated = await orderApi.markCODCollected(orderId);
+            setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+            toast.success(`Order #${orderId} — COD payment collected! 💵`);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to mark as collected');
+        } finally {
+            setMarkingId(null);
+        }
+    };
+
     // Filter + Search
     const filtered = orders
         .filter(o => filter === 'ALL' || o.status === filter)
+        // ✨ Filter by payment method
+        .filter(o => paymentFilter === 'ALL' || o.paymentMethod === paymentFilter)
         .filter(o => {
             if (!search.trim()) return true;
             const q = search.toLowerCase();
@@ -77,6 +104,13 @@ export default function OrderManagementPage() {
                 o.shippingAddress?.phone?.includes(q)
             );
         });
+
+    // ✨ Count COD pending collection
+    const codPendingCount = orders.filter(o =>
+        o.paymentMethod === 'COD'
+        && o.status === 'DELIVERED'
+        && !o.codCollected
+    ).length;
 
     if (loading) return (
         <div className="flex items-center justify-center py-20">
@@ -88,11 +122,16 @@ export default function OrderManagementPage() {
         <div className="space-y-5">
 
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
                     <p className="text-sm text-gray-500 mt-0.5">
                         {orders.length} total orders
+                        {codPendingCount > 0 && (
+                            <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                                💵 {codPendingCount} COD pending collection
+                            </span>
+                        )}
                     </p>
                 </div>
                 <button
@@ -115,7 +154,43 @@ export default function OrderManagementPage() {
                 />
             </div>
 
-            {/* Filter tabs */}
+            {/* ✨ Payment Method Tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment:</span>
+                {[
+                    { key: 'ALL',  label: 'All',              icon: Wallet   },
+                    { key: 'CARD', label: 'Card',             icon: CreditCard },
+                    { key: 'COD',  label: 'Cash on Delivery', icon: Banknote   },
+                ].map(({ key, label, icon: Icon }) => {
+                    const count = key === 'ALL'
+                        ? orders.length
+                        : orders.filter(o => o.paymentMethod === key).length;
+                    const active = paymentFilter === key;
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => setPaymentFilter(key)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                                ${active
+                                ? key === 'COD'
+                                    ? 'bg-green-600 text-white'
+                                    : key === 'CARD'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-800 text-white'
+                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                        >
+                            <Icon className="w-3.5 h-3.5" />
+                            {label}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full
+                                ${active ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>
+                                {count}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Status Filter tabs */}
             <div className="flex gap-2 overflow-x-auto pb-1">
                 {FILTERS.map(f => {
                     const count = f === 'ALL'
@@ -161,7 +236,9 @@ export default function OrderManagementPage() {
                                 expandedId === order.id ? null : order.id
                             )}
                             onStatusUpdate={handleStatusUpdate}
+                            onMarkCODCollected={handleMarkCODCollected}
                             updating={updating === order.id}
+                            marking={markingId === order.id}
                         />
                     ))}
                 </div>
@@ -170,11 +247,22 @@ export default function OrderManagementPage() {
     );
 }
 
-function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
+function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollected, updating, marking }) {
     const s    = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
     const Icon = s.icon;
     const addr = order.shippingAddress;
     const next = STATUS_TRANSITIONS[order.status] || [];
+
+    // ✨ Payment method badge
+    const paymentKey = order.paymentMethod || 'CARD';
+    const pay = PAYMENT_CONFIG[paymentKey] || PAYMENT_CONFIG.CARD;
+    const PayIcon = pay.icon;
+
+    // ✨ Should we show "Mark COD Collected" button?
+    const showCollectButton =
+        paymentKey === 'COD'
+        && order.status === 'DELIVERED'
+        && !order.codCollected;
 
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -184,7 +272,7 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
                 className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={onToggle}
             >
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
 
                     {/* Order ID + date */}
                     <div className="min-w-0 flex-1">
@@ -206,6 +294,15 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
                         )}
                     </div>
 
+                    <span className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1
+                        rounded-lg border flex-shrink-0 ${pay.color}`}>
+                        <PayIcon className="w-3.5 h-3.5" />
+                        {pay.label}
+                        {paymentKey === 'COD' && order.codCollected && (
+                            <CheckCircle2 className="w-3 h-3 ml-0.5" />
+                        )}
+                    </span>
+
                     {/* Items count + total */}
                     <div className="text-right flex-shrink-0 hidden sm:block">
                         <p className="text-sm text-gray-500">
@@ -221,6 +318,24 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
                         rounded-full flex-shrink-0 ${s.color}`}>
                         <Icon className="w-3 h-3" /> {s.label}
                     </span>
+
+                    {showCollectButton && (
+                        <button
+                            onClick={e => {
+                                e.stopPropagation();
+                                onMarkCODCollected(order.id);
+                            }}
+                            disabled={marking}
+                            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold
+                                bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg
+                                transition-all disabled:opacity-50"
+                        >
+                            {marking
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <Banknote className="w-3.5 h-3.5" />}
+                            Mark Collected
+                        </button>
+                    )}
 
                     {/* Status update dropdown */}
                     {next.length > 0 && (
@@ -327,13 +442,35 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
                                     <span>Order ID</span>
                                     <span className="font-medium">#{order.id}</span>
                                 </div>
-                                <div className="flex justify-between text-gray-600">
-                                    <span>Payment</span>
-                                    <span className={`font-medium px-2 py-0.5 rounded text-xs
-                                        ${STATUS_CONFIG[order.status]?.color}`}>
-                                        {order.status}
+
+                                <div className="flex justify-between text-gray-600 items-center">
+                                    <span>Payment Method</span>
+                                    <span className={`font-medium px-2 py-0.5 rounded text-xs border ${pay.color}`}>
+                                        {pay.label}
                                     </span>
                                 </div>
+
+                                {paymentKey === 'COD' && (
+                                    <div className="flex justify-between text-gray-600 items-center">
+                                        <span>COD Status</span>
+                                        {order.codCollected
+                                            ? <span className="font-medium px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">
+                                                ✓ Collected
+                                              </span>
+                                            : <span className="font-medium px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700">
+                                                ⏳ Pending Collection
+                                              </span>
+                                        }
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between text-gray-600 items-center">
+                                    <span>Order Status</span>
+                                    <span className={`font-medium px-2 py-0.5 rounded text-xs ${s.color}`}>
+                                        {s.label}
+                                    </span>
+                                </div>
+
                                 <div className="flex justify-between text-gray-600">
                                     <span>Date</span>
                                     <span className="font-medium">
@@ -343,6 +480,21 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, updating }) {
                                     </span>
                                 </div>
                             </div>
+
+                            {showCollectButton && (
+                                <button
+                                    onClick={() => onMarkCODCollected(order.id)}
+                                    disabled={marking}
+                                    className="mt-4 w-full flex items-center justify-center gap-2
+                                        bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg
+                                        font-semibold text-sm transition-all disabled:opacity-50"
+                                >
+                                    {marking
+                                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                                        : <Banknote className="w-4 h-4" />}
+                                    Mark COD Payment as Collected
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

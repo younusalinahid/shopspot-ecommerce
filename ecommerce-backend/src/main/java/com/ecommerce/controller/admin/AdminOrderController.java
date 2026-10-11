@@ -2,6 +2,7 @@ package com.ecommerce.controller.admin;
 
 import com.ecommerce.dto.OrderDTO;
 import com.ecommerce.model.type.OrderStatus;
+import com.ecommerce.model.type.PaymentMethod;
 import com.ecommerce.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +34,16 @@ public class AdminOrderController {
     public ResponseEntity<OrderDTO> getOrderById(
             @PathVariable(name = "orderId") Long orderId) {
         return ResponseEntity.ok(orderService.getAdminOrderById(orderId));
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<OrderDTO>> filterByPaymentMethod(
+            @RequestParam(name = "paymentMethod") PaymentMethod paymentMethod) {
+        return ResponseEntity.ok(orderService.getOrdersByPaymentMethod(paymentMethod));
+    }
+
+    @PutMapping("/{orderId}/mark-cod-collected")
+    public ResponseEntity<OrderDTO> markCODCollected(@PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.markCODCollected(orderId));
     }
 }

@@ -2,7 +2,7 @@ package com.ecommerce.service;
 
 import com.ecommerce.dto.OrderDTO;
 import com.ecommerce.dto.OrderItemDTO;
-import jakarta.mail.MessagingException;
+import com.ecommerce.model.type.PaymentMethod;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,8 @@ public class EmailService {
 
             helper.setTo(toEmail);
             helper.setFrom(fromEmail);
-            helper.setSubject("🔥 Your Order is Confirmed! #" + order.getId());            helper.setText(buildEmailHtml(customerName, order), true);
+            helper.setSubject("🔥 Your Order is Confirmed! #" + order.getId());
+            helper.setText(buildEmailHtml(customerName, order), true);
 
             mailSender.send(message);
             log.info("✅ Email sent to: {}", toEmail);
@@ -69,6 +70,27 @@ public class EmailService {
                     + (addr.getPostalCode() != null ? " - " + addr.getPostalCode() : "");
         }
 
+        boolean isCOD = order.getPaymentMethod() == PaymentMethod.COD;
+        String paymentMethodLabel = isCOD ? "💵 Cash on Delivery" : "💳 Card Payment";
+        String paymentStatusLabel = isCOD
+                ? "Pay on delivery"
+                : "Paid Online";
+        String paymentStatusColor = isCOD
+                ? "background:#fef3c7;color:#92400e"
+                : "background:#dcfce7;color:#166534";
+        String totalLabel = isCOD ? "Total (Pay on Delivery)" : "Total Paid";
+
+        // Extra COD instructions
+        String codNotice = "";
+        if (isCOD) {
+            codNotice = "<div style='background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px;margin:20px 0'>"
+                    + "<p style='color:#92400e;font-size:14px;margin:0'><b>💵 Cash on Delivery</b></p>"
+                    + "<p style='color:#78350f;font-size:13px;margin:6px 0 0'>Please keep <b>৳"
+                    + String.format("%.2f", order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0)
+                    + "</b> ready when the delivery arrives.</p>"
+                    + "</div>";
+        }
+
         String html = "<html><body style='margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif'>"
                 + "<div style='max-width:600px;margin:30px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1)'>"
 
@@ -83,11 +105,15 @@ public class EmailService {
                 + "<p style='color:#374151;font-size:16px'>Hi <strong>" + customerName + "</strong>,</p>"
                 + "<p style='color:#6b7280'>Thank you for your order! We have received it and will start processing soon.</p>"
 
+                + codNotice
+
                 // Order info
                 + "<div style='background:#f9fafb;border-radius:8px;padding:16px;margin:20px 0'>"
                 + "<table style='width:100%'>"
                 + "<tr><td style='color:#6b7280;font-size:14px'>Order ID</td><td style='text-align:right;font-weight:bold;color:#111827'>#" + order.getId() + "</td></tr>"
                 + "<tr><td style='color:#6b7280;font-size:14px;padding-top:8px'>Status</td><td style='text-align:right;padding-top:8px'><span style='background:#dcfce7;color:#166534;padding:2px 10px;border-radius:99px;font-size:13px'>" + order.getStatus() + "</span></td></tr>"
+                + "<tr><td style='color:#6b7280;font-size:14px;padding-top:8px'>Payment Method</td><td style='text-align:right;color:#374151;font-size:14px;padding-top:8px'>" + paymentMethodLabel + "</td></tr>"
+                + "<tr><td style='color:#6b7280;font-size:14px;padding-top:8px'>Payment Status</td><td style='text-align:right;padding-top:8px'><span style='" + paymentStatusColor + ";padding:2px 10px;border-radius:99px;font-size:13px'>" + paymentStatusLabel + "</span></td></tr>"
                 + "<tr><td style='color:#6b7280;font-size:14px;padding-top:8px'>Shipping to</td><td style='text-align:right;color:#374151;font-size:14px;padding-top:8px'>" + shippingAddr + "</td></tr>"
                 + "</table></div>"
 
@@ -101,7 +127,7 @@ public class EmailService {
                 + "</tr></thead>"
                 + "<tbody>" + items.toString() + "</tbody>"
                 + "<tfoot><tr>"
-                + "<td colspan='2' style='padding:12px 10px;font-weight:bold;color:#111827'>Total Paid</td>"
+                + "<td colspan='2' style='padding:12px 10px;font-weight:bold;color:#111827'>" + totalLabel + "</td>"
                 + "<td style='padding:12px 10px;text-align:right;font-weight:bold;font-size:18px;color:#2563eb'>"
                 + String.format("৳%.2f", order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0)
                 + "</td></tr></tfoot></table>"

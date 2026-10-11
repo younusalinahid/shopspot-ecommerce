@@ -1,6 +1,7 @@
 package com.ecommerce.model;
 
 import com.ecommerce.model.type.OrderStatus;
+import com.ecommerce.model.type.PaymentMethod;
 import com.ecommerce.model.type.ShippingAddress;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,6 +36,15 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    @Builder.Default
+    private PaymentMethod paymentMethod = PaymentMethod.CARD;
+
+    @Column(name = "cod_collected")
+    @Builder.Default
+    private Boolean codCollected = false;
 
     @Column(nullable = false)
     private Integer totalAmount;

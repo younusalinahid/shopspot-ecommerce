@@ -81,44 +81,82 @@ const Chatbot = () => {
     }, []);
 
     const renderMessageContent = (content) => {
-        // Prevent undefined/null content from causing errors
-        if (!content) {
-            return "";
-        }
+        if (!content) return "";
 
-        const regex = /\[([^\]]+)\]\(search:([^)]+)\)/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
+        // First, handle product links
+        const linkRegex = /\[([^\]]+)\]\((\d+)\)/g;
+        const searchRegex = /\[([^\]]+)\]\(search:([^)]+)\)/g;
 
-        while ((match = regex.exec(content)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(content.substring(lastIndex, match.index));
+        // Split by line breaks first
+        const lines = content.split('\n');
+
+        return lines.map((line, lineIndex) => {
+            const parts = [];
+            let lastIndex = 0;
+            let match;
+
+            // Combined regex for both product and search links
+            const combinedRegex = /\[([^\]]+)\]\((?:search:)?([^)]+)\)/g;
+
+            while ((match = combinedRegex.exec(line)) !== null) {
+                if (match.index > lastIndex) {
+                    parts.push(line.substring(lastIndex, match.index));
+                }
+
+                const linkText = match[1];
+                const linkTarget = match[2];
+                const isSearch = line.substring(match.index, match.index + 8).includes('search:');
+
+                if (isSearch) {
+                    parts.push(
+                        <Link
+                            key={`${lineIndex}-${match.index}`}
+                            to={`/search?q=${encodeURIComponent(linkTarget.trim())}`}
+                            className="inline-flex items-center gap-1.5 mx-1 px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-sm transition-all text-xs"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            {linkText}
+                            <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                    );
+                } else {
+                    parts.push(
+                        <Link
+                            key={`${lineIndex}-${match.index}`}
+                            to={`/product/${linkTarget}`}
+                            className="inline-flex items-center gap-1 mx-0.5 px-2 py-0.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-medium transition-all text-xs border border-cyan-200"
+                            onClick={() => setIsOpen(false)}
+                        >
+                            {linkText}
+                        </Link>
+                    );
+                }
+
+                lastIndex = combinedRegex.lastIndex;
             }
 
-            const linkText = match[1];
-            const searchKeyword = match[2];
+            if (lastIndex < line.length) {
+                parts.push(line.substring(lastIndex));
+            }
 
-            parts.push(
-                <Link
-                    key={match.index}
-                    to={`/search?q=${encodeURIComponent(searchKeyword.trim())}`}
-                    className="inline-flex items-center gap-1.5 mx-1 px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-sm transition-all text-xs"
-                    onClick={() => setIsOpen(false)}
-                >
-                    {linkText}
-                    <ExternalLink className="w-3.5 h-3.5" />
-                </Link>
+            const lineContent = parts.length > 0 ? parts : line;
+
+            // Check if line starts with bullet point
+            if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+                return (
+                    <div key={lineIndex} className="flex gap-2 my-1">
+                        <span className="text-cyan-500 flex-shrink-0">•</span>
+                        <span className="flex-1">{lineContent}</span>
+                    </div>
+                );
+            }
+
+            return (
+                <div key={lineIndex} className={line.trim() ? "my-0.5" : "h-2"}>
+                    {lineContent}
+                </div>
             );
-
-            lastIndex = regex.lastIndex;
-        }
-
-        if (lastIndex < content.length) {
-            parts.push(content.substring(lastIndex));
-        }
-
-        return parts.length > 0 ? parts : content;
+        });
     };
 
     const handleSend = async () => {

@@ -16,4 +16,6 @@ public class CheckoutRequestDTO {
     private String  district;
     private String  postalCode;
     private Boolean saveAddress = false;
+    private String paymentMethod = "CARD";
+
 }

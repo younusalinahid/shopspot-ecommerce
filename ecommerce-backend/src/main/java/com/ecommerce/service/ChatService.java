@@ -141,7 +141,13 @@ public class ChatService {
                 "- Respond in the exact language the user uses.\n" +
                 "- If the user says 'Hello', 'hi', or writes in English, you MUST reply ONLY in English.\n" +
                 "- If the user writes in Bengali, you MUST reply ONLY in Bengali.\n" +
-                "- NEVER mix languages.\n\n" +
+                "- NEVER mix languages. If replying in Bengali, translate product names to Bengali where possible, or keep English names in parentheses.\n" +
+                "- Use proper Bengali punctuation and formatting.\n\n" +
+                "FORMATTING RULES:\n" +
+                "- Use line breaks between each product recommendation.\n" +
+                "- Use bullet points (•) for lists.\n" +
+                "- Format prices as: ৳৪,৮০০ (with Taka symbol)\n" +
+                "- Keep responses clean and readable.\n\n" +
                 "Store Catalog:\n" +
                 "- Categories: " + categories + "\n" +
                 "- Products Details: " + productsInfo + "\n" +
