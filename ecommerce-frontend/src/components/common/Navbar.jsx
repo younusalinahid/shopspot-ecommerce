@@ -247,14 +247,15 @@ export default function Navbar() {
         <>
             <nav
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
-                <div className="w-full px-4 lg:px-8">
-                    <div className="flex justify-between items-center">
+                <div className="w-full px-3 sm:px-4 lg:px-8">
+                    <div className="flex justify-between items-center gap-2">
                         {/* Logo */}
-                        <div className="flex items-center flex-shrink-0">
-                            <Link to="/" className="flex items-center space-x-1 lg:space-x-2">
-                                <img src={logo} alt="ShopSpot Logo" className="w-20 h-20 lg:w-24 lg:h-24"/>
+                        <div className="flex items-center min-w-0">
+                            <Link to="/" className="flex items-center min-w-0 space-x-1 lg:space-x-2">
+                                <img src={logo} alt="ShopSpot Logo"
+                                     className="w-14 h-14 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0"/>
                                 <span
-                                    className="text-white font-bold text-2xl lg:text-3xl -ml-10">ShopSpot Online</span>
+                                    className="text-white font-bold text-base sm:text-2xl lg:text-3xl -ml-6 sm:-ml-10 truncate">ShopSpot Online</span>
                             </Link>
                         </div>
 
@@ -297,7 +298,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Actions (Cart, Profile, Theme) */}
-                        <div className="flex items-center space-x-4 lg:space-x-6">
+                        <div className="flex items-center flex-shrink-0 space-x-1 sm:space-x-4 lg:space-x-6">
                             <img
                                 src={playStoreButton}
                                 alt="Google Play"
@@ -305,15 +306,16 @@ export default function Navbar() {
                             />
 
                             <div
-                                className="relative cursor-pointer group p-2 rounded-full hover:bg-white/10 transition-colors duration-200"
+                                className="relative cursor-pointer group p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors duration-200"
                                 onClick={handleCartClick}
+                                role="button"
+                                aria-label="Open cart"
                             >
                                 <ShoppingCart
-                                    className="text-white group-hover:scale-110 transition-transform duration-200"
-                                    size={40}/>
+                                    className="text-white w-7 h-7 sm:w-10 sm:h-10 group-hover:scale-110 transition-transform duration-200"/>
                                 {cartCount > 0 && (
                                     <span
-                                        className="absolute -top-1 -right-1 flex justify-center items-center bg-red-500 rounded-full w-6 h-6 font-bold text-sm text-white shadow-lg">
+                                        className="absolute -top-1 -right-1 flex justify-center items-center bg-red-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 font-bold text-xs sm:text-sm text-white shadow-lg">
                                         {cartCount}
                                     </span>
                                 )}
@@ -333,25 +335,26 @@ export default function Navbar() {
 
                             <button
                                 onClick={toggleTheme}
-                                className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-lg"
+                                className="hidden sm:block p-2 sm:p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-lg"
                                 aria-label="Toggle theme"
                             >
-                                {isDark ? <Sun className="text-yellow-400" size={24}/> :
-                                    <Moon className="text-white" size={24}/>}
+                                {isDark ? <Sun className="text-yellow-400 w-5 h-5 sm:w-6 sm:h-6"/> :
+                                    <Moon className="text-white w-5 h-5 sm:w-6 sm:h-6"/>}
                             </button>
 
                             <button
                                 className="lg:hidden p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                aria-label="Open menu"
                             >
-                                {isMobileMenuOpen ? <X className="text-white" size={28}/> :
-                                    <Menu className="text-white" size={28}/>}
+                                {isMobileMenuOpen ? <X className="text-white w-6 h-6 sm:w-7 sm:h-7"/> :
+                                    <Menu className="text-white w-6 h-6 sm:w-7 sm:h-7"/>}
                             </button>
                         </div>
                     </div>
 
                     {/* Mobile Search Bar */}
-                    <div className="lg:hidden pb-4">
+                    <div className="lg:hidden pb-3 sm:pb-4">
                         <form onSubmit={handleSearchSubmit} className="relative">
                             <input
                                 type="text"
@@ -413,18 +416,30 @@ export default function Navbar() {
                             </button>
                         )}
 
+                        <button
+                            onClick={toggleTheme}
+                            className="sm:hidden w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200"
+                        >
+                            {isDark ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5"/>}
+                            <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+                        </button>
+
                         <div className="flex justify-center">
                             <img src={playStoreButton} alt="Google Play"
                                  className="w-40 h-auto cursor-pointer hover:scale-105 transition-transform duration-200"/>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <Link to="/categories"
-                                  className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  onClick={() => setIsMobileMenuOpen(false)}>Categories</Link>
-                            <Link to="/deals"
-                                  className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  onClick={() => setIsMobileMenuOpen(false)}>Hot Deals</Link>
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            {[
+                                {to: "/", label: "Home"},
+                                {to: "/cart", label: `Cart${cartCount ? ` (${cartCount})` : ""}`},
+                                {to: "/compare", label: "Compare"},
+                                ...(isLoggedIn ? [{to: "/orders", label: "My Orders"}] : []),
+                            ].map(item => (
+                                <Link key={item.to} to={item.to}
+                                      className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                      onClick={() => setIsMobileMenuOpen(false)}>{item.label}</Link>
+                            ))}
                         </div>
                     </div>
                 </div>

@@ -152,12 +152,12 @@ export default function CategoryManagementPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-0 sm:p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">Category Management</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Category Management</h1>
                         <p className="text-gray-500 mt-1">Manage your product categories and subcategories</p>
                     </div>
                     <button
@@ -165,7 +165,7 @@ export default function CategoryManagementPage() {
                             resetForm();
                             setShowModal(true);
                         }}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
                     >
                         <Plus className="w-5 h-5"/>
                         Add Category
@@ -183,9 +183,9 @@ export default function CategoryManagementPage() {
                         {categories.map((category) => (
                             <div key={category.id} className="bg-white rounded-lg shadow-sm border border-gray-200">
                                 {/* Category Header */}
-                                <div className="p-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4 flex-1">
+                                <div className="p-4 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                             <button
                                                 onClick={() => toggleCategory(category.id)}
                                                 className="text-gray-500 hover:text-gray-700"
@@ -209,7 +209,7 @@ export default function CategoryManagementPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 self-end sm:self-auto">
                                             <button
                                                 onClick={() => openSubCategoryModal(category.id)}
                                                 className="px-4 py-2 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
@@ -234,7 +234,7 @@ export default function CategoryManagementPage() {
 
                                 {/* Subcategories */}
                                 {expandedCategories[category.id] && category.subCategories?.length > 0 && (
-                                    <div className="border-t border-gray-200 bg-gray-50 p-6">
+                                    <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
                                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {category.subCategories.map((sub) => (
                                                 <div key={sub.id} className="bg-white p-4 rounded-lg border border-gray-200">

@@ -361,7 +361,7 @@ const ProductDetailsPage = () => {
                                         <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
                                     </button>
                                     <button onClick={handleBuyNow} disabled={!hasStock || addingToCart || loading}
-                                            className="flex-1 bg-gray-900 hover:bg-black text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center disabled:bg-gray-400">
+                                            className="flex-1 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center disabled:bg-gray-400">
                                         <span>{addingToCart ? 'Adding...' : 'Buy Now'}</span>
                                     </button>
                                 </div>

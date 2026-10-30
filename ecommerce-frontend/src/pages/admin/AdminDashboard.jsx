@@ -26,7 +26,8 @@ export default function AdminDashboard() {
     };
 
     const [activeTab, setActiveTab] = useState(() => getTabFromPath());
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // Sidebar starts closed on phones/tablets so the content gets the full width
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 1024);
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isHighlighted, setIsHighlighted] = useState(false);
@@ -264,13 +265,14 @@ export default function AdminDashboard() {
                 activeTab={activeTab}
                 setActiveTab={handleTabChange}
                 isSidebarOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 min-w-0 overflow-auto">
                 <Header
                     isSidebarOpen={isSidebarOpen}
                     setIsSidebarOpen={setIsSidebarOpen}
                 />
-                <main className="p-6">
+                <main className="p-3 sm:p-6">
                     {renderContent()}
                 </main>
             </div>

@@ -7,19 +7,20 @@ export default function Header({isSidebarOpen, setIsSidebarOpen}) {
 
     return (
         <header className="bg-white shadow-sm">
-            <div className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-2 px-3 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="p-2 hover:bg-gray-100 rounded-lg"
+                        aria-label="Toggle sidebar"
                     >
                         {isSidebarOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+                    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Dashboard</h2>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                     <div
-                        className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                        className="hidden sm:flex w-10 h-10 bg-blue-500 rounded-full items-center justify-center text-white font-semibold">
                         A
                     </div>
                     <button
@@ -27,7 +28,7 @@ export default function Header({isSidebarOpen, setIsSidebarOpen}) {
                         className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     >
                         <Home className="w-4 h-4"/>
-                        Home
+                        <span className="hidden sm:inline">Home</span>
                     </button>
                 </div>
             </div>

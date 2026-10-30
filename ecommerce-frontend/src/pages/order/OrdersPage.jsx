@@ -18,6 +18,12 @@ const STATUS = {
         icon: Clock,
         gradient: 'from-amber-500 to-orange-500'
     },
+    CONFIRMED: {
+        label: 'Confirmed',
+        color: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
+        icon: CheckCircle2,
+        gradient: 'from-teal-500 to-emerald-500'
+    },
     PAID: {
         label: 'Paid',
         color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
@@ -50,7 +56,21 @@ const STATUS = {
     },
 };
 
-const FILTERS = ['ALL', 'PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+const FILTERS = ['ALL', 'PENDING', 'CONFIRMED', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+
+/** Payment state text that works for both card and cash-on-delivery orders. */
+const paymentStatusLabel = (order) => {
+    if (order.status === 'CANCELLED') return 'Cancelled';
+    if (order.paymentMethod === 'COD') {
+        return order.codCollected || order.status === 'PAID' ? 'Paid (Cash)' : 'Pay on Delivery';
+    }
+    return order.status === 'PENDING' ? 'Pending' : 'Paid';
+};
+
+const isPaymentDone = (order) =>
+    order.paymentMethod === 'COD'
+        ? Boolean(order.codCollected) || order.status === 'PAID'
+        : ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status);
 
 export default function OrdersPage() {
     const navigate = useNavigate();
@@ -62,6 +82,8 @@ export default function OrdersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    // Separate flag so the auto-selected desktop sidebar order does not pop up a sheet on mobile
+    const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
 
     useEffect(() => {
         if (!localStorage.getItem('token')) {
@@ -232,7 +254,10 @@ export default function OrdersPage() {
                                             onCancel={handleCancel}
                                             cancelling={cancelling === order.id}
                                             index={index}
-                                            onViewDetails={() => setSelectedOrder(order)}
+                                            onViewDetails={() => {
+                                                setSelectedOrder(order);
+                                                setMobileDetailsOpen(true);
+                                            }}
                                         />
                                     ))}
                                 </div>
@@ -241,6 +266,24 @@ export default function OrdersPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile / tablet: order details open as a bottom sheet (the sidebar is desktop-only) */}
+            {selectedOrder && mobileDetailsOpen && (
+                <div
+                    className="lg:hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4"
+                    onClick={() => setMobileDetailsOpen(false)}
+                >
+                    <div
+                        className="w-full sm:max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <OrderDetailsSidebar
+                            order={selectedOrder}
+                            onClose={() => setMobileDetailsOpen(false)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -381,14 +424,15 @@ function OrderDetailsSidebar({order, onClose}) {
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-600 dark:text-gray-400">Payment Method</span>
                             <span
-                                className="text-sm font-medium text-gray-900 dark:text-white">Credit Card (Stripe)</span>
+                                className="text-sm font-medium text-gray-900 dark:text-white">
+                                {order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Credit Card (Stripe)'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-600 dark:text-gray-400">Payment Status</span>
                             <span
-                                className={`text-sm font-medium ${order.status === 'PAID' || order.status === 'PROCESSING' || order.status === 'SHIPPED' || order.status === 'DELIVERED'
-                                    ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                {order.status === 'PENDING' ? 'Pending' : 'Paid'}
+                                className={`text-sm font-medium ${isPaymentDone(order) ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                {paymentStatusLabel(order)}
                             </span>
                         </div>
                         <div
@@ -496,7 +540,7 @@ function OrderCard({order, expanded, onToggle, onCancel, cancelling, index, onVi
                 transition-all duration-300 hover:shadow-xl border border-gray-100 dark:border-gray-700
                 ${expanded ? 'ring-2 ring-purple-500/20' : ''}`}
         >
-            <div className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+            <div className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                  onClick={onToggle}>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
@@ -581,7 +625,7 @@ function OrderCard({order, expanded, onToggle, onCancel, cancelling, index, onVi
                         <QuickStat icon={Truck} label="Delivery"
                                    value={order.status === 'DELIVERED' ? 'Delivered' : 'In Transit'}/>
                         <QuickStat icon={CreditCard} label="Payment"
-                                   value={order.status === 'PENDING' ? 'Pending' : 'Completed'}/>
+                                   value={paymentStatusLabel(order)}/>
                         <QuickStat icon={Calendar} label="Order Date" value={formattedDate}/>
                     </div>
                     <button

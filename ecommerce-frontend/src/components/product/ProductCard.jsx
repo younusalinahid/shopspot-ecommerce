@@ -51,7 +51,7 @@ export default function ProductCard({ product, showDiscount = false }) {
     return (
         <div className="group w-full relative">
             <div
-                className="relative bg-gray-50 dark:bg-gray-800 h-96 w-full flex items-center justify-center overflow-hidden rounded-xl cursor-pointer"
+                className="relative bg-gray-50 dark:bg-gray-800 h-52 sm:h-72 lg:h-96 w-full flex items-center justify-center overflow-hidden rounded-xl cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
             >
                 {imageSource && !imageError ? (
@@ -60,10 +60,10 @@ export default function ProductCard({ product, showDiscount = false }) {
                     <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
 
-                <div className="absolute bottom-6 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 z-50">
+                <div className="absolute bottom-2 sm:bottom-6 flex items-center justify-center gap-2 sm:gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
                     {/* Add to Cart with Tooltip */}
                     <div className="relative group/tooltip">
-                        <div onClick={handleAddToCart} className="p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
+                        <div onClick={handleAddToCart} aria-label="Add to cart" role="button" className="p-2.5 sm:p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                         </div>
                         <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Add to Cart</span>
@@ -71,7 +71,7 @@ export default function ProductCard({ product, showDiscount = false }) {
 
                     {/* Compare with Tooltip */}
                     <div className="relative group/tooltip">
-                        <div onClick={handleCompare} className="p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
+                        <div onClick={handleCompare} aria-label="Add to compare" role="button" className="p-2.5 sm:p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
                         </div>
                         <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Compare</span>
@@ -79,15 +79,15 @@ export default function ProductCard({ product, showDiscount = false }) {
                 </div>
             </div>
 
-            <div className="mt-4 px-1 cursor-pointer flex flex-col items-center justify-center text-center" onClick={() => navigate(`/product/${product.id}`)}>
+            <div className="mt-2 sm:mt-4 px-1 cursor-pointer flex flex-col items-center justify-center text-center" onClick={() => navigate(`/product/${product.id}`)}>
                 <h3 className="text-gray-800 dark:text-gray-100 font-medium text-sm truncate w-full">{product.name}</h3>
 
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1">
                     {hasDiscount && (
                         <span className="text-gray-400 line-through text-xs">৳{Number(product.originalPrice).toFixed(2)}</span>
                     )}
                     <div className="flex items-center gap-1">
-                        <p className="text-gray-900 dark:text-white font-bold text-base">৳{Number(product.price).toFixed(2)}</p>
+                        <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-base">৳{Number(product.price).toFixed(2)}</p>
                         {hasDiscount && (
                             <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{discountPercentage}% OFF</span>
                         )}

@@ -116,13 +116,13 @@ const CartPage = () => {
                             {cart.items.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+                                    className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
                                 >
-                                    <div className="flex flex-col sm:flex-row gap-6">
+                                    <div className="flex flex-row gap-3 sm:gap-6">
                                         {/* Product Image */}
                                         <div className="flex-shrink-0">
                                             <div
-                                                className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                                                className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                                                 {getProductImage(item) ? (
                                                     <img
                                                         src={getProductImage(item)}
@@ -138,11 +138,11 @@ const CartPage = () => {
                                         </div>
 
                                         {/* Product Details */}
-                                        <div className="flex-grow">
-                                            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
+                                        <div className="flex-grow min-w-0 pr-8 sm:pr-0">
+                                            <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white mb-1 line-clamp-2">
                                                 {getProductName(item)}
                                             </h3>
-                                            <p className="text-blue-600 dark:text-blue-400 font-semibold text-xl mb-3">
+                                            <p className="text-blue-600 dark:text-blue-400 font-semibold text-lg sm:text-xl mb-2 sm:mb-3">
                                                 ৳{getProductPrice(item).toFixed(2)}
                                             </p>
 
@@ -166,7 +166,7 @@ const CartPage = () => {
 
                                             {/* Quantity and Actions */}
                                             <div
-                                                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                                className="flex flex-row flex-wrap items-center justify-between gap-2 sm:gap-4">
                                                 {/* Quantity Controls */}
                                                 <div
                                                     className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
@@ -179,7 +179,7 @@ const CartPage = () => {
                                                     </button>
 
                                                     <span
-                                                        className="w-12 text-center font-semibold text-gray-900 dark:text-white">
+                                                        className="w-8 sm:w-12 text-center font-semibold text-gray-900 dark:text-white">
                             {updatingItems[item.id] ? '...' : item.quantity}
                           </span>
 
@@ -193,21 +193,22 @@ const CartPage = () => {
                                                 </div>
 
                                                 {/* Item Total */}
-                                                <div className="text-left sm:text-right">
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
-                                                    <p className="font-bold text-xl text-gray-900 dark:text-white">
+                                                <div className="text-right">
+                                                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
+                                                    <p className="font-bold text-base sm:text-xl text-gray-900 dark:text-white">
                                                         ৳{(getProductPrice(item) * item.quantity).toFixed(2)}
                                                     </p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Remove Button */}
-                                        <div className="flex sm:flex-col justify-end">
+                                        {/* Remove Button (top-right corner on mobile) */}
+                                        <div className="absolute top-3 right-3 sm:static flex sm:flex-col justify-end">
                                             <button
                                                 onClick={() => handleRemoveItem(item.id, getProductName(item))}
                                                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                 title="Remove item"
+                                                aria-label="Remove item"
                                             >
                                                 <Trash2 size={20}/>
                                             </button>

@@ -224,12 +224,12 @@ const ProductManagementPage = () => {
 
 
     return (
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Product Management</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Product Management</h2>
                         <p className="text-sm text-gray-500">
                             {filteredProducts.length} of {products.length} products
                         </p>
@@ -264,11 +264,11 @@ const ProductManagementPage = () => {
 
 
                 {/* Right Side */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                     <select
                         value={filterOption}
                         onChange={(e) => setFilterOption(e.target.value)}
-                        className="border border-gray-300 rounded-full px-5 py-3 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[160px]"
+                        className="border border-gray-300 rounded-full px-5 py-3 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-none min-w-0 sm:min-w-[160px]"
                     >
                         <option value="all">All Products</option>
                         <option value="active">Active Products</option>

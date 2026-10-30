@@ -198,12 +198,12 @@ const Chatbot = () => {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
 
             {/* ── Chat Window ── */}
             {isOpen && (
-                <div className="mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-                     style={{ height: "500px" }}>
+                <div className="mb-4 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+                     style={{ height: "min(500px, calc(100vh - 7rem))" }}>
 
                     {/* Header */}
                     <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-4 flex items-center justify-between">
@@ -300,7 +300,7 @@ const Chatbot = () => {
 
             {/* ── Tooltip ── */}
             {!isOpen && showTooltip && (
-                <div className="absolute bottom-3 right-full mr-3 animate-fadeIn">
+                <div className="hidden sm:block absolute bottom-3 right-full mr-3 animate-fadeIn">
                     <div className="bg-gray-900 text-white text-xs font-medium px-3.5 py-2 rounded-xl
                         shadow-lg whitespace-nowrap relative">
                         Need help? Chat with us! 💬
@@ -324,7 +324,7 @@ const Chatbot = () => {
                     onClick={handleToggle}
                     onMouseEnter={() => !isOpen && setShowTooltip(true)}
                     onMouseLeave={() => setShowTooltip(false)}
-                    className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center
+                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg flex items-center justify-center
                         transition-all duration-300 hover:scale-110
                         ${isOpen
                         ? "bg-gray-600 hover:bg-gray-700"

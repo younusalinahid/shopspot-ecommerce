@@ -116,9 +116,9 @@ const HomePage = () => {
                             <Banner/>
 
                             {/* Product Categories Section */}
-                            <div className="relative px-6 py-8">
+                            <div className="relative px-3 sm:px-6 py-5 sm:py-8">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="font-bold text-gray-900 dark:text-white text-2xl transition-colors duration-300">
+                                    <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
                                         Product Categories
                                     </h2>
                                     <button
@@ -189,11 +189,11 @@ const HomePage = () => {
 
                             {/* Recommended For You */}
                             {isAuthenticated() && (
-                                <div className="px-6 py-8">
+                                <div className="px-3 sm:px-6 py-5 sm:py-8">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-2">
                                             <span className="text-2xl">✨</span>
-                                            <h2 className="font-bold text-gray-900 dark:text-white text-2xl">
+                                            <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl">
                                                 Recommended For You
                                             </h2>
                                         </div>
@@ -204,7 +204,7 @@ const HomePage = () => {
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"/>
                                         </div>
                                     ) : recommendations.length === 0 ? null : (
-                                        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        <div className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                             {recommendations.map(product => (
                                                 <ProductCard key={product.id} product={product}/>
                                             ))}
@@ -214,9 +214,9 @@ const HomePage = () => {
                             )}
 
                             {/* Featured Products */}
-                            <div className="px-6 py-8">
+                            <div className="px-3 sm:px-6 py-5 sm:py-8">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="font-bold text-gray-900 dark:text-white text-2xl transition-colors duration-300">
+                                    <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
                                         Featured Products
                                     </h2>
                                     <button
@@ -244,7 +244,7 @@ const HomePage = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                         {featuredProducts.map((product) => (
                                             <ProductCard
                                                 key={product.id}
@@ -256,7 +256,7 @@ const HomePage = () => {
                             </div>
 
                             {/* Category-wise Products */}
-                            <div className="px-6 py-8 pb-16">
+                            <div className="px-3 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-16">
                                 {categoryProductsLoading ? (
                                     <div className="flex justify-center items-center py-12">
                                         <div
@@ -284,7 +284,7 @@ const HomePage = () => {
                                                                 {categoryData.icon}
                                                             </div>
                                                         )}
-                                                        <h2 className="font-bold text-gray-900 dark:text-white text-2xl transition-colors duration-300">
+                                                        <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
                                                             {categoryData.name}
                                                         </h2>
                                                     </div>
@@ -298,7 +298,7 @@ const HomePage = () => {
                                                 </div>
 
                                                 <div
-                                                    className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                                    className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                                     {categoryData.products.map((product) => (
                                                         <ProductCard
                                                             key={product.id}

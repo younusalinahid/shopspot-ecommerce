@@ -6,7 +6,8 @@ const AdminLayout = ({children}) => {
         <div style={{display: "flex"}}>
             <AdminSidebar/>
 
-            <div style={{flex: 1}}>
+            {/* minWidth 0 lets wide tables scroll inside the page instead of stretching it on mobile */}
+            <div style={{flex: 1, minWidth: 0}}>
                 {children || <Outlet/>}
             </div>
         </div>

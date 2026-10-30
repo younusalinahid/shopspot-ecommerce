@@ -28,11 +28,12 @@ export default function CategorySidebar({ categories = [] }) {
 
     return (
         <>
-            {/* Mobile Toggle Button */}
-            <div className="lg:hidden fixed top-6 left-6 z-50">
+            {/* Mobile Toggle Button (bottom-left so it never covers the navbar) */}
+            <div className="lg:hidden fixed bottom-6 left-4 z-40">
                 <button
                     onClick={() => setIsMobileOpen(true)}
-                    className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all duration-300"
+                    aria-label="Open categories"
+                    className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all duration-300"
                 >
                     <Grid3X3 className="w-6 h-6" />
                 </button>
@@ -48,7 +49,7 @@ export default function CategorySidebar({ categories = [] }) {
 
             {/* Sidebar Container */}
             <div className={`
-                fixed lg:sticky top-0 left-0 h-screen w-80 
+                fixed lg:sticky top-0 left-0 h-screen w-80 max-w-[85vw] 
                 bg-white dark:bg-gray-900 
                 border-r border-purple-100 dark:border-gray-800
                 shadow-2xl lg:shadow-none z-40

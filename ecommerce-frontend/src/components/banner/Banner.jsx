@@ -55,9 +55,9 @@ const Banner = () => {
     // If banners exist, show carousel
     if (banners.length > 0) {
         return (
-            <div className="relative mx-4 my-6 rounded-2xl overflow-hidden group">
-                {/* Banner Images */}
-                <div className="relative h-64 md:h-80 lg:h-70">
+            <div className="relative mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden group">
+                {/* Banner Images: height follows the 3:1 banner ratio so mobile has no empty space */}
+                <div className="relative w-full aspect-[3/1] max-h-80">
                     {banners.map((banner, index) => (
                         <div
                             key={banner.id}
@@ -90,8 +90,8 @@ const Banner = () => {
                             )}
 
                             {/* Banner Title Overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                                <h2 className="text-white text-2xl md:text-3xl font-bold">
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 sm:p-6">
+                                <h2 className="text-white text-base sm:text-2xl md:text-3xl font-bold line-clamp-1">
                                     {banner.title}
                                 </h2>
                             </div>
@@ -142,13 +142,13 @@ const Banner = () => {
 
     // Fallback default banner if no banners available
     return (
-        <div className="bg-gradient-to-r from-cyan-100 to-cyan-200 mx-4 my-6 rounded-2xl overflow-hidden">
-            <div className="flex justify-between items-center p-8">
-                <div className="flex-1 space-y-4">
-                    <h2 className="font-bold text-cyan-800 text-3xl">Embrace Your Heritage</h2>
-                    <h3 className="font-bold text-gray-700 text-2xl">Wear Tradition with Style</h3>
+        <div className="bg-gradient-to-r from-cyan-100 to-cyan-200 mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden">
+            <div className="flex justify-between items-center gap-4 p-5 sm:p-8">
+                <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
+                    <h2 className="font-bold text-cyan-800 text-xl sm:text-3xl">Embrace Your Heritage</h2>
+                    <h3 className="font-bold text-gray-700 text-lg sm:text-2xl">Wear Tradition with Style</h3>
 
-                    <div className="flex items-center space-x-6 text-white">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-white text-sm sm:text-base">
                         <div className="bg-cyan-500 px-4 py-2 rounded-lg">
                             <span className="font-semibold">Flat $5 Cashback</span>
                         </div>
@@ -161,8 +161,8 @@ const Banner = () => {
                     </div>
                 </div>
 
-                <div className="flex-shrink-0">
-                    <div className="relative flex justify-center items-center bg-cyan-300 rounded-2xl w-64 h-48 overflow-hidden">
+                <div className="hidden sm:block flex-shrink-0">
+                    <div className="relative flex justify-center items-center bg-cyan-300 rounded-2xl w-48 h-36 lg:w-64 lg:h-48 overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-br from-cyan-200 to-cyan-400"></div>
                         <div className="relative text-6xl">👘</div>
                     </div>

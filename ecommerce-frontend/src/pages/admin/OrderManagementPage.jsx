@@ -274,8 +274,8 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
             >
                 <div className="flex items-center gap-3 flex-wrap">
 
-                    {/* Order ID + date */}
-                    <div className="min-w-0 flex-1">
+                    {/* Order ID + date (full row on mobile, badges wrap below it) */}
+                    <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-900">#{order.id}</span>
                             <span className="text-xs text-gray-400">
@@ -283,6 +283,9 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                                     day: 'numeric', month: 'short', year: 'numeric',
                                     hour: '2-digit', minute: '2-digit'
                                 })}
+                            </span>
+                            <span className="sm:hidden ml-auto font-bold text-gray-900">
+                                ৳{order.totalAmount?.toFixed(2)}
                             </span>
                         </div>
 

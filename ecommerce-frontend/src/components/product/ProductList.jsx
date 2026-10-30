@@ -64,20 +64,21 @@ const ProductList = () => {
 
     return (
         <div className="dark:bg-gray-900 transition-colors duration-300">
-            <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+            <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                {/* On mobile the sidebar is an off-canvas drawer (opened from its floating button) */}
                 <div
-                    className="w-80 flex-shrink-0 sticky top-0 h-screen overflow-y-auto bg-white dark:bg-gray-800 shadow-lg transition-colors duration-300">
+                    className="lg:w-80 flex-shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto bg-white dark:bg-gray-800 lg:shadow-lg transition-colors duration-300">
                     <CategorySidebar categories={categories}/>
                 </div>
 
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 min-w-0 flex flex-col">
                     <div
-                        className="flex-grow bg-gray-50 dark:bg-gray-900 overflow-y-auto px-6 py-8 transition-colors duration-300">
-                        <div className="mb-8">
-                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                        className="flex-grow bg-gray-50 dark:bg-gray-900 overflow-y-auto px-3 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-8 transition-colors duration-300">
+                        <div className="mb-5 sm:mb-8">
+                            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
                                 {subCategory?.name || 'Products'}
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400 text-lg transition-colors duration-300">
+                            <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg transition-colors duration-300">
                                 {products.length} {products.length === 1 ? 'product' : 'products'} found
                             </p>
                         </div>
@@ -90,7 +91,7 @@ const ProductList = () => {
                                 </p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                                 {products.map((product) => (
                                     <ProductCard key={product.id} product={product}/>
                                 ))}
