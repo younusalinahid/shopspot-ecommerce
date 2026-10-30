@@ -58,12 +58,18 @@ public class CartService {
             if (!product.isActive()) {
                 throw new RuntimeException("Product is not available");
             }
+            if (product.getStockQuantity() <= 0) {
+                throw new RuntimeException("Product is out of stock");
+            }
 
             Cart cart = cartRepository.findByUserId(userId)
                     .orElseGet(() -> createNewCart(userId));
 
             Optional<CartItem> existingItem = cartItemRepository
                     .findByCartIdAndProductId(cart.getId(), request.getProductId());
+
+            int alreadyInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+            ensureEnoughStock(product, alreadyInCart + request.getQuantity());
 
             if (existingItem.isPresent()) {
                 CartItem item = existingItem.get();
@@ -87,6 +93,17 @@ public class CartService {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to add item to cart: " + e.getMessage());
+        }
+    }
+
+    /** Stock 0 means out of stock; a cart line can never ask for more than what is left. */
+    private void ensureEnoughStock(Product product, int requestedQuantity) {
+        int stock = product.getStockQuantity();
+        if (stock <= 0) {
+            throw new RuntimeException(product.getName() + " is out of stock");
+        }
+        if (requestedQuantity > stock) {
+            throw new RuntimeException("Only " + stock + " left in stock for " + product.getName());
         }
     }
 
@@ -148,6 +165,7 @@ public class CartService {
         if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
         } else {
+            ensureEnoughStock(cartItem.getProduct(), quantity);
             cartItem.setQuantity(quantity);
             cartItemRepository.save(cartItem);
         }

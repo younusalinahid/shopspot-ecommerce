@@ -251,6 +251,7 @@ public class OrderService {
             if (line.quantity() <= 0 || line.quantity() > MAX_ITEM_QUANTITY) {
                 throw new RuntimeException("Invalid quantity in cart");
             }
+            ensureEnoughStock(line.product(), line.quantity());
             subtotal += line.product().calculateSellingPrice() * line.quantity();
         }
 
@@ -323,10 +324,16 @@ public class OrderService {
         if (order.getStatus() != OrderStatus.PENDING)
             throw new RuntimeException("Order already processed");
 
+        // Check again at confirmation time: stock may have changed since checkout
+        for (OrderItem item : order.getItems()) {
+            ensureEnoughStock(item.getProduct(), item.getQuantity());
+        }
+
         order.setPaymentMethod(PaymentMethod.COD);
         order.setStripePaymentIntentId(null);
         order.setStripeClientSecret(null);
         order.setStatus(OrderStatus.CONFIRMED);
+        deductStock(order);
         return orderRepository.save(order);
     }
 
@@ -364,8 +371,44 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.PAID);
+        // The customer has already paid, so the order is kept even if stock ran short meanwhile
+        deductStock(order);
         orderRepository.save(order);
         return true;
+    }
+
+    private void ensureEnoughStock(Product product, int quantity) {
+        int stock = product.getStockQuantity();
+        if (stock <= 0) {
+            throw new RuntimeException(product.getName() + " is out of stock");
+        }
+        if (quantity > stock) {
+            throw new RuntimeException("Only " + stock + " left in stock for " + product.getName());
+        }
+    }
+
+    /** Subtracts the ordered quantities from product stock once per order. */
+    private void deductStock(Order order) {
+        if (Boolean.TRUE.equals(order.getStockDeducted())) return;
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (product == null) continue;
+            product.setStockQuantity(Math.max(0, product.getStockQuantity() - item.getQuantity()));
+            productRepository.save(product);
+        }
+        order.setStockDeducted(true);
+    }
+
+    /** Puts the quantities back when an order whose stock was taken is cancelled. */
+    private void restoreStock(Order order) {
+        if (!Boolean.TRUE.equals(order.getStockDeducted())) return;
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (product == null) continue;
+            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+            productRepository.save(product);
+        }
+        order.setStockDeducted(false);
     }
 
     private void sendConfirmationEmail(Order order) {
@@ -445,8 +488,11 @@ public class OrderService {
     }
 
     public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdWithItems(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+        if (status == OrderStatus.CANCELLED) {
+            restoreStock(order);
+        }
         order.setStatus(status);
         return toDTO(orderRepository.save(order));
     }

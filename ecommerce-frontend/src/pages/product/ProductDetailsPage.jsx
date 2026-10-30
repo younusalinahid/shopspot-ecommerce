@@ -205,9 +205,10 @@ const ProductDetailsPage = () => {
     };
 
     const getStockStatus = () => {
+        // Stock 0 (or missing) means out of stock
         const stockCount = parseInt(product?.stock);
-        if (isNaN(stockCount) || stockCount === 0) return {hasStock: true, stockCount: 999, isUnlimited: true};
-        return {hasStock: stockCount > 0, stockCount, isUnlimited: false};
+        if (isNaN(stockCount) || stockCount <= 0) return {hasStock: false, stockCount: 0, isUnlimited: false};
+        return {hasStock: true, stockCount, isUnlimited: false};
     };
 
     if (isLoading) return (

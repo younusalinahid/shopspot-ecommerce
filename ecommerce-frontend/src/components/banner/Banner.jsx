@@ -1,135 +1,149 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getActiveBanners } from "../../api/bannerApi";
+
+const AUTOPLAY_MS = 5000;
+
+/** Detects the real image type from the base64 header (PNG, WebP or JPEG). */
+const getImageSrc = (imageData) => {
+    if (!imageData) return null;
+    if (imageData.startsWith('data:')) return imageData;
+    const mime = imageData.startsWith('iVBOR') ? 'image/png'
+        : imageData.startsWith('UklGR') ? 'image/webp'
+            : 'image/jpeg';
+    return `data:${mime};base64,${imageData}`;
+};
+
+/** Internal links ("/category/3") stay in the app; full URLs open in a new tab. */
+const BannerLink = ({ url, children, tabIndex }) => {
+    if (!url) return children;
+    if (url.startsWith('/')) {
+        return <Link to={url} tabIndex={tabIndex} className="block w-full h-full">{children}</Link>;
+    }
+    return (
+        <a href={url} target="_blank" rel="noopener noreferrer" tabIndex={tabIndex} className="block w-full h-full">
+            {children}
+        </a>
+    );
+};
 
 const Banner = () => {
     const [banners, setBanners] = useState([]);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPaused, setIsPaused] = useState(false);
+    const touchStartX = useRef(null);
 
     useEffect(() => {
         getActiveBanners()
             .then(data => {
-                const activeBanners = data.sort((a, b) => a.orderIndex - b.orderIndex);
+                const activeBanners = (Array.isArray(data) ? data : [])
+                    .filter(b => b.imageData)
+                    .sort((a, b) => a.orderIndex - b.orderIndex);
                 setBanners(activeBanners);
-                setIsLoading(false);
             })
-            .catch(err => {
-                console.error('Error loading banners:', err);
-                setIsLoading(false);
-            });
+            .catch(err => console.error('Error loading banners:', err))
+            .finally(() => setIsLoading(false));
     }, []);
 
+    // Restart the timer after every slide change, so a manual click gets the full 5 seconds
     useEffect(() => {
-        if (banners.length <= 1) return;
-
-        const interval = setInterval(() => {
+        if (banners.length <= 1 || isPaused) return;
+        const timer = setTimeout(() => {
             setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-        }, 5000);
+        }, AUTOPLAY_MS);
+        return () => clearTimeout(timer);
+    }, [banners.length, currentBannerIndex, isPaused]);
 
-        return () => clearInterval(interval);
-    }, [banners.length]);
+    const nextBanner = () => setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    const prevBanner = () => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
 
-    const nextBanner = () => {
-        setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    // Swipe left/right on touch screens
+    const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null || banners.length <= 1) return;
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(delta) > 40) (delta < 0 ? nextBanner : prevBanner)();
+        touchStartX.current = null;
     };
 
-    const prevBanner = () => {
-        setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-    };
-
-    const getImageSrc = (imageData) => {
-        if (!imageData) return null;
-        return `data:image/jpeg;base64,${imageData}`;
-    };
-
-    // Loading state
+    // Loading state (same 3:1 shape as the real banner, so the page does not jump)
     if (isLoading) {
         return (
-            <div className="bg-gradient-to-r from-gray-200 to-gray-300 mx-4 my-6 rounded-2xl h-64 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
-            </div>
+            <div className="mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl w-auto aspect-[3/1] bg-gray-200 dark:bg-gray-800 animate-pulse"/>
         );
     }
 
     // If banners exist, show carousel
     if (banners.length > 0) {
         return (
-            <div className="relative mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden group">
+            <div
+                className="relative mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden group bg-gray-200 dark:bg-gray-800"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                aria-roledescription="carousel"
+            >
                 {/* Banner Images: height follows the 3:1 banner ratio so mobile has no empty space */}
-                <div className="relative w-full aspect-[3/1] max-h-80">
-                    {banners.map((banner, index) => (
-                        <div
-                            key={banner.id}
-                            className={`absolute inset-0 transition-opacity duration-500 ${
-                                index === currentBannerIndex ? 'opacity-100' : 'opacity-0'
-                            }`}
-                        >
-                            {banner.linkUrl ? (
-                                <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer">
+                <div className="relative w-full aspect-[3/1]">
+                    {banners.map((banner, index) => {
+                        const isActive = index === currentBannerIndex;
+                        return (
+                            <div
+                                key={banner.id}
+                                // Hidden slides must not catch clicks, otherwise the last banner's link always opens
+                                className={`absolute inset-0 transition-opacity duration-700 ${
+                                    isActive ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none'
+                                }`}
+                                aria-hidden={!isActive}
+                            >
+                                <BannerLink url={banner.linkUrl} tabIndex={isActive ? 0 : -1}>
                                     <img
                                         src={getImageSrc(banner.imageData)}
-                                        alt={banner.title}
-                                        className="w-full h-full object-contain bg-gray-200"
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/1200x400?text=Banner+Image';
-                                        }}
-                                    />
-                                </a>
-                            ) : (
-                                <div className="relative w-full aspect-[3/1] overflow-hidden rounded-2xl">
-                                    <img
-                                        src={getImageSrc(banner.imageData)}
-                                        alt={banner.title}
+                                        alt={banner.title || 'ShopSpot offer'}
                                         className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/1200x400?text=Banner+Image';
-                                        }}
+                                        loading={index === 0 ? 'eager' : 'lazy'}
+                                        draggable={false}
                                     />
-                                </div>
-                            )}
-
-                            {/* Banner Title Overlay */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 sm:p-6">
-                                <h2 className="text-white text-base sm:text-2xl md:text-3xl font-bold line-clamp-1">
-                                    {banner.title}
-                                </h2>
+                                </BannerLink>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
-                {/* Navigation Arrows */}
+                {/* Navigation Arrows: hidden on phones (swipe instead), always shown on tablets, on hover for desktop */}
                 {banners.length > 1 && (
                     <>
                         <button
                             onClick={prevBanner}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            className="absolute z-20 left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-1.5 sm:p-3 rounded-full shadow-lg hidden sm:block opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"
                             aria-label="Previous banner"
                         >
-                            <ChevronLeft className="w-6 h-6" />
+                            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
                         </button>
                         <button
                             onClick={nextBanner}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            className="absolute z-20 right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-1.5 sm:p-3 rounded-full shadow-lg hidden sm:block opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"
                             aria-label="Next banner"
                         >
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
                         </button>
                     </>
                 )}
 
                 {/* Dots Indicator */}
                 {banners.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    <div className="absolute z-20 bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
                         {banners.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentBannerIndex(index)}
-                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 shadow ${
                                     index === currentBannerIndex
-                                        ? 'bg-white w-8'
-                                        : 'bg-white/50 hover:bg-white/75'
+                                        ? 'bg-white w-6 sm:w-8'
+                                        : 'bg-white/60 hover:bg-white/80 w-1.5 sm:w-2'
                                 }`}
                                 aria-label={`Go to banner ${index + 1}`}
                             />

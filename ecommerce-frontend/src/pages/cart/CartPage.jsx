@@ -16,8 +16,12 @@ const CartPage = () => {
         if (newQuantity < 1) return;
         setUpdatingItems(prev => ({...prev, [cartItemId]: true}));
         try {
-            await updateCartItem(cartItemId, newQuantity);
-            toast.success('Quantity updated', {position: "top-left", autoClose: 1500});
+            const result = await updateCartItem(cartItemId, newQuantity);
+            if (result?.success === false) {
+                toast.error(result.error || 'Update failed', {position: "top-left"});
+            } else {
+                toast.success('Quantity updated', {position: "top-left", autoClose: 1500});
+            }
         } catch {
             toast.error('Update failed', {position: "top-left"});
         } finally {

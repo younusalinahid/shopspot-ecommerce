@@ -11,9 +11,15 @@ export default function ProductCard({ product, showDiscount = false }) {
 
     if (!product) return null;
 
+    const isOutOfStock = product.stock !== undefined && Number(product.stock) <= 0;
+
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (isOutOfStock) {
+            toast.info('This product is out of stock');
+            return;
+        }
         addToCart(product.id, 1).then((result) => {
             if (result?.success) toast.success('Added to cart!');
             else if (!result?.deactivated) toast.error(result?.error || 'Failed to add');
@@ -60,10 +66,16 @@ export default function ProductCard({ product, showDiscount = false }) {
                     <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
 
+                {isOutOfStock && (
+                    <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-gray-900/80 text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-md z-10">
+                        Out of stock
+                    </span>
+                )}
+
                 <div className="absolute bottom-2 sm:bottom-6 flex items-center justify-center gap-2 sm:gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
                     {/* Add to Cart with Tooltip */}
                     <div className="relative group/tooltip">
-                        <div onClick={handleAddToCart} aria-label="Add to cart" role="button" className="p-2.5 sm:p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
+                        <div onClick={handleAddToCart} aria-label="Add to cart" aria-disabled={isOutOfStock} role="button" className={`p-2.5 sm:p-3 bg-white text-gray-900 rounded-full shadow-xl transition-all ${isOutOfStock ? "opacity-40 cursor-not-allowed" : "hover:bg-cyan-500 hover:text-white cursor-pointer"}`}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                         </div>
                         <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Add to Cart</span>

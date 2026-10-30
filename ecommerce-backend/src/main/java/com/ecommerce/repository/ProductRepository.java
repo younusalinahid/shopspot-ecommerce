@@ -28,6 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")
     List<Product> findAllProducts();
 
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.stockQuantity > 0 AND p.stockQuantity < 10 ORDER BY p.stockQuantity ASC")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.stockQuantity < 10 ORDER BY p.stockQuantity ASC")
     List<Product> findLowStockProducts();
 }

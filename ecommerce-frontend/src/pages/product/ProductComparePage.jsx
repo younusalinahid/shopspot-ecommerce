@@ -114,10 +114,10 @@ const ProductComparePage = () => {
                                 <td className="p-6 font-black text-slate-600 dark:text-slate-400 text-sm">Stock Status</td>
                                 {compareList.map(item => {
                                     const sCount = parseInt(item.stock);
-                                    const isUnlim = isNaN(sCount) || sCount === 0;
+                                    const inStock = !isNaN(sCount) && sCount > 0;
                                     return <td key={item.id || item._id} className="p-6 text-center border-l border-slate-100 dark:border-slate-800 text-sm font-bold">
-                                            <span className={isUnlim || sCount > 0 ? "text-emerald-600" : "text-rose-600"}>
-                                                {isUnlim ? "In Stock" : sCount > 0 ? `${sCount} left` : "Out of Stock"}
+                                            <span className={inStock ? "text-emerald-600" : "text-rose-600"}>
+                                                {inStock ? `${sCount} left` : "Out of Stock"}
                                             </span>
                                     </td>
                                 })}

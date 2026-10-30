@@ -223,7 +223,7 @@ export default function AdminDashboard() {
                                             ${product.stock <= 3
                                             ? "bg-red-200 text-red-700"
                                             : "bg-orange-100 text-orange-700"}`}>
-                                            {product.stock} left
+                                            {product.stock <= 0 ? 'Out of stock' : `${product.stock} left`}
                                         </span>
                                     </div>
                                 ))}

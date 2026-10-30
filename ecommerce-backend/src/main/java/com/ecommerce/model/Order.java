@@ -49,6 +49,10 @@ public class Order {
     @Column(nullable = false)
     private Integer totalAmount;
 
+    /** True once this order's items were subtracted from product stock (restored on cancel). */
+    @Builder.Default
+    private Boolean stockDeducted = false;
+
     /** Email for orders placed without an account (user is null). */
     private String guestEmail;
 

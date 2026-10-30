@@ -108,10 +108,21 @@ export const CartProvider = ({ children }) => {
                 const items = readGuestItems();
                 const id = guestItemId(productId, size, color);
                 const existing = items.find((i) => i.id === id);
+                // Fresh stock from the server (stock 0 = out of stock)
+                const product = await productService.getProductById(productId);
+                const stock = Number(product.stock) || 0;
+                const alreadyInCart = items
+                    .filter((i) => i.product?.id === productId)
+                    .reduce((sum, i) => sum + i.quantity, 0);
+                if (stock <= 0) {
+                    return { success: false, error: 'This product is out of stock' };
+                }
+                if (alreadyInCart + quantity > stock) {
+                    return { success: false, error: `Only ${stock} left in stock` };
+                }
                 if (existing) {
                     existing.quantity += quantity;
                 } else {
-                    const product = await productService.getProductById(productId);
                     items.push({
                         id,
                         quantity,
@@ -146,6 +157,11 @@ export const CartProvider = ({ children }) => {
 
     const handleUpdateCartItem = async (cartItemId, quantity) => {
         if (!isLoggedIn()) {
+            const target = readGuestItems().find((i) => i.id === cartItemId);
+            const stock = Number(target?.product?.stock);
+            if (target && quantity > target.quantity && !Number.isNaN(stock) && quantity > stock) {
+                return { success: false, error: `Only ${stock} left in stock` };
+            }
             const items = readGuestItems()
                 .map((i) => (i.id === cartItemId ? { ...i, quantity } : i))
                 .filter((i) => i.quantity > 0);

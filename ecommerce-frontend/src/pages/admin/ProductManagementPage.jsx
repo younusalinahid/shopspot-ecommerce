@@ -319,8 +319,8 @@ const ProductManagementPage = () => {
                                     )}
                                 </td>
                                 <td className="p-3">
-                                    {p.stock === 0 ? (
-                                        <span className="text-green-600 text-xs font-medium">Unlimited</span>
+                                    {p.stock <= 0 ? (
+                                        <span className="text-red-600 text-xs font-semibold whitespace-nowrap">Out of stock</span>
                                     ) : (
                                         <span className={p.stock < 5 ? "text-red-600 font-semibold" : "text-gray-700"}>
                                                {p.stock}
@@ -392,7 +392,7 @@ const ProductManagementPage = () => {
 
                             <Field label="Stock Quantity">
                                 <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleInputChange} min="0" disabled={loading} className={INPUT_CLS} placeholder="0" />
-                                <p className="text-xs text-gray-400 mt-1">0 = unlimited stock</p>
+                                <p className="text-xs text-gray-400 mt-1">0 = out of stock (customers cannot buy it)</p>
                             </Field>
 
 

@@ -350,6 +350,9 @@ export default function BannerManagementPage() {
                                         onChange={handleFileChange}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        Best size: 1500 × 500 px (3:1). Keep text in the middle so it is not cropped on phones. Max 5 MB.
+                                    </p>
                                     {formData.imagePreview && (
                                         <div className="mt-3">
                                             <img

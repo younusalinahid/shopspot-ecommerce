@@ -107,8 +107,8 @@ const HomePage = () => {
                         <CategorySidebar categories={categories}/>
                     </div>
 
-                    {/* Scrollable Main Content */}
-                    <div className="flex-1 flex flex-col">
+                    {/* Scrollable Main Content (min-w-0 stops wide images from stretching the page) */}
+                    <div className="flex-1 min-w-0 flex flex-col">
                         {/* Main Content */}
                         <div
                             className="flex-grow bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-300">
