@@ -25,9 +25,24 @@ public class AuthenticationService {
 
     @Transactional
     public AuthenticationResponse register(RegisterRequest request) {
+        String email = request.getEmail() != null ? request.getEmail().trim() : null;
+
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            throw new RuntimeException("A valid email is required");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new RuntimeException("Password must be at least 6 characters");
+        }
+        if (request.getFullName() == null || request.getFullName().isBlank()) {
+            throw new RuntimeException("Full name is required");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("An account with this email already exists");
+        }
+
         User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
+                .fullName(request.getFullName().trim())
+                .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .active(true)

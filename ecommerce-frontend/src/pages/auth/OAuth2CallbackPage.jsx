@@ -25,6 +25,11 @@ const OAuth2CallbackPage = () => {
 
         localStorage.setItem("token", token);
 
+        const refreshToken = searchParams.get("refreshToken");
+        if (refreshToken) {
+            localStorage.setItem("refreshToken", refreshToken);
+        }
+
         axiosInstance.get("/api/user/profile")
             .then(res => {
                 const normalizedUser = {

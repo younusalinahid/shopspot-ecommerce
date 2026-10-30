@@ -3,6 +3,7 @@ package com.ecommerce.config;
 import com.ecommerce.model.User;
 import com.ecommerce.model.type.Role;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,15 +22,18 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     public OAuth2AuthenticationSuccessHandler(
             @Lazy JwtService jwtService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            @Lazy RefreshTokenService refreshTokenService) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -72,7 +76,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (!user.isActive()) {
             response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token + "&isRestricted=true");
         } else {
-            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token);
+            String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
+            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token
+                    + "&refreshToken=" + refreshToken);
         }
     }
 }

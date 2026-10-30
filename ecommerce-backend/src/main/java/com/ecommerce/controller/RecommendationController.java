@@ -24,7 +24,7 @@ public class RecommendationController {
         return ResponseEntity.ok(recommendationService.getRecommendations(user.getId()));
     }
 
-    @PostMapping("/api/user/search-history")
+    @PostMapping("/search-history")
     public ResponseEntity<Void> saveSearch(
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal User user) {

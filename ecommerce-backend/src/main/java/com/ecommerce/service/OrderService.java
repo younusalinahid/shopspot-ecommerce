@@ -103,11 +103,29 @@ public class OrderService {
             }
         }
 
+        // Recalculate the total from current product prices instead of trusting the
+        // cached cart total, so the charged amount always matches the order items.
+        int totalAmount = 0;
+        for (CartItem cartItem : cart.getCartItems()) {
+            Product product = cartItem.getProduct();
+            if (product == null || !product.isActive()) {
+                throw new RuntimeException("Some products in your cart are no longer available");
+            }
+            if (cartItem.getQuantity() == null || cartItem.getQuantity() <= 0) {
+                throw new RuntimeException("Invalid quantity in cart");
+            }
+            totalAmount += product.getPrice() * cartItem.getQuantity();
+        }
+
+        if (totalAmount <= 0) {
+            throw new RuntimeException("Invalid order amount");
+        }
+
         Order order = Order.builder()
                 .user(user)
                 .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
-                .totalAmount(cart.getTotalPrice())
+                .totalAmount(totalAmount)
                 .paymentMethod(paymentMethod)
                 .codCollected(false)
                 .build();
@@ -128,7 +146,7 @@ public class OrderService {
         if (paymentMethod == PaymentMethod.CARD) {
             try {
                 PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                        .setAmount((long) cart.getTotalPrice() * 100)
+                        .setAmount((long) totalAmount * 100)
                         .setCurrency("usd")
                         .setAutomaticPaymentMethods(
                                 PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
@@ -193,10 +211,25 @@ public class OrderService {
         if (!order.getUser().getId().equals(userId))
             throw new RuntimeException("Unauthorized");
 
-        try {
-            PaymentIntent intent = PaymentIntent.retrieve(request.getPaymentIntentId());
+        if (order.getStatus() == OrderStatus.PAID)
+            return toDTO(order);
 
-            if ("succeeded".equals(intent.getStatus())) {
+        if (order.getStatus() != OrderStatus.PENDING)
+            throw new RuntimeException("Order already processed");
+
+        // The payment intent must belong to this order; otherwise a single succeeded
+        // payment could be replayed to mark other orders as paid.
+        if (order.getStripePaymentIntentId() == null
+                || !order.getStripePaymentIntentId().equals(request.getPaymentIntentId()))
+            throw new RuntimeException("Payment does not match this order");
+
+        try {
+            PaymentIntent intent = PaymentIntent.retrieve(order.getStripePaymentIntentId());
+
+            long expectedAmount = (long) order.getTotalAmount() * 100;
+            if ("succeeded".equals(intent.getStatus())
+                    && intent.getAmount() != null
+                    && intent.getAmount() == expectedAmount) {
                 order.setStatus(OrderStatus.PAID);
                 orderRepository.save(order);
                 cartService.clearCart(userId);
