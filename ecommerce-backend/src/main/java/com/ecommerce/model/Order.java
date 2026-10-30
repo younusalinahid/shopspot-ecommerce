@@ -24,7 +24,7 @@ public class Order {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -34,11 +34,11 @@ public class Order {
     private ShippingAddress shippingAddress;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(30)")
     private OrderStatus status = OrderStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
+    @Column(name = "payment_method", nullable = false, columnDefinition = "VARCHAR(20)")
     @Builder.Default
     private PaymentMethod paymentMethod = PaymentMethod.CARD;
 
@@ -48,6 +48,12 @@ public class Order {
 
     @Column(nullable = false)
     private Integer totalAmount;
+
+    /** Email for orders placed without an account (user is null). */
+    private String guestEmail;
+
+    /** Random secret that lets a guest confirm / view their own order. */
+    private String guestToken;
 
     private String stripePaymentIntentId;
     private String stripeClientSecret;

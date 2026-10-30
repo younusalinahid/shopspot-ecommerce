@@ -5,7 +5,7 @@ import {Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, CreditCard} fr
 import {toast} from 'react-toastify';
 
 const CartPage = () => {
-    const {cart, updateCartItem, removeCartItem, clearCart} = useCart();
+    const {cart, isGuest, updateCartItem, removeCartItem, clearCart} = useCart();
     const [updatingItems, setUpdatingItems] = useState({});
 
     const getProductImage = (item) => item.product?.imageData || null;
@@ -291,8 +291,25 @@ const CartPage = () => {
                                         to="/checkout"
                                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors"
                                     >
-                                        Proceed to Checkout
+                                        {isGuest ? 'Checkout as Guest' : 'Proceed to Checkout'}
                                     </Link>
+
+                                    {isGuest && (
+                                        <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                                            No account needed.{' '}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    sessionStorage.setItem('intendedPath', '/checkout');
+                                                    window.dispatchEvent(new Event('openLogin'));
+                                                }}
+                                                className="text-blue-600 hover:underline font-semibold"
+                                            >
+                                                Log in
+                                            </button>{' '}
+                                            to keep your cart and order history.
+                                        </p>
+                                    )}
 
                                     <Link
                                         to="/"

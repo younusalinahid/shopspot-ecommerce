@@ -42,6 +42,9 @@ public class CartService {
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseGet(() -> createNewCart(userId));
 
+        // Recalculate so price or discount changes are reflected in the stored totals
+        updateCartTotals(cart);
+
         return cartMapper.toDTO(cart);
     }
 
@@ -112,7 +115,7 @@ public class CartService {
 
         for (CartItem item : cart.getCartItems()) {
             if (item.getProduct() != null) {
-                totalPrice += item.getProduct().getPrice() * item.getQuantity();
+                totalPrice += item.getProduct().calculateSellingPrice() * item.getQuantity();
                 totalItems += item.getQuantity();
             }
         }

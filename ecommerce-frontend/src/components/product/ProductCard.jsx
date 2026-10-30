@@ -14,8 +14,9 @@ export default function ProductCard({ product, showDiscount = false }) {
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        addToCart(product.id, 1).then(() => {
-            toast.success('Added to cart!');
+        addToCart(product.id, 1).then((result) => {
+            if (result?.success) toast.success('Added to cart!');
+            else if (!result?.deactivated) toast.error(result?.error || 'Failed to add');
         }).catch(() => {
             toast.error('Failed to add');
         });

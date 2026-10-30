@@ -83,8 +83,10 @@ public class DashboardService {
                 .stream()
                 .map(o -> DashboardDTO.RecentOrderDTO.builder()
                         .id(o.getId())
-                        .customerName(o.getUser().getFullName())
-                        .customerEmail(o.getUser().getEmail())
+                        .customerName(o.getUser() != null
+                                ? o.getUser().getFullName()
+                                : (o.getShippingAddress() != null ? o.getShippingAddress().getFullName() + " (Guest)" : "Guest"))
+                        .customerEmail(o.getUser() != null ? o.getUser().getEmail() : o.getGuestEmail())
                         .totalAmount(o.getTotalAmount())
                         .status(o.getStatus().name())
                         .createdAt(dateFmt.format(o.getCreatedAt()))

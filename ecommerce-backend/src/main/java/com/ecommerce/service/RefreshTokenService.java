@@ -21,13 +21,13 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Value("${app.jwt.refresh-expiration-days:7}")
+    @Value("${app.jwt.refresh-expiration-days:30}")
     private long refreshExpirationDays;
 
     @Transactional
     public RefreshToken createRefreshToken(User user) {
-        refreshTokenRepository.revokeAllByUser(user);
-
+        // Each device/browser keeps its own refresh token, so logging in on a phone
+        // does not log the user out on their laptop.
         RefreshToken token = RefreshToken.builder()
                 .user(user)
                 .token(generateSecureToken())
@@ -44,7 +44,6 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
 
         if (!token.isActive()) {
-            refreshTokenRepository.revokeAllByUser(token.getUser());
             throw new RuntimeException("Refresh token expired or revoked. Please login again.");
         }
 

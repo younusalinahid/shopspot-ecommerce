@@ -53,15 +53,20 @@ export default function Navbar() {
         setIsSearching(false);
     }, [location.search]);
 
+    // Other pages can ask for the login modal with window.dispatchEvent(new Event('openLogin'))
+    useEffect(() => {
+        const openLogin = () => setShowAuthPage(true);
+        window.addEventListener("openLogin", openLogin);
+        return () => window.removeEventListener("openLogin", openLogin);
+    }, []);
+
     const cartCount = cart?.totalItems || 0;
 
     const handleCartClick = async () => {
         if (isLoggedIn) {
             await fetchCart();
-            navigate("/cart");
-        } else {
-            toast.warning("Please log in to view your cart!");
         }
+        navigate("/cart");
     };
 
     const handleImageSearch = (e) => {
@@ -433,6 +438,11 @@ export default function Navbar() {
                     onLoginSuccess={() => {
                         setIsLoggedIn(true);
                         setIsMobileMenuOpen(false);
+                        const intendedPath = sessionStorage.getItem('intendedPath');
+                        if (intendedPath) {
+                            sessionStorage.removeItem('intendedPath');
+                            navigate(intendedPath);
+                        }
                     }}
                 />
             )}

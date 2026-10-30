@@ -46,16 +46,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
         final String userEmail;
 
+        // Public pages (products, guest checkout, login, refresh) must keep working even if the
+        // browser still sends an old or expired token, so token problems are ignored there.
+        final boolean publicPath = request.getServletPath().startsWith("/api/public/");
+
         try {
             userEmail = jwtService.extractUsername(jwt);
-        } catch (ExpiredJwtException e) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expired. Please login again.");
-            return;
-        } catch (JwtException e) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid token.");
-            return;
         } catch (Exception e) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed.");
+            if (publicPath) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+            handleTokenError(response, e);
             return;
         }
 
@@ -65,11 +67,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             } catch (UsernameNotFoundException e) {
+                if (publicPath) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "User not found.");
                 return;
             }
 
             if (!userDetails.isEnabled()) {
+                if (publicPath) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Your account has been deactivated.");
                 return;
             }
@@ -89,6 +99,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void handleTokenError(HttpServletResponse response, Exception e) throws IOException {
+        if (e instanceof ExpiredJwtException) {
+            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expired. Please login again.");
+        } else if (e instanceof JwtException) {
+            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid token.");
+        } else {
+            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed.");
+        }
     }
 
     private void sendError(HttpServletResponse response, int status, String message)

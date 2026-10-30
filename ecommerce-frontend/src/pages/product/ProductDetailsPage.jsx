@@ -146,11 +146,11 @@ const ProductDetailsPage = () => {
 
     const handleAddToCart = async () => {
         if (addingToCart || !product) return;
-        if (!authState.isAuthenticated) { toast.info('Please login to add items to cart'); navigate('/login', {state: {from: `/product/${productId}`}}); return; }
         setAddingToCart(true);
         try {
             const result = await addToCart(product.id, quantity);
-            if (result) toast.success('Product added to cart successfully!');
+            if (!result?.success) { toast.error(result?.error || 'Failed to add product to cart'); return; }
+            toast.success('Product added to cart successfully!');
             window.dispatchEvent(new CustomEvent("cartItemAdded", {detail: {productName: product.name}}));
         } catch { toast.error('Failed to add product to cart'); }
         finally { setAddingToCart(false); }
@@ -158,17 +158,16 @@ const ProductDetailsPage = () => {
 
     const handleBuyNow = async () => {
         if (addingToCart || !product) return;
-        if (!authState.isAuthenticated) { toast.info('Please login to proceed'); navigate('/login', {state: {from: `/product/${productId}`}}); return; }
         setAddingToCart(true);
         try {
             const result = await addToCart(product.id, quantity);
-            if (result) { toast.success('Redirecting to cart...'); setTimeout(() => navigate('/cart'), 1000); }
+            if (result?.success) { navigate('/cart'); } else { toast.error(result?.error || 'Failed to add product to cart'); }
         } catch { toast.error('Failed to add product to cart'); }
         finally { setAddingToCart(false); }
     };
 
     const handleWishlist = async () => {
-        if (!authState.isAuthenticated) { toast.info('Please login to add to wishlist'); navigate('/login'); return; }
+        if (!authState.isAuthenticated) { toast.info('Please login to add to wishlist'); window.dispatchEvent(new Event('openLogin')); return; }
         try {
             const res = await wishlistApi.toggleWishlist(product.id);
             setIsWishlisted(res.wishlisted);
@@ -356,20 +355,20 @@ const ProductDetailsPage = () => {
 
                                 {/* Actions */}
                                 <div className="flex space-x-3 pt-1">
-                                    <button onClick={handleAddToCart} disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
+                                    <button onClick={handleAddToCart} disabled={!hasStock || addingToCart || loading}
                                             className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center space-x-2 disabled:bg-gray-400">
                                         <ShoppingCart className="w-4 h-4"/>
-                                        <span>{!authState.isAuthenticated ? 'Login to Add' : addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                                        <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
                                     </button>
-                                    <button onClick={handleBuyNow} disabled={!hasStock || addingToCart || loading || !authState.isAuthenticated}
+                                    <button onClick={handleBuyNow} disabled={!hasStock || addingToCart || loading}
                                             className="flex-1 bg-gray-900 hover:bg-black text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center disabled:bg-gray-400">
-                                        <span>{!authState.isAuthenticated ? 'Login to Buy' : addingToCart ? 'Adding...' : 'Buy Now'}</span>
+                                        <span>{addingToCart ? 'Adding...' : 'Buy Now'}</span>
                                     </button>
                                 </div>
 
                                 {/* Secondary Actions */}
                                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                                    <button onClick={handleWishlist} disabled={!authState.isAuthenticated}
+                                    <button onClick={handleWishlist}
                                             className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm border transition-all ${isWishlisted ? 'bg-red-50 border-red-200 text-red-600' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100/50'}`}>
                                         <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current' : ''}`}/>
                                         <span>{isWishlisted ? 'Wishlisted' : 'Wishlist'}</span>
@@ -470,8 +469,7 @@ const ProductDetailsPage = () => {
                                                             )}
                                                         </div>
                                                         <button onClick={async () => {
-                                                            if (!authState.isAuthenticated) { toast.info('Please login'); navigate('/login'); return; }
-                                                            try { await addToCart(itemId, 1); toast.success('Added to cart!'); }
+                                                            try { const r = await addToCart(itemId, 1); if (r?.success) toast.success('Added to cart!'); else toast.error('Failed to add'); }
                                                             catch { toast.error('Failed to add'); }
                                                         }} className="bg-cyan-100 dark:bg-cyan-950/80 hover:bg-cyan-500 text-cyan-700 dark:text-cyan-400 hover:text-white p-2 rounded-lg transition-all flex-shrink-0">
                                                             <ShoppingCart className="w-3.5 h-3.5"/>

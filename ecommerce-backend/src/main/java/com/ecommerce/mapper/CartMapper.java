@@ -47,7 +47,7 @@ public class CartMapper {
 
         // Calculate item total
         if (cartItem.getProduct() != null && cartItem.getQuantity() != null) {
-            Integer itemTotal = cartItem.getProduct().getPrice() * cartItem.getQuantity();
+            Integer itemTotal = cartItem.getProduct().calculateSellingPrice() * cartItem.getQuantity();
             dto.setItemTotal(itemTotal);
         } else {
             dto.setItemTotal(0);
@@ -67,7 +67,10 @@ public class CartMapper {
         dto.setId(product.getId());
         dto.setName(product.getName());
         dto.setDescription(product.getDescription());
-        dto.setPrice(product.getPrice());
+        dto.setPrice(product.calculateSellingPrice());
+        dto.setOriginalPrice(product.getDiscountPercent() > 0 ? product.getPrice() : 0);
+        dto.setDiscountPercent(product.getDiscountPercent());
+        dto.setStock(product.getStockQuantity());
         dto.setActive(product.isActive());
         dto.setCreatedAt(product.getCreatedAt());
         dto.setImageData(imageData);

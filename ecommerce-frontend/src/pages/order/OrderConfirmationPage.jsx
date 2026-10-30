@@ -1,10 +1,12 @@
 import {useEffect, useState} from 'react';
 import {useParams, useNavigate, Link} from 'react-router-dom';
-import {orderApi} from '../../api/orderApi';
+import {orderApi, guestOrderStore} from '../../api/orderApi';
+import {isAuthenticated} from '../../api/authApi';
 import {CheckCircle2, Package, MapPin, Loader2, ShoppingBag} from 'lucide-react';
 
 const STATUS_STYLE = {
     PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    CONFIRMED: 'bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-300',
     PAID: 'bg-green-100  text-green-800  dark:bg-green-900/30  dark:text-green-300',
     PROCESSING: 'bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-300',
     SHIPPED: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
@@ -20,11 +22,18 @@ export default function OrderConfirmationPage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!localStorage.getItem('token')) {
+        const guestToken = guestOrderStore.get(orderId);
+        let request;
+        if (guestToken) {
+            request = orderApi.getGuestOrder(orderId, guestToken);
+        } else if (isAuthenticated()) {
+            request = orderApi.getOrderById(orderId);
+        } else {
+            sessionStorage.setItem('intendedPath', `/order-confirmation/${orderId}`);
             navigate('/login');
             return;
         }
-        orderApi.getOrderById(orderId)
+        request
             .then(setOrder)
             .catch(() => setError('Order not found'))
             .finally(() => setLoading(false));
@@ -139,13 +148,24 @@ export default function OrderConfirmationPage() {
 
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <Link
-                            to="/orders"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg
+                        {order.guestOrder ? (
+                            <button
+                                type="button"
+                                onClick={() => window.dispatchEvent(new Event('openLogin'))}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg
                                 font-semibold text-center transition-colors"
-                        >
-                            View All Orders
-                        </Link>
+                            >
+                                Create an Account
+                            </button>
+                        ) : (
+                            <Link
+                                to="/orders"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg
+                                font-semibold text-center transition-colors"
+                            >
+                                View All Orders
+                            </Link>
+                        )}
                         <Link
                             to="/"
                             className="flex-1 border border-gray-300 dark:border-gray-600

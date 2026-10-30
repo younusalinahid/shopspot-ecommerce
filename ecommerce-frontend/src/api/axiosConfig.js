@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { BASE_URL } from "./config";
-import { refreshToken as refreshTokenAPI } from './authApi';
+import { refreshToken as refreshTokenAPI, clearSession, isAccessTokenValid } from './authApi';
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -9,94 +9,78 @@ const axiosInstance = axios.create({
     },
 });
 
-let isRefreshing = false;
-let failedQueue = [];
+const PROTECTED_PAGES = ['/orders', '/profile', '/user', '/admin'];
 
-const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
-        if (error) prom.reject(error);
-        else prom.resolve(token);
-    });
-    failedQueue = [];
+const isAuthCall = (url = '') =>
+    url.includes('/auth/refresh') || url.includes('/auth/login') || url.includes('/auth/register');
+
+const isPublicCall = (url = '') => url.includes('/api/public/');
+
+const getStoredToken = () =>
+    localStorage.getItem('token') || localStorage.getItem('accessToken');
+
+/** Ends the session; sends the user to login only if they are on a page that needs it. */
+const handleSessionExpired = () => {
+    clearSession();
+    const path = window.location.pathname;
+    if (PROTECTED_PAGES.some((p) => path.startsWith(p))) {
+        sessionStorage.setItem('intendedPath', path);
+        window.location.href = '/login';
+    }
 };
 
+// ── Request: attach a valid token, refreshing it first if it has expired ──
 axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token') ||
-            localStorage.getItem('accessToken') ||
-            localStorage.getItem('jwtToken');
+    async (config) => {
+        let token = getStoredToken();
+
+        if (token && !isAuthCall(config.url) && !isAccessTokenValid()) {
+            const result = await refreshTokenAPI();
+            if (result.success) {
+                token = result.token;
+            } else {
+                token = null;
+                if (result.expired) handleSessionExpired();
+            }
+        }
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        } else {
+            delete config.headers.Authorization;
         }
         return config;
     },
     (error) => Promise.reject(error)
 );
 
+// ── Response: on 401 try one refresh, and never let a stale token break public pages ──
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        const isAuthEndpoint =
-            originalRequest.url?.includes('/auth/refresh') ||
-            originalRequest.url?.includes('/auth/login');
+        if (!originalRequest || error.response?.status !== 401 || originalRequest._retry
+            || isAuthCall(originalRequest.url)) {
+            return Promise.reject(error);
+        }
+        originalRequest._retry = true;
 
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !isAuthEndpoint
-        ) {
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
-                        return axiosInstance(originalRequest);
-                    })
-                    .catch((err) => Promise.reject(err));
+        if (localStorage.getItem('refreshToken')) {
+            const result = await refreshTokenAPI();
+            if (result.success) {
+                originalRequest.headers.Authorization = `Bearer ${result.token}`;
+                return axiosInstance(originalRequest);
             }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            try {
-                const result = await refreshTokenAPI();
-
-                if (result.success) {
-                    processQueue(null, result.token);
-
-                    originalRequest.headers.Authorization = `Bearer ${result.token}`;
-                    return axiosInstance(originalRequest);
-                } else {
-                    throw new Error(result.error || 'Refresh failed');
-                }
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-
-                localStorage.removeItem('token');
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('user');
-                localStorage.removeItem('role');
-
-                window.dispatchEvent(new Event('userLoggedOut'));
-
-                if (!window.location.pathname.includes('/login')) {
-                    sessionStorage.setItem('intendedPath', window.location.pathname);
-                    window.location.href = '/login';
-                }
-
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
+            if (result.expired) handleSessionExpired();
+        } else if (getStoredToken()) {
+            handleSessionExpired();
         }
 
-        if (error.response?.status === 403) {
-            console.error('❌ 403 Forbidden - Check token validity or backend permissions');
+        // Public endpoints work without login, so retry them anonymously
+        if (isPublicCall(originalRequest.url)) {
+            delete originalRequest.headers.Authorization;
+            return axiosInstance(originalRequest);
         }
 
         return Promise.reject(error);

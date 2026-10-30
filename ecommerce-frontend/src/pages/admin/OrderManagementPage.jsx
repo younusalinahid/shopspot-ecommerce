@@ -290,6 +290,11 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                         {addr && (
                             <p className="text-sm text-gray-600 mt-0.5">
                                 {addr.fullName} · {addr.phone}
+                                {order.guestOrder && (
+                                    <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                                        Guest
+                                    </span>
+                                )}
                             </p>
                         )}
                     </div>
@@ -428,6 +433,9 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                             <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
                                 <p className="font-medium text-gray-900">{addr.fullName}</p>
                                 <p className="text-gray-600">{addr.phone}</p>
+                                {order.customerEmail && (
+                                    <p className="text-gray-600">{order.customerEmail}</p>
+                                )}
                                 <p className="text-gray-600">{addr.addressLine}</p>
                                 <p className="text-gray-600">
                                     {addr.city}

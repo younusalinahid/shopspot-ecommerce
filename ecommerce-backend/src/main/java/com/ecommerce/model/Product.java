@@ -41,4 +41,15 @@ public class Product {
     @JoinColumn(name = "sub_category_id")
     @JsonBackReference
     private SubCategory subCategory;
+
+    /**
+     * Price the customer actually pays (after discount). Same formula as ProductMapper,
+     * so the cart, the order total and the product page always agree.
+     */
+    public int calculateSellingPrice() {
+        if (discountPercent > 0) {
+            return price - (price * discountPercent / 100);
+        }
+        return price;
+    }
 }

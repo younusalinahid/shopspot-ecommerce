@@ -8,6 +8,7 @@ import com.ecommerce.model.type.ShippingAddress;
 import com.ecommerce.repository.AddressRepository;
 import com.ecommerce.repository.CartRepository;
 import com.ecommerce.repository.OrderRepository;
+import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.UserRepository;
 import com.stripe.Stripe;
 import com.stripe.model.PaymentIntent;
@@ -19,6 +20,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,9 +34,16 @@ import java.util.stream.Collectors;
 @Transactional
 public class OrderService {
 
+    /** Free shipping above this subtotal (must match the frontend cart/checkout pages). */
+    private static final int FREE_SHIPPING_THRESHOLD = 2000;
+    private static final int SHIPPING_FEE = 120;
+    private static final double TAX_RATE = 0.07;
+    private static final int MAX_ITEM_QUANTITY = 100;
+
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     private final CartService cartService;
     private final AddressService addressService;
     private final AddressRepository addressRepository;
@@ -45,6 +57,14 @@ public class OrderService {
         Stripe.apiKey = stripeSecretKey;
     }
 
+    /** One order line before it is persisted. */
+    private record OrderLine(Product product, int quantity, String size, String color) {
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Logged-in user checkout
+    // ─────────────────────────────────────────────────────────────
+
     public OrderDTO createOrder(Long userId, CheckoutRequestDTO request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -56,19 +76,9 @@ public class OrderService {
             throw new RuntimeException("Cart is empty");
         }
 
-        PaymentMethod paymentMethod = PaymentMethod.CARD;
-        if (request.getPaymentMethod() != null) {
-            try {
-                paymentMethod = PaymentMethod.valueOf(request.getPaymentMethod().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                paymentMethod = PaymentMethod.CARD;
-            }
-        }
-
         ShippingAddress shippingAddress;
         if (request.getAddressId() != null) {
-            Address saved = addressRepository.findByIdAndUserId(
-                            request.getAddressId(), userId)
+            Address saved = addressRepository.findByIdAndUserId(request.getAddressId(), userId)
                     .orElseThrow(() -> new RuntimeException("Address not found"));
 
             shippingAddress = ShippingAddress.builder()
@@ -80,6 +90,9 @@ public class OrderService {
                     .postalCode(saved.getPostalCode())
                     .build();
         } else {
+            validateAddress(request.getFullName(), request.getPhone(),
+                    request.getAddressLine(), request.getCity());
+
             shippingAddress = ShippingAddress.builder()
                     .fullName(request.getFullName())
                     .phone(request.getPhone())
@@ -103,26 +116,153 @@ public class OrderService {
             }
         }
 
-        // Recalculate the total from current product prices instead of trusting the
-        // cached cart total, so the charged amount always matches the order items.
-        int totalAmount = 0;
-        for (CartItem cartItem : cart.getCartItems()) {
-            Product product = cartItem.getProduct();
-            if (product == null || !product.isActive()) {
-                throw new RuntimeException("Some products in your cart are no longer available");
-            }
-            if (cartItem.getQuantity() == null || cartItem.getQuantity() <= 0) {
-                throw new RuntimeException("Invalid quantity in cart");
-            }
-            totalAmount += product.getPrice() * cartItem.getQuantity();
+        List<OrderLine> lines = cart.getCartItems().stream()
+                .map(ci -> new OrderLine(ci.getProduct(),
+                        ci.getQuantity() != null ? ci.getQuantity() : 0,
+                        ci.getSize(), ci.getColor()))
+                .collect(Collectors.toList());
+
+        Order order = buildOrder(user, null, shippingAddress, lines,
+                parsePaymentMethod(request.getPaymentMethod()));
+
+        return toDTO(orderRepository.save(order));
+    }
+
+    public OrderDTO confirmCODOrder(Long userId, Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getUser() == null || !order.getUser().getId().equals(userId))
+            throw new RuntimeException("Unauthorized");
+
+        Order saved = markAsCOD(order);
+        cartService.clearCart(userId);
+        sendConfirmationEmail(saved);
+        return toDTO(saved);
+    }
+
+    public OrderDTO confirmPayment(Long userId, PaymentConfirmDTO request) {
+        Order order = orderRepository.findByIdWithItems(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getUser() == null || !order.getUser().getId().equals(userId))
+            throw new RuntimeException("Unauthorized");
+
+        boolean newlyPaid = markAsPaid(order, request.getPaymentIntentId());
+        if (newlyPaid) {
+            cartService.clearCart(userId);
+            sendConfirmationEmail(order);
+        }
+        return toDTO(order);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Guest checkout (no login required)
+    // ─────────────────────────────────────────────────────────────
+
+    public OrderDTO createGuestOrder(GuestCheckoutRequestDTO request) {
+        String email = request.getEmail() != null ? request.getEmail().trim() : "";
+        if (email.isEmpty() || !email.contains("@")) {
+            throw new RuntimeException("A valid email is required");
+        }
+        validateAddress(request.getFullName(), request.getPhone(),
+                request.getAddressLine(), request.getCity());
+
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Cart is empty");
         }
 
-        if (totalAmount <= 0) {
+        List<OrderLine> lines = new ArrayList<>();
+        for (GuestCheckoutRequestDTO.Item item : request.getItems()) {
+            if (item.getProductId() == null) {
+                throw new RuntimeException("Invalid product in cart");
+            }
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Some products in your cart are no longer available"));
+            lines.add(new OrderLine(product,
+                    item.getQuantity() != null ? item.getQuantity() : 0,
+                    item.getSize(), item.getColor()));
+        }
+
+        ShippingAddress shippingAddress = ShippingAddress.builder()
+                .fullName(request.getFullName().trim())
+                .phone(request.getPhone().trim())
+                .addressLine(request.getAddressLine().trim())
+                .city(request.getCity().trim())
+                .district(request.getDistrict() != null && !request.getDistrict().isBlank()
+                        ? request.getDistrict() : request.getArea())
+                .postalCode(request.getPostalCode())
+                .build();
+
+        Order order = buildOrder(null, email, shippingAddress, lines,
+                parsePaymentMethod(request.getPaymentMethod()));
+        order.setGuestToken(generateGuestToken());
+
+        Order saved = orderRepository.save(order);
+        OrderDTO dto = toDTO(saved);
+        dto.setGuestToken(saved.getGuestToken());
+        return dto;
+    }
+
+    public OrderDTO confirmGuestCODOrder(Long orderId, String guestToken) {
+        Order order = findGuestOrder(orderId, guestToken);
+        Order saved = markAsCOD(order);
+        sendConfirmationEmail(saved);
+        return toDTO(saved);
+    }
+
+    public OrderDTO confirmGuestPayment(Long orderId, String paymentIntentId, String guestToken) {
+        Order order = findGuestOrder(orderId, guestToken);
+        if (markAsPaid(order, paymentIntentId)) {
+            sendConfirmationEmail(order);
+        }
+        return toDTO(order);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDTO getGuestOrder(Long orderId, String guestToken) {
+        return toDTO(findGuestOrder(orderId, guestToken));
+    }
+
+    private Order findGuestOrder(Long orderId, String guestToken) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getGuestToken() == null || guestToken == null
+                || !MessageDigest.isEqual(
+                order.getGuestToken().getBytes(StandardCharsets.UTF_8),
+                guestToken.getBytes(StandardCharsets.UTF_8))) {
+            throw new RuntimeException("Order not found");
+        }
+        return order;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Shared order logic
+    // ─────────────────────────────────────────────────────────────
+
+    private Order buildOrder(User user, String guestEmail, ShippingAddress shippingAddress,
+                             List<OrderLine> lines, PaymentMethod paymentMethod) {
+        int subtotal = 0;
+        for (OrderLine line : lines) {
+            if (line.product() == null || !line.product().isActive()) {
+                throw new RuntimeException("Some products in your cart are no longer available");
+            }
+            if (line.quantity() <= 0 || line.quantity() > MAX_ITEM_QUANTITY) {
+                throw new RuntimeException("Invalid quantity in cart");
+            }
+            subtotal += line.product().calculateSellingPrice() * line.quantity();
+        }
+
+        if (subtotal <= 0) {
             throw new RuntimeException("Invalid order amount");
         }
 
+        int totalAmount = calculateGrandTotal(subtotal);
+
         Order order = Order.builder()
                 .user(user)
+                .guestEmail(guestEmail)
                 .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
@@ -130,89 +270,74 @@ public class OrderService {
                 .codCollected(false)
                 .build();
 
-        List<OrderItem> orderItems = cart.getCartItems().stream()
-                .map(cartItem -> OrderItem.builder()
+        List<OrderItem> orderItems = lines.stream()
+                .map(line -> OrderItem.builder()
                         .order(order)
-                        .product(cartItem.getProduct())
-                        .quantity(cartItem.getQuantity())
-                        .priceAtPurchase(cartItem.getProduct().getPrice())
-                        .size(cartItem.getSize())
-                        .color(cartItem.getColor())
+                        .product(line.product())
+                        .quantity(line.quantity())
+                        .priceAtPurchase(line.product().calculateSellingPrice())
+                        .size(line.size())
+                        .color(line.color())
                         .build())
                 .collect(Collectors.toList());
-
         order.setItems(orderItems);
 
         if (paymentMethod == PaymentMethod.CARD) {
-            try {
-                PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                        .setAmount((long) totalAmount * 100)
-                        .setCurrency("usd")
-                        .setAutomaticPaymentMethods(
-                                PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                        .setEnabled(true)
-                                        .build()
-                        )
-                        .build();
-
-                PaymentIntent intent = PaymentIntent.create(params);
-                order.setStripePaymentIntentId(intent.getId());
-                order.setStripeClientSecret(intent.getClientSecret());
-
-            } catch (Exception e) {
-                log.error("Stripe error", e);
-                throw new RuntimeException("Payment initialization failed");
-            }
+            createPaymentIntent(order);
         }
-
-        Order savedOrder = orderRepository.save(order);
-        return toDTO(savedOrder);
+        return order;
     }
 
-    public OrderDTO confirmCODOrder(Long userId, Long orderId) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+    /** Subtotal + shipping + 7% tax, the same formula the cart and checkout pages show. */
+    private int calculateGrandTotal(int subtotal) {
+        int shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+        int tax = (int) Math.round(subtotal * TAX_RATE);
+        return subtotal + shipping + tax;
+    }
 
-        if (!order.getUser().getId().equals(userId))
-            throw new RuntimeException("Unauthorized");
+    private void createPaymentIntent(Order order) {
+        if (stripeSecretKey == null || stripeSecretKey.isBlank()) {
+            throw new RuntimeException("Card payment is not available right now. Please choose Cash on Delivery.");
+        }
+        try {
+            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                    .setAmount((long) order.getTotalAmount() * 100)
+                    .setCurrency("usd")
+                    .setAutomaticPaymentMethods(
+                            PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                                    .setEnabled(true)
+                                    .build()
+                    )
+                    .build();
 
+            PaymentIntent intent = PaymentIntent.create(params);
+            order.setStripePaymentIntentId(intent.getId());
+            order.setStripeClientSecret(intent.getClientSecret());
+        } catch (Exception e) {
+            log.error("Stripe error", e);
+            throw new RuntimeException("Payment initialization failed");
+        }
+    }
+
+    private Order markAsCOD(Order order) {
         if (order.getStatus() != OrderStatus.PENDING)
             throw new RuntimeException("Order already processed");
 
         order.setPaymentMethod(PaymentMethod.COD);
-
         order.setStripePaymentIntentId(null);
         order.setStripeClientSecret(null);
-
         order.setStatus(OrderStatus.CONFIRMED);
-        Order savedOrder = orderRepository.save(order);
-
-        cartService.clearCart(userId);
-
-        try {
-            emailService.sendOrderConfirmationEmail(
-                    order.getUser().getEmail(),
-                    order.getUser().getFullName() != null
-                            ? order.getUser().getFullName() : "Customer",
-                    toDTO(savedOrder)
-            );
-            log.info("COD confirmation email sent to: {}", order.getUser().getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send COD confirmation email", e);
-        }
-
-        return toDTO(savedOrder);
+        return orderRepository.save(order);
     }
 
-    public OrderDTO confirmPayment(Long userId, PaymentConfirmDTO request) {
-        Order order = orderRepository.findByIdWithItems(request.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        if (!order.getUser().getId().equals(userId))
-            throw new RuntimeException("Unauthorized");
-
+    /**
+     * Verifies the Stripe payment and marks the order as PAID.
+     *
+     * @return true if the order was marked paid by this call, false if it was already paid
+     */
+    private boolean markAsPaid(Order order, String paymentIntentId) {
         if (order.getStatus() == OrderStatus.PAID)
-            return toDTO(order);
+            return false;
 
         if (order.getStatus() != OrderStatus.PENDING)
             throw new RuntimeException("Order already processed");
@@ -220,37 +345,74 @@ public class OrderService {
         // The payment intent must belong to this order; otherwise a single succeeded
         // payment could be replayed to mark other orders as paid.
         if (order.getStripePaymentIntentId() == null
-                || !order.getStripePaymentIntentId().equals(request.getPaymentIntentId()))
+                || !order.getStripePaymentIntentId().equals(paymentIntentId))
             throw new RuntimeException("Payment does not match this order");
 
+        PaymentIntent intent;
         try {
-            PaymentIntent intent = PaymentIntent.retrieve(order.getStripePaymentIntentId());
-
-            long expectedAmount = (long) order.getTotalAmount() * 100;
-            if ("succeeded".equals(intent.getStatus())
-                    && intent.getAmount() != null
-                    && intent.getAmount() == expectedAmount) {
-                order.setStatus(OrderStatus.PAID);
-                orderRepository.save(order);
-                cartService.clearCart(userId);
-
-                log.info("Sending email to: {}", order.getUser().getEmail());
-
-                emailService.sendOrderConfirmationEmail(
-                        order.getUser().getEmail(),
-                        order.getUser().getFullName() != null
-                                ? order.getUser().getFullName() : "Customer",
-                        toDTO(order)
-                );
-            }
-
+            intent = PaymentIntent.retrieve(order.getStripePaymentIntentId());
         } catch (Exception e) {
             log.error("Payment confirm error", e);
             throw new RuntimeException("Payment confirmation failed");
         }
 
-        return toDTO(order);
+        long expectedAmount = (long) order.getTotalAmount() * 100;
+        if (!"succeeded".equals(intent.getStatus())
+                || intent.getAmount() == null
+                || intent.getAmount() != expectedAmount) {
+            throw new RuntimeException("Payment has not been completed");
+        }
+
+        order.setStatus(OrderStatus.PAID);
+        orderRepository.save(order);
+        return true;
     }
+
+    private void sendConfirmationEmail(Order order) {
+        String email;
+        String name;
+        if (order.getUser() != null) {
+            email = order.getUser().getEmail();
+            name = order.getUser().getFullName();
+        } else {
+            email = order.getGuestEmail();
+            name = order.getShippingAddress() != null ? order.getShippingAddress().getFullName() : null;
+        }
+        if (email == null || email.isBlank()) return;
+
+        try {
+            emailService.sendOrderConfirmationEmail(email, name != null ? name : "Customer", toDTO(order));
+            log.info("Order confirmation email sent to: {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send order confirmation email", e);
+        }
+    }
+
+    private void validateAddress(String fullName, String phone, String addressLine, String city) {
+        if (fullName == null || fullName.isBlank()) throw new RuntimeException("Full name is required");
+        if (phone == null || phone.isBlank()) throw new RuntimeException("Phone number is required");
+        if (addressLine == null || addressLine.isBlank()) throw new RuntimeException("Street address is required");
+        if (city == null || city.isBlank()) throw new RuntimeException("City is required");
+    }
+
+    private PaymentMethod parsePaymentMethod(String value) {
+        if (value == null) return PaymentMethod.CARD;
+        try {
+            return PaymentMethod.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return PaymentMethod.CARD;
+        }
+    }
+
+    private String generateGuestToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Queries
+    // ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<OrderDTO> getUserOrders(Long userId) {
@@ -263,7 +425,7 @@ public class OrderService {
         Order order = orderRepository.findByIdWithItems(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (!order.getUser().getId().equals(userId)) {
+        if (order.getUser() == null || !order.getUser().getId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -290,7 +452,7 @@ public class OrderService {
     }
 
     /**
-     * NEW: Admin marks COD money as collected (after delivery)
+     * Admin marks COD money as collected (after delivery)
      */
     public OrderDTO markCODCollected(Long orderId) {
         Order order = orderRepository.findById(orderId)
@@ -307,6 +469,27 @@ public class OrderService {
         return toDTO(orderRepository.save(order));
     }
 
+    public OrderDTO cancelOrder(Long userId, Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getUser() == null || !order.getUser().getId().equals(userId))
+            throw new RuntimeException("Unauthorized");
+
+        if (order.getStatus() != OrderStatus.PENDING)
+            throw new RuntimeException("Only PENDING orders can be cancelled");
+
+        order.setStatus(OrderStatus.CANCELLED);
+        return toDTO(orderRepository.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDTO getAdminOrderById(Long orderId) {
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return toDTO(order);
+    }
+
     private OrderDTO toDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
@@ -316,6 +499,8 @@ public class OrderService {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCodCollected(order.getCodCollected());
         dto.setCreatedAt(order.getCreatedAt());
+        dto.setGuestOrder(order.getUser() == null);
+        dto.setCustomerEmail(order.getUser() != null ? order.getUser().getEmail() : order.getGuestEmail());
 
         if (order.getShippingAddress() != null) {
             ShippingAddressDTO addressDTO = new ShippingAddressDTO();
@@ -351,26 +536,5 @@ public class OrderService {
         }
 
         return dto;
-    }
-
-    public OrderDTO cancelOrder(Long userId, Long orderId) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        if (!order.getUser().getId().equals(userId))
-            throw new RuntimeException("Unauthorized");
-
-        if (order.getStatus() != OrderStatus.PENDING)
-            throw new RuntimeException("Only PENDING orders can be cancelled");
-
-        order.setStatus(OrderStatus.CANCELLED);
-        return toDTO(orderRepository.save(order));
-    }
-
-    @Transactional(readOnly = true)
-    public OrderDTO getAdminOrderById(Long orderId) {
-        Order order = orderRepository.findByIdWithItems(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        return toDTO(order);
     }
 }

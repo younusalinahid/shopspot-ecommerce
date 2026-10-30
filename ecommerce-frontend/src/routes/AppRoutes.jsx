@@ -17,6 +17,7 @@ import CheckoutPage from "../pages/cart/CheckoutPage";
 import CartPage from "../pages/cart/CartPage";
 import OAuth2CallbackPage from "../pages/auth/OAuth2CallbackPage";
 import SearchResultsPage from "../pages/product/SearchResultsPage";
+import LoginRedirect from "../pages/auth/LoginRedirect";
 
 
 import ProductComparePage from "../pages/product/ProductComparePage";
@@ -37,6 +38,7 @@ export default function AppRoutes() {
                 <Route path="/cart" element={<CartPage/>}/>
                 <Route path="/checkout" element={<CheckoutPage/>}/>
                 <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage/>}/>
+                <Route path="/login" element={<LoginRedirect/>}/>
                 <Route path="/orders" element={<OrdersPage/>}/>
                 <Route path="/profile" element={<ProfilePage/>}/>
             </Route>

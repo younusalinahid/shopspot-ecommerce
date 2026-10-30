@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
     getCart,
     addToCart,
@@ -6,9 +6,14 @@ import {
     removeCartItem,
     clearCart
 } from '../api/cartApi';
-import {toast} from "react-toastify";
+import { productService } from '../api/productApi';
+import { isAuthenticated } from '../api/authApi';
+import { toast } from "react-toastify";
 
 const CartContext = createContext();
+
+const GUEST_CART_KEY = 'guestCart';
+const EMPTY_CART = { items: [], totalPrice: 0, totalItems: 0 };
 
 export const useCart = () => {
     const context = useContext(CartContext);
@@ -16,31 +21,73 @@ export const useCart = () => {
     return context;
 };
 
+// ── Guest cart (stored in this browser until the visitor logs in or orders) ──
+
+const readGuestItems = () => {
+    try {
+        const items = JSON.parse(localStorage.getItem(GUEST_CART_KEY) || '[]');
+        return Array.isArray(items) ? items : [];
+    } catch {
+        return [];
+    }
+};
+
+const buildGuestCart = (items) => ({
+    guest: true,
+    items: items.map((item) => ({
+        ...item,
+        itemTotal: (item.product?.price || 0) * item.quantity,
+    })),
+    totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+    totalPrice: items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0),
+});
+
+const saveGuestItems = (items) => {
+    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+    return buildGuestCart(items);
+};
+
+const guestItemId = (productId, size, color) => `guest-${productId}-${size || ''}-${color || ''}`;
+
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
+    const mergingRef = useRef(false);
 
-    const isLoggedIn = useCallback(() => !!localStorage.getItem('token'), []);
+    const isLoggedIn = useCallback(() => isAuthenticated(), []);
+
+    /** Moves items a visitor added before logging in into their account cart. */
+    const mergeGuestCart = useCallback(async () => {
+        const guestItems = readGuestItems();
+        if (!guestItems.length || mergingRef.current) return;
+        mergingRef.current = true;
+        try {
+            for (const item of guestItems) {
+                await addToCart(item.product.id, item.quantity, item.size, item.color);
+            }
+            localStorage.removeItem(GUEST_CART_KEY);
+        } finally {
+            mergingRef.current = false;
+        }
+    }, []);
 
     const fetchCart = useCallback(async () => {
         if (!isLoggedIn()) {
-            setCart({ items: [], totalPrice: 0, totalItems: 0 });
+            setCart(buildGuestCart(readGuestItems()));
             setLoading(false);
             return;
         }
         try {
             setLoading(true);
+            await mergeGuestCart();
             const result = await getCart();
-            setCart(result.success
-                ? result.data
-                : { items: [], totalPrice: 0, totalItems: 0 }
-            );
+            setCart(result.success ? result.data : EMPTY_CART);
         } catch {
-            setCart({ items: [], totalPrice: 0, totalItems: 0 });
+            setCart(EMPTY_CART);
         } finally {
             setLoading(false);
         }
-    }, [isLoggedIn]);
+    }, [isLoggedIn, mergeGuestCart]);
 
     const isUserActive = () => {
         try {
@@ -50,7 +97,38 @@ export const CartProvider = ({ children }) => {
     };
 
     const handleAddToCart = async (productId, quantity = 1, size = null, color = null) => {
-        if (!isLoggedIn()) return { success: false };
+        if (!isLoggedIn()) {
+            try {
+                const items = readGuestItems();
+                const id = guestItemId(productId, size, color);
+                const existing = items.find((i) => i.id === id);
+                if (existing) {
+                    existing.quantity += quantity;
+                } else {
+                    const product = await productService.getProductById(productId);
+                    items.push({
+                        id,
+                        quantity,
+                        size,
+                        color,
+                        product: {
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            originalPrice: product.originalPrice,
+                            imageData: product.imageData,
+                            stock: product.stock,
+                        },
+                    });
+                }
+                const updated = saveGuestItems(items);
+                setCart(updated);
+                return { success: true, data: updated };
+            } catch {
+                return { success: false, error: 'Could not add product' };
+            }
+        }
+
         if (!isUserActive()) {
             toast.error('Your account has been deactivated. Please contact support.');
             return { success: false, deactivated: true };
@@ -61,14 +139,25 @@ export const CartProvider = ({ children }) => {
     };
 
     const handleUpdateCartItem = async (cartItemId, quantity) => {
-        if (!isLoggedIn()) return { success: false };
+        if (!isLoggedIn()) {
+            const items = readGuestItems()
+                .map((i) => (i.id === cartItemId ? { ...i, quantity } : i))
+                .filter((i) => i.quantity > 0);
+            const updated = saveGuestItems(items);
+            setCart(updated);
+            return { success: true, data: updated };
+        }
         const result = await updateCartItem(cartItemId, quantity);
         if (result.success) setCart(result.data);
         return result;
     };
 
     const handleRemoveCartItem = async (cartItemId) => {
-        if (!isLoggedIn()) return { success: false };
+        if (!isLoggedIn()) {
+            const updated = saveGuestItems(readGuestItems().filter((i) => i.id !== cartItemId));
+            setCart(updated);
+            return { success: true };
+        }
 
         const previousCart = cart;
 
@@ -91,10 +180,14 @@ export const CartProvider = ({ children }) => {
     };
 
     const handleClearCart = async () => {
-        if (!isLoggedIn()) return { success: false };
+        if (!isLoggedIn()) {
+            localStorage.removeItem(GUEST_CART_KEY);
+            setCart(EMPTY_CART);
+            return { success: true };
+        }
 
         const previousCart = cart;
-        setCart({ items: [], totalPrice: 0, totalItems: 0 });
+        setCart(EMPTY_CART);
 
         const result = await clearCart();
         if (!result.success) setCart(previousCart);
@@ -103,6 +196,14 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         fetchCart();
+        // Reload the cart when the user logs in or out (guest items are merged on login)
+        const reload = () => fetchCart();
+        window.addEventListener('userLoggedIn', reload);
+        window.addEventListener('userLoggedOut', reload);
+        return () => {
+            window.removeEventListener('userLoggedIn', reload);
+            window.removeEventListener('userLoggedOut', reload);
+        };
     }, [fetchCart]);
 
     return (
@@ -110,6 +211,7 @@ export const CartProvider = ({ children }) => {
             cart,
             loading,
             fetchCart,
+            isGuest: !isLoggedIn(),
             addToCart:      handleAddToCart,
             updateCartItem: handleUpdateCartItem,
             removeCartItem: handleRemoveCartItem,

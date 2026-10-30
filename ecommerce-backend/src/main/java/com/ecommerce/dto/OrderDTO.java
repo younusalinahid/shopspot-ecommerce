@@ -17,4 +17,7 @@ public class OrderDTO {
     private Instant createdAt;
     private PaymentMethod paymentMethod;
     private Boolean codCollected;
+    private Boolean guestOrder;
+    private String customerEmail;
+    private String guestToken;
 }
