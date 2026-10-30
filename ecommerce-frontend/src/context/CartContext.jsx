@@ -49,6 +49,12 @@ const saveGuestItems = (items) => {
 
 const guestItemId = (productId, size, color) => `guest-${productId}-${size || ''}-${color || ''}`;
 
+// The product API returns raw base64; the cart page expects a data URL (same as the server cart)
+const toImageSrc = (imageData) => {
+    if (!imageData) return null;
+    return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
+};
+
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -116,7 +122,7 @@ export const CartProvider = ({ children }) => {
                             name: product.name,
                             price: product.price,
                             originalPrice: product.originalPrice,
-                            imageData: product.imageData,
+                            imageData: toImageSrc(product.imageData),
                             stock: product.stock,
                         },
                     });

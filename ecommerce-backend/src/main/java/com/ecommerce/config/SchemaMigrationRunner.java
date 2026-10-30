@@ -16,7 +16,8 @@ import java.util.List;
  *
  * Older databases created the order status / payment method columns as MySQL ENUMs, so new
  * values such as CONFIRMED fail with "Data truncated for column 'status'". Guest checkout
- * also needs orders.user_id to be nullable. Every statement is safe to run on each startup.
+ * also needs orders.user_id to be nullable, and old orders need a payment method.
+ * Every statement is safe to run on each startup.
  */
 @Slf4j
 @Component
@@ -30,7 +31,11 @@ public class SchemaMigrationRunner implements CommandLineRunner {
     private static final List<String> MYSQL_STATEMENTS = List.of(
             "ALTER TABLE orders MODIFY COLUMN status VARCHAR(30) NOT NULL",
             "ALTER TABLE orders MODIFY COLUMN payment_method VARCHAR(20) NOT NULL",
-            "ALTER TABLE orders MODIFY COLUMN user_id BIGINT NULL"
+            "ALTER TABLE orders MODIFY COLUMN user_id BIGINT NULL",
+            // Orders created before COD existed got an empty payment method, which breaks
+            // the admin and "My Orders" pages ("No enum constant PaymentMethod.").
+            "UPDATE orders SET payment_method = 'CARD' WHERE payment_method IS NULL OR payment_method = ''",
+            "UPDATE orders SET cod_collected = 0 WHERE cod_collected IS NULL"
     );
 
     @Override

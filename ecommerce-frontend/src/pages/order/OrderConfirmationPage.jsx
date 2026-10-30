@@ -126,7 +126,7 @@ export default function OrderConfirmationPage() {
                         </div>
                         <div
                             className="flex justify-between font-bold text-gray-900 dark:text-white pt-4 border-t border-gray-200 dark:border-gray-700 mt-2">
-                            <span>Total Paid</span>
+                            <span>{order.paymentMethod === 'COD' && order.status !== 'PAID' ? 'Total (Pay on Delivery)' : 'Total Paid'}</span>
                             <span>৳{order.totalAmount?.toFixed(2)}</span>
                         </div>
                     </div>
