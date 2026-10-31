@@ -291,6 +291,10 @@ export default function OrdersPage() {
 
 // Order Details Sidebar Component
 function OrderDetailsSidebar({order, onClose}) {
+    // Break the stored total into its parts (older orders have no stored delivery charge)
+    const itemsSubtotal = (order.items || []).reduce((sum, i) => sum + (i.priceAtPurchase || 0) * (i.quantity || 0), 0);
+    const taxAmount = Math.round(itemsSubtotal * 0.07);
+    const shippingAmount = order.shippingFee ?? Math.max(0, (order.totalAmount || 0) - itemsSubtotal - taxAmount);
     const addr = order.shippingAddress;
     const s = STATUS[order.status] || STATUS.PENDING;
     const Icon = s.icon;
@@ -456,16 +460,18 @@ function OrderDetailsSidebar({order, onClose}) {
                         <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                             <span
-                                className="text-gray-900 dark:text-white">৳{order.totalAmount?.toLocaleString()}</span>
+                                className="text-gray-900 dark:text-white">৳{itemsSubtotal.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">Shipping</span>
-                            <span className="text-emerald-600">{order.totalAmount > 2000 ? 'FREE' : '৳120'}</span>
+                            <span className={shippingAmount === 0 ? 'text-emerald-600' : 'text-gray-900 dark:text-white'}>
+                                {shippingAmount === 0 ? 'FREE' : `৳${shippingAmount.toLocaleString()}`}
+                            </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">Tax (7%)</span>
                             <span
-                                className="text-gray-900 dark:text-white">৳{Math.round(order.totalAmount * 0.07).toLocaleString()}</span>
+                                className="text-gray-900 dark:text-white">৳{taxAmount.toLocaleString()}</span>
                         </div>
                         <div
                             className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-600 font-bold">

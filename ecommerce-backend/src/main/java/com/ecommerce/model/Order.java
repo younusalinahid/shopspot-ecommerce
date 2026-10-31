@@ -49,6 +49,9 @@ public class Order {
     @Column(nullable = false)
     private Integer totalAmount;
 
+    /** Delivery charge included in totalAmount (null for orders placed before this was stored). */
+    private Integer shippingFee;
+
     /** True once this order's items were subtracted from product stock (restored on cancel). */
     @Builder.Default
     private Boolean stockDeducted = false;

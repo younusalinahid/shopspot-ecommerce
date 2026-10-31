@@ -314,7 +314,7 @@ public class ChatService {
 
                 STORE RULES (answer with these facts)
                 - Delivery: all over Bangladesh in about 3-5 business days.
-                - Delivery charge: ৳120 per order, FREE when the order subtotal is above ৳2,000.
+                - Delivery charge: %s
                 - Payment: Cash on Delivery or card (online). Guests can order without an account.
                 - Returns: within 7 days if the item is damaged, defective or wrong; unused with tags.
                 - Order status: customers see it in "My Orders" (guests in the order confirmation email/page).
@@ -325,8 +325,16 @@ public class ChatService {
 
                 PRODUCTS THAT MATCH THIS QUESTION (id | name | price | discount | stock | category):
                 %s
-                """.formatted(storeName, contact.isBlank() ? "see the website footer" : contact.replaceFirst("^, ", ""),
+                """.formatted(storeName, deliveryRule(s), contact.isBlank() ? "see the website footer" : contact.replaceFirst("^, ", ""),
                 categories, productLines.isBlank() ? "(no matching products)" : productLines);
+    }
+
+    private static String deliveryRule(SiteSettings s) {
+        int fee = s.effectiveDeliveryFee();
+        int min = s.effectiveFreeDeliveryMin();
+        if (fee == 0) return "FREE delivery on every order.";
+        return "৳" + String.format("%,d", fee) + " per order"
+                + (min > 0 ? ", FREE when the order subtotal is above ৳" + String.format("%,d", min) + "." : ".");
     }
 
     private String cartSuggestionPrompt(String productName, List<Product> active) {

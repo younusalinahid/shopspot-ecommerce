@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {toast} from 'react-toastify';
-import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2, Palette} from 'lucide-react';
+import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2, Palette, Truck} from 'lucide-react';
 import {siteContentApi} from '../../api/siteContentApi';
 import {BASE_URL} from '../../api/config';
 import defaultLogo from '../../assets/logo/logo-mark.png';
@@ -36,6 +36,8 @@ const withHeaderDefaults = (s) => {
     const out = {...s};
     HEADER_KEYS.forEach(k => { if (out[k] == null) out[k] = SITE_CONTENT_DEFAULTS.settings[k]; });
     if (out.showTopBar == null) out.showTopBar = true;
+    if (out.deliveryFee == null) out.deliveryFee = SITE_CONTENT_DEFAULTS.settings.deliveryFee;
+    if (out.freeDeliveryMin == null) out.freeDeliveryMin = SITE_CONTENT_DEFAULTS.settings.freeDeliveryMin;
     return out;
 };
 
@@ -75,6 +77,12 @@ export default function SiteContentPage() {
             toast.error(`${bad.label} link must start with https://`);
             return;
         }
+        const fee = Number(settings.deliveryFee);
+        const freeMin = Number(settings.freeDeliveryMin);
+        if (!Number.isInteger(fee) || fee < 0 || fee > 100000 || !Number.isInteger(freeMin) || freeMin < 0 || freeMin > 100000) {
+            toast.error('Delivery amounts must be whole numbers between 0 and 100000');
+            return;
+        }
         const badColor = COLOR_FIELDS.find(f => settings[f.key] && !isHex(settings[f.key]));
         if (badColor) {
             toast.error(`${badColor.label} must look like #1a2b3c`);
@@ -86,7 +94,11 @@ export default function SiteContentPage() {
         }
         setSavingSettings(true);
         try {
-            const saved = await siteContentApi.updateSettings(settings);
+            const saved = await siteContentApi.updateSettings({
+                ...settings,
+                deliveryFee: Number(settings.deliveryFee),
+                freeDeliveryMin: Number(settings.freeDeliveryMin),
+            });
             setSettings(withHeaderDefaults(saved));
             toast.success('Store info, header & social links saved');
         } catch (err) {
@@ -215,6 +227,37 @@ export default function SiteContentPage() {
                             </label>
                         ))}
                     </div>
+                </div>
+
+                <div>
+                    <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-1">
+                        <Truck className="w-5 h-5 text-cyan-600"/> Delivery charge
+                    </h2>
+                    <p className="text-xs text-gray-500 mb-4">
+                        Used in the cart, checkout and the order total. Changes apply to new orders only.
+                    </p>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block">
+                            <span className="block text-sm font-medium text-gray-700 mb-1">Delivery charge per order (৳)</span>
+                            <input type="number" min="0" max="100000" step="1" className={inputCls}
+                                   value={settings.deliveryFee ?? ''}
+                                   onChange={e => setField('deliveryFee', e.target.value)}/>
+                            <span className="text-xs text-gray-400">0 = free delivery on every order</span>
+                        </label>
+                        <label className="block">
+                            <span className="block text-sm font-medium text-gray-700 mb-1">Free delivery when subtotal is above (৳)</span>
+                            <input type="number" min="0" max="100000" step="1" className={inputCls}
+                                   value={settings.freeDeliveryMin ?? ''}
+                                   onChange={e => setField('freeDeliveryMin', e.target.value)}/>
+                            <span className="text-xs text-gray-400">0 = never free (always charge delivery)</span>
+                        </label>
+                    </div>
+                    <p className="mt-3 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                        Customers will see: {Number(settings.deliveryFee) === 0
+                            ? <b>Free delivery on every order</b>
+                            : <>Delivery <b>৳{Number(settings.deliveryFee) || 0}</b>{Number(settings.freeDeliveryMin) > 0 && <>, free when the order is above <b>৳{Number(settings.freeDeliveryMin)}</b></>}</>}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">Remember to update the top bar message and the “Shipping &amp; Charges” page text if they mention the amounts.</p>
                 </div>
 
                 <div>

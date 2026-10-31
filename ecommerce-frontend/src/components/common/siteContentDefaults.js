@@ -21,7 +21,9 @@ const SITE_CONTENT_DEFAULTS = {
         "showTopBar": true,
         "announcementText": "Free delivery on orders over ৳2000",
         "announcementLinkText": "Shop Deals",
-        "announcementLinkUrl": "/shop?sale=1"
+        "announcementLinkUrl": "/shop?sale=1",
+        "deliveryFee": 120,
+        "freeDeliveryMin": 2000
     },
     "pages": [
         {

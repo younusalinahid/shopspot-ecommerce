@@ -96,6 +96,8 @@ public class SiteContentService {
         s.setYoutubeUrl(url(in.getYoutubeUrl(), "YouTube"));
         s.setTiktokUrl(url(in.getTiktokUrl(), "TikTok"));
         s.setCopyrightText(optional(in.getCopyrightText(), "Copyright text", 200));
+        s.setDeliveryFee(amount(in.getDeliveryFee(), "Delivery charge", s.effectiveDeliveryFee()));
+        s.setFreeDeliveryMin(amount(in.getFreeDeliveryMin(), "Free delivery amount", s.effectiveFreeDeliveryMin()));
         s.setBrandColor(color(in.getBrandColor(), "Store name colour"));
         s.setLogoBgColor(color(in.getLogoBgColor(), "Logo background colour"));
         s.setTopBarColor(color(in.getTopBarColor(), "Top bar colour"));
@@ -154,6 +156,13 @@ public class SiteContentService {
         String t = v.trim();
         if (t.length() > max) throw new IllegalArgumentException(field + " must be at most " + max + " characters");
         return t;
+    }
+
+    /** A Taka amount between 0 and 100,000; keeps the current value when not sent. */
+    private static Integer amount(Integer v, String field, int current) {
+        if (v == null) return current;
+        if (v < 0 || v > 100_000) throw new IllegalArgumentException(field + " must be between 0 and 100000");
+        return v;
     }
 
     /** "#rrggbb" or empty. */

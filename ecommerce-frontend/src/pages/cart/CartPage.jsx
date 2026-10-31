@@ -4,8 +4,10 @@ import {useCart} from '../../context/CartContext';
 import {Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, CreditCard} from 'lucide-react';
 import {toast} from 'react-toastify';
 import {imageSrc} from '../../utils/imageSrc';
+import {useSiteContent} from '../../hooks/useSiteContent';
 
 const CartPage = () => {
+    const {delivery} = useSiteContent();
     const {cart, isGuest, updateCartItem, removeCartItem, clearCart} = useCart();
     const [updatingItems, setUpdatingItems] = useState({});
 
@@ -97,7 +99,7 @@ const CartPage = () => {
 
     // Calculate totals
     const subtotal = cart.totalPrice || 0;
-    const shipping = subtotal > 2000 ? 0 : 120;
+    const shipping = delivery.chargeFor(subtotal);
     const tax = Math.round(subtotal * 0.07);
     const total = subtotal + shipping + tax;
 
@@ -255,9 +257,9 @@ const CartPage = () => {
                     </span>
                                     </div>
 
-                                    {shipping > 0 && (
+                                    {shipping > 0 && delivery.freeMin > 0 && (
                                         <p className="text-sm text-blue-600 dark:text-blue-400">
-                                            Add ৳{(2000 - subtotal).toFixed(2)} more for free shipping
+                                            Add ৳{(delivery.freeMin - subtotal + 1).toFixed(2)} more for free shipping
                                         </p>
                                     )}
 
@@ -279,7 +281,9 @@ const CartPage = () => {
                                 <div className="space-y-2 mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Truck className="w-4 h-4 text-green-600"/>
-                                        <span>Free shipping over ৳2000</span>
+                                        <span>{delivery.fee === 0
+                                            ? 'Free shipping on every order'
+                                            : delivery.freeMin > 0 ? `Free shipping over ৳${delivery.freeMin}` : `Delivery ৳${delivery.fee} per order`}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Shield className="w-4 h-4 text-blue-600"/>

@@ -11,6 +11,7 @@ public class OrderDTO {
     private Long id;
     private OrderStatus status;
     private Integer totalAmount;
+    private Integer shippingFee;
     private String stripeClientSecret;
     private ShippingAddressDTO shippingAddress;
     private List<OrderItemDTO> items;

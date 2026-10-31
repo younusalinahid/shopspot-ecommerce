@@ -9,8 +9,10 @@ import {wishlistApi} from '../../api/wishlistApi';
 import ReviewSection from "../../components/product/ReviewSection";
 import {getReviewSummary} from '../../api/reviewApi';
 import {imageSrc} from '../../utils/imageSrc';
+import {useSiteContent} from '../../hooks/useSiteContent';
 
 const ProductDetailsPage = () => {
+    const {delivery} = useSiteContent();
     const {productId} = useParams();
     const navigate = useNavigate();
     const {addToCart, loading} = useCart();
@@ -439,12 +441,14 @@ const ProductDetailsPage = () => {
                                     <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-cyan-50 to-blue-100 dark:from-cyan-900/10 dark:to-blue-900/10 rounded-xl">
                                         <Truck className="w-8 h-8 text-cyan-600"/>
                                         <div>
-                                            {/* Same rule as checkout: free over ৳2000, otherwise ৳120 */}
+                                            {/* Same rule as checkout (set in Admin -> Site Content) */}
                                             <h4 className="text-xs font-semibold text-gray-900 dark:text-white">
-                                                {product.price > 2000 ? 'Free Delivery' : 'Delivery ৳120'}
+                                                {delivery.chargeFor(product.price) === 0 ? 'Free Delivery' : `Delivery ৳${delivery.fee}`}
                                             </h4>
                                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                {product.price > 2000 ? '3–5 business days' : 'Free on orders over ৳2000'}
+                                                {delivery.chargeFor(product.price) === 0 || delivery.freeMin <= 0
+                                                    ? '3–5 business days'
+                                                    : `Free on orders over ৳${delivery.freeMin}`}
                                             </p>
                                         </div>
                                     </div>

@@ -35,6 +35,26 @@ public class SiteSettings {
 
     private String copyrightText;
 
+    // ---- Delivery charge (used by checkout, cart and the order total) ----
+    /** Delivery charge per order in Taka. null = default (120). */
+    private Integer deliveryFee;
+    /** Delivery is free when the subtotal is above this. null = default (2000); 0 = never free. */
+    private Integer freeDeliveryMin;
+
+    public int effectiveDeliveryFee() {
+        return deliveryFee != null ? deliveryFee : 120;
+    }
+
+    public int effectiveFreeDeliveryMin() {
+        return freeDeliveryMin != null ? freeDeliveryMin : 2000;
+    }
+
+    /** Delivery charge for an order with this subtotal. */
+    public int deliveryChargeFor(int subtotal) {
+        int min = effectiveFreeDeliveryMin();
+        return (min > 0 && subtotal > min) ? 0 : effectiveDeliveryFee();
+    }
+
     // ---- Header look and the announcement bar above it ----
     /** Store name colour in the header (light mode), e.g. #064e3b. */
     @Column(length = 7) private String brandColor;

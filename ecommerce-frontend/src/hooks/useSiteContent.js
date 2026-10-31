@@ -28,7 +28,16 @@ export const useSiteContent = () => {
     }, []);
 
     const settings = content.settings || {};
+    // Delivery rule from Admin -> Site Content (same rule the backend uses for the order total)
+    const fee = settings.deliveryFee ?? SITE_CONTENT_DEFAULTS.settings.deliveryFee;
+    const freeMin = settings.freeDeliveryMin ?? SITE_CONTENT_DEFAULTS.settings.freeDeliveryMin;
+    const delivery = {
+        fee,
+        freeMin,
+        chargeFor: (subtotal) => (freeMin > 0 && subtotal > freeMin ? 0 : fee),
+    };
     return {
+        delivery,
         settings,
         pages: content.pages || [],
         storeName: settings.storeName || 'ShopSpot Online',

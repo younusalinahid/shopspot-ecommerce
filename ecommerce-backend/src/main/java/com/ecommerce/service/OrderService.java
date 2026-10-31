@@ -35,8 +35,6 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     /** Free shipping above this subtotal (must match the frontend cart/checkout pages). */
-    private static final int FREE_SHIPPING_THRESHOLD = 2000;
-    private static final int SHIPPING_FEE = 120;
     private static final double TAX_RATE = 0.07;
     private static final int MAX_ITEM_QUANTITY = 100;
 
@@ -48,6 +46,7 @@ public class OrderService {
     private final AddressService addressService;
     private final AddressRepository addressRepository;
     private final EmailService emailService;
+    private final SiteContentService siteContentService;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -259,7 +258,9 @@ public class OrderService {
             throw new RuntimeException("Invalid order amount");
         }
 
-        int totalAmount = calculateGrandTotal(subtotal);
+        // Delivery charge comes from Admin -> Site Content
+        int shippingFee = siteContentService.getSettings().deliveryChargeFor(subtotal);
+        int totalAmount = subtotal + shippingFee + (int) Math.round(subtotal * TAX_RATE);
 
         Order order = Order.builder()
                 .user(user)
@@ -267,6 +268,7 @@ public class OrderService {
                 .shippingAddress(shippingAddress)
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
+                .shippingFee(shippingFee)
                 .paymentMethod(paymentMethod)
                 .codCollected(false)
                 .build();
@@ -287,13 +289,6 @@ public class OrderService {
             createPaymentIntent(order);
         }
         return order;
-    }
-
-    /** Subtotal + shipping + 7% tax, the same formula the cart and checkout pages show. */
-    private int calculateGrandTotal(int subtotal) {
-        int shipping = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
-        int tax = (int) Math.round(subtotal * TAX_RATE);
-        return subtotal + shipping + tax;
     }
 
     private void createPaymentIntent(Order order) {
@@ -558,6 +553,7 @@ public class OrderService {
         dto.setId(order.getId());
         dto.setStatus(order.getStatus());
         dto.setTotalAmount(order.getTotalAmount());
+        dto.setShippingFee(order.getShippingFee());
         dto.setStripeClientSecret(order.getStripeClientSecret());
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCodCollected(order.getCodCollected());

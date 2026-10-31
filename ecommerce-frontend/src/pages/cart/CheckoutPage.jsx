@@ -12,6 +12,7 @@ import {
     Package, CreditCard, Truck, Shield, Star,
     Wallet, Banknote, ArrowRight, Info
 } from 'lucide-react';
+import {useSiteContent} from '../../hooks/useSiteContent';
 
 const stripePromise = loadStripe(
     process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -43,6 +44,7 @@ export default function CheckoutPage() {
 }
 
 function CheckoutContent() {
+    const {delivery} = useSiteContent();
     const navigate = useNavigate();
     const { cart, loading: cartLoading, clearCart } = useCart();
     const isGuest = !isAuthenticated();
@@ -248,7 +250,7 @@ function CheckoutContent() {
     );
 
     const subtotal = cart?.totalPrice || 0;
-    const shipping = subtotal > 2000 ? 0 : 120;
+    const shipping = delivery.chargeFor(subtotal);
     const tax = Math.round(subtotal * 0.07);
     const total = subtotal + shipping + tax;
 
