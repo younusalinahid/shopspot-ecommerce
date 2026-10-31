@@ -9,8 +9,10 @@ import {useTheme} from "../../context/ThemeContext";
 import UserMenu from "../user/UserMenu";
 import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
+import {useSiteContent} from "../../hooks/useSiteContent";
 
 export default function Navbar() {
+    const {storeName, logoUrl: siteLogoUrl} = useSiteContent();
     const [showAuthPage, setShowAuthPage] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const {isDark, toggleTheme} = useTheme();
@@ -252,10 +254,15 @@ export default function Navbar() {
                         {/* Logo */}
                         <div className="flex items-center min-w-0">
                             <Link to="/" className="flex items-center min-w-0 space-x-1 lg:space-x-2">
-                                <img src={logo} alt="ShopSpot Logo"
-                                     className="w-14 h-14 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0"/>
+                                {siteLogoUrl ? (
+                                    <img src={siteLogoUrl} alt={`${storeName} logo`}
+                                         className="h-10 sm:h-12 lg:h-14 w-auto max-w-[140px] object-contain flex-shrink-0 my-2 sm:my-4 lg:my-5"/>
+                                ) : (
+                                    <img src={logo} alt={`${storeName} logo`}
+                                         className="w-14 h-14 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0"/>
+                                )}
                                 <span
-                                    className="text-white font-bold text-base sm:text-2xl lg:text-3xl -ml-6 sm:-ml-10 truncate">ShopSpot Online</span>
+                                    className={`text-white font-bold text-base sm:text-2xl lg:text-3xl truncate ${siteLogoUrl ? 'ml-1 sm:ml-2' : '-ml-6 sm:-ml-10'}`}>{storeName}</span>
                             </Link>
                         </div>
 

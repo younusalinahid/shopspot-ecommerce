@@ -1,7 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {toast} from 'react-toastify';
-import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff} from 'lucide-react';
+import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2} from 'lucide-react';
 import {siteContentApi} from '../../api/siteContentApi';
+import {BASE_URL} from '../../api/config';
+import defaultLogo from '../../assets/logo/logo-6.png';
 
 const STORE_FIELDS = [
     {key: 'storeName', label: 'Store name', required: true},
@@ -32,6 +34,7 @@ export default function SiteContentPage() {
     const [savingSettings, setSavingSettings] = useState(false);
     const [savingPage, setSavingPage] = useState(null);
     const [openSlug, setOpenSlug] = useState(null);
+    const [logoBusy, setLogoBusy] = useState(false);
 
     useEffect(() => {
         siteContentApi.getAdminContent()
@@ -63,6 +66,42 @@ export default function SiteContentPage() {
             toast.error(err.response?.data?.message || 'Failed to save');
         } finally {
             setSavingSettings(false);
+        }
+    };
+
+    const uploadLogo = async (file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please choose an image file');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('Logo must be smaller than 2 MB');
+            return;
+        }
+        setLogoBusy(true);
+        try {
+            const saved = await siteContentApi.uploadLogo(file);
+            setSettings(prev => ({...prev, logoUrl: saved.logoUrl}));
+            toast.success('Logo updated');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to upload logo');
+        } finally {
+            setLogoBusy(false);
+        }
+    };
+
+    const removeLogo = async () => {
+        if (!window.confirm('Remove the uploaded logo and use the default one?')) return;
+        setLogoBusy(true);
+        try {
+            await siteContentApi.removeLogo();
+            setSettings(prev => ({...prev, logoUrl: null}));
+            toast.success('Logo removed — default logo restored');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to remove logo');
+        } finally {
+            setLogoBusy(false);
         }
     };
 
@@ -104,6 +143,28 @@ export default function SiteContentPage() {
                     <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-4">
                         <Globe className="w-5 h-5 text-cyan-600"/> Store info
                     </h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
+                        {/* Preview on the navbar colours so the admin sees how it will look */}
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 min-w-0">
+                            <img src={settings.logoUrl ? `${BASE_URL}${settings.logoUrl}` : defaultLogo}
+                                 alt="Logo preview" className="h-12 w-auto max-w-[120px] object-contain"/>
+                            <span className="text-white font-bold text-lg truncate">{settings.storeName || 'ShopSpot Online'}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-cyan-600 text-cyan-700 hover:bg-cyan-50 cursor-pointer ${logoBusy ? 'opacity-60 pointer-events-none' : ''}`}>
+                                <ImagePlus className="w-4 h-4"/> {logoBusy ? 'Uploading...' : 'Upload logo'}
+                                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden"
+                                       onChange={e => { uploadLogo(e.target.files?.[0]); e.target.value = ''; }}/>
+                            </label>
+                            {settings.logoUrl && (
+                                <button type="button" onClick={removeLogo} disabled={logoBusy}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50">
+                                    <Trash2 className="w-4 h-4"/> Use default logo
+                                </button>
+                            )}
+                            <span className="text-xs text-gray-500 w-full">PNG with transparent background works best. Max 2 MB.</span>
+                        </div>
+                    </div>
                     <div className="grid gap-4 md:grid-cols-2">
                         {STORE_FIELDS.map(f => (
                             <label key={f.key} className={`block ${f.textarea ? 'md:col-span-2' : ''}`}>

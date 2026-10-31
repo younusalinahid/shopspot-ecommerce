@@ -11,6 +11,7 @@ import CustomerManagementPage from "../../pages/admin/CustomerManagementPage";
 import AnalyticsPage from "../../pages/admin/AnalyticsPage";
 import {dashboardApi} from "../../api/dashboardApi";
 import {useNavigate, useLocation} from 'react-router-dom';
+import {ToastContainer} from 'react-toastify';
 import {
     LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe
 } from 'lucide-react';
@@ -291,6 +292,8 @@ export default function AdminDashboard() {
                     {renderContent()}
                 </main>
             </div>
+            {/* Admin pages live outside MainLayout, so they need their own toast container */}
+            <ToastContainer position="top-right" autoClose={2500} theme="colored" newestOnTop/>
         </div>
     );
 }

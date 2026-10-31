@@ -100,6 +100,27 @@ public class SiteContentService {
     }
 
     @Transactional
+    public SiteSettings updateLogo(org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        byte[] bytes = com.ecommerce.util.ImageValidator.readImage(file, 2L * 1024 * 1024);
+        SiteSettings s = getSettings();
+        s.setId(1L);
+        if (s.getStoreName() == null) s.setStoreName("ShopSpot Online");
+        s.setLogoData(bytes);
+        s.setLogoType(com.ecommerce.util.ImageValidator.contentType(bytes));
+        s.setLogoVersion(System.currentTimeMillis());
+        return settingsRepository.save(s);
+    }
+
+    @Transactional
+    public SiteSettings removeLogo() {
+        SiteSettings s = getSettings();
+        s.setLogoData(null);
+        s.setLogoType(null);
+        s.setLogoVersion(System.currentTimeMillis());
+        return settingsRepository.save(s);
+    }
+
+    @Transactional
     public InfoPage updatePage(String slug, InfoPage in) {
         InfoPage page = pageRepository.findById(slug)
                 .orElseThrow(() -> new IllegalArgumentException("Page not found"));

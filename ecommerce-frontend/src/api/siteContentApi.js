@@ -7,8 +7,16 @@ const authConfig = () => {
     return { headers: { Authorization: `Bearer ${token}` } };
 };
 
-// The footer is on every page, so the public content is fetched once and shared.
+// The navbar and footer are on every page, so the public content is fetched once and shared.
 let cached = null;
+
+export const SITE_CONTENT_UPDATED = "site-content-updated";
+
+// Tell the navbar/footer to reload after the admin saves something
+const notifyUpdated = () => {
+    cached = null;
+    window.dispatchEvent(new Event(SITE_CONTENT_UPDATED));
+};
 
 export const siteContentApi = {
     getPublicContent: () => {
@@ -34,13 +42,27 @@ export const siteContentApi = {
 
     updateSettings: async (settings) => {
         const res = await axios.put(`${ADMIN_URL}/site-content/settings`, settings, authConfig());
-        cached = null;
+        notifyUpdated();
         return res.data;
     },
 
     updatePage: async (slug, page) => {
         const res = await axios.put(`${ADMIN_URL}/site-content/pages/${slug}`, page, authConfig());
-        cached = null;
+        notifyUpdated();
+        return res.data;
+    },
+
+    uploadLogo: async (file) => {
+        const formData = new FormData();
+        formData.append("logoFile", file);
+        const res = await axios.put(`${ADMIN_URL}/site-content/logo`, formData, authConfig());
+        notifyUpdated();
+        return res.data;
+    },
+
+    removeLogo: async () => {
+        const res = await axios.delete(`${ADMIN_URL}/site-content/logo`, authConfig());
+        notifyUpdated();
         return res.data;
     },
 };

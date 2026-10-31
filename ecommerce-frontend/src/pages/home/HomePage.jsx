@@ -160,47 +160,37 @@ const HomePage = () => {
                                     ) : (
                                         <div
                                             id="category-scroll"
-                                            className="flex space-x-6 px-3 overflow-x-auto scroll-smooth snap-mandatory snap-x scrollbar-hide"
+                                            className="flex space-x-4 sm:space-x-6 px-6 sm:px-8 py-2 overflow-x-auto scroll-smooth snap-mandatory snap-x scrollbar-hide"
                                             style={{
                                                 maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
                                                 WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
                                             }}
                                         >
                                             {categories.map((category) => (
-                                                category.imageUrl ? (
-                                                    <button
-                                                        type="button"
-                                                        key={category.id}
-                                                        className="group relative flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[140px] aspect-[4/5] snap-start overflow-hidden rounded-2xl bg-gray-200 dark:bg-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer text-left"
-                                                        onClick={() => handleCategoryClick(category.id, category.name)}
-                                                    >
-                                                        <img
-                                                            src={category.imageUrl}
-                                                            alt={category.name}
-                                                            loading="lazy"
-                                                            className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                                                        />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"/>
-                                                        <h3 className="absolute bottom-0 inset-x-0 p-3 font-semibold text-white text-sm leading-tight drop-shadow">
-                                                            {category.name}
-                                                        </h3>
-                                                    </button>
-                                                ) : (
-                                                <div
+                                                <button
+                                                    type="button"
                                                     key={category.id}
-                                                    className={`${getCategoryCardStyles(category.color)} rounded-2xl p-6 text-center hover:shadow-lg dark:hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[140px] aspect-[4/5] snap-start flex flex-col items-center justify-center cursor-pointer`}
+                                                    className="group flex-shrink-0 w-24 sm:w-28 lg:w-32 snap-start flex flex-col items-center text-center cursor-pointer focus:outline-none"
                                                     onClick={() => handleCategoryClick(category.id, category.name)}
                                                 >
                                                     <div
-                                                        className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center text-white text-2xl shadow-lg mb-4 transition-colors duration-300`}
+                                                        className={`w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden flex items-center justify-center shadow-md ring-2 ring-white dark:ring-gray-700 group-hover:ring-cyan-400 group-hover:shadow-lg transition-all duration-300 ${category.imageUrl ? 'bg-gray-100 dark:bg-gray-800' : getCategoryCardStyles(category.color)}`}
                                                     >
-                                                        {category.icon}
+                                                        {category.imageUrl ? (
+                                                            <img
+                                                                src={category.imageUrl}
+                                                                alt={category.name}
+                                                                loading="lazy"
+                                                                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-3xl">{category.icon}</span>
+                                                        )}
                                                     </div>
-                                                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-sm transition-colors duration-300">
+                                                    <h3 className="mt-2 font-semibold text-gray-800 dark:text-gray-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 text-xs sm:text-sm leading-tight line-clamp-2 transition-colors duration-300">
                                                         {category.name}
                                                     </h3>
-                                                </div>
-                                                )
+                                                </button>
                                             ))}
                                         </div>
                                     )}

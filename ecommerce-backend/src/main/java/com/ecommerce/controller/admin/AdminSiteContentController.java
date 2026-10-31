@@ -27,6 +27,18 @@ public class AdminSiteContentController {
         return ResponseEntity.ok(siteContentService.updateSettings(settings));
     }
 
+    @PutMapping(value = "/logo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SiteSettings> uploadLogo(
+            @RequestParam("logoFile") org.springframework.web.multipart.MultipartFile logoFile)
+            throws java.io.IOException {
+        return ResponseEntity.ok(siteContentService.updateLogo(logoFile));
+    }
+
+    @DeleteMapping("/logo")
+    public ResponseEntity<SiteSettings> removeLogo() {
+        return ResponseEntity.ok(siteContentService.removeLogo());
+    }
+
     @PutMapping("/pages/{slug}")
     public ResponseEntity<InfoPage> updatePage(@PathVariable String slug, @RequestBody InfoPage page) {
         return ResponseEntity.ok(siteContentService.updatePage(slug, page));

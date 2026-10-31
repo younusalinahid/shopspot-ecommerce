@@ -1,7 +1,6 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Facebook, Instagram, Youtube, MapPin, Mail, Phone, MessageCircle, Send, X, X as CloseIcon, Music2} from 'lucide-react';
-import {siteContentApi} from '../../api/siteContentApi';
-import SITE_CONTENT_DEFAULTS from './siteContentDefaults';
+import {useSiteContent} from '../../hooks/useSiteContent';
 
 const SOCIALS = [
     {key: 'facebookUrl', label: 'Facebook', Icon: Facebook, hover: 'hover:bg-[#1877F2]'},
@@ -17,21 +16,9 @@ const SOCIALS = [
 const safeUrl = (url) => (typeof url === 'string' && /^https?:\/\//i.test(url.trim()) ? url.trim() : null);
 
 const Footer = () => {
-    const [content, setContent] = useState(SITE_CONTENT_DEFAULTS);
+    const {settings: s, pages: allPages} = useSiteContent();
     const [openPage, setOpenPage] = useState(null);
     const modalRef = useRef(null);
-
-    useEffect(() => {
-        let alive = true;
-        siteContentApi.getPublicContent()
-            .then(data => {
-                if (alive && data?.settings) {
-                    setContent({settings: data.settings, pages: data.pages || []});
-                }
-            })
-            .catch(() => { /* keep the built-in defaults */ });
-        return () => { alive = false; };
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -48,8 +35,7 @@ const Footer = () => {
         };
     }, []);
 
-    const s = content.settings || {};
-    const pagesIn = (section) => (content.pages || [])
+    const pagesIn = (section) => allPages
         .filter(p => p.section === section && p.visible !== false)
         .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     const phoneHref = s.contactPhone ? `tel:${s.contactPhone.replace(/[^+0-9]/g, '')}` : null;

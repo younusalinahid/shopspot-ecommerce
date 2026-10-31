@@ -1,6 +1,8 @@
 import React from 'react';
+import {useSiteContent} from '../../hooks/useSiteContent';
 
 export default function Sidebar({ menuItems, activeTab, setActiveTab, isSidebarOpen, onClose }) {
+    const {storeName} = useSiteContent();
     const handleSelect = (id) => {
         setActiveTab(id);
         // On phones/tablets the sidebar is an overlay, so close it after choosing a page
@@ -19,7 +21,7 @@ export default function Sidebar({ menuItems, activeTab, setActiveTab, isSidebarO
                     bg-gray-900 text-white transition-all duration-300 overflow-hidden overflow-y-auto`}
             >
                 <div className="p-6 w-64">
-                    <h1 className="text-2xl font-bold">ShopSpot Online</h1>
+                    <h1 className="text-2xl font-bold truncate">{storeName}</h1>
                     <p className="text-gray-400 text-sm">Admin Panel</p>
                 </div>
                 <nav className="mt-6 w-64">
