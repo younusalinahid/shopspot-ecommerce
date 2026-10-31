@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { categoryApi } from '../api/categoryApi';
+import { BASE_URL } from '../api/config';
 
 export const useCategories = () => {
     const [categories, setCategories] = useState([]);
@@ -13,8 +14,9 @@ export const useCategories = () => {
                     id: cat.id,
                     name: cat.name,
                     icon: cat.icon,
+                    imageUrl: cat.imageUrl ? `${BASE_URL}${cat.imageUrl}` : null,
                     color: "bg-blue-100 text-blue-600",
-                    subCategories: cat.subCategories.map(sub => ({
+                    subCategories: (cat.subCategories || []).map(sub => ({
                         id: sub.id,
                         name: sub.name,
                         color: "bg-blue-50 text-blue-700 hover:bg-blue-100"

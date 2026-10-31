@@ -41,6 +41,19 @@ public class AdminCategoryController {
         return ResponseEntity.ok(categoryService.updateCategory(id, category));
     }
 
+    @PutMapping(value = "/{id}/image", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<com.ecommerce.dto.CategoryDTO> uploadCategoryImage(
+            @PathVariable Long id,
+            @RequestParam("imageFile") org.springframework.web.multipart.MultipartFile imageFile)
+            throws java.io.IOException {
+        return ResponseEntity.ok(categoryService.updateCategoryImage(id, imageFile));
+    }
+
+    @DeleteMapping("/{id}/image")
+    public ResponseEntity<com.ecommerce.dto.CategoryDTO> removeCategoryImage(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.removeCategoryImage(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);

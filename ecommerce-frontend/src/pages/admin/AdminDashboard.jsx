@@ -12,8 +12,9 @@ import AnalyticsPage from "../../pages/admin/AnalyticsPage";
 import {dashboardApi} from "../../api/dashboardApi";
 import {useNavigate, useLocation} from 'react-router-dom';
 import {
-    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles
+    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe
 } from 'lucide-react';
+import SiteContentPage from './SiteContentPage';
 import InventoryAlerts from "./InventoryAlerts";
 
 export default function AdminDashboard() {
@@ -73,7 +74,8 @@ export default function AdminDashboard() {
         {id: 'orders', icon: ShoppingBag, label: 'Orders'},
         {id: 'customers', icon: Users, label: 'Customers'},
         {id: 'analytics', icon: BarChart3, label: 'Analytics'},
-        {id: 'inventory-alerts', icon: Sparkles, label: 'AI Stock Alerts'}
+        {id: 'inventory-alerts', icon: Sparkles, label: 'AI Stock Alerts'},
+        {id: 'site-content', icon: Globe, label: 'Site Content'}
     ];
 
     const stats = dashboardData ? [
@@ -264,6 +266,8 @@ export default function AdminDashboard() {
                 return <AnalyticsPage/>;
             case 'inventory-alerts':
                 return <InventoryAlerts/>;
+            case 'site-content':
+                return <SiteContentPage/>;
             default:
                 return null;
         }

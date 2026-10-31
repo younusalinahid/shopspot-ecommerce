@@ -43,6 +43,18 @@ export const categoryApi = {
         return res.data;
     },
 
+    uploadCategoryImage: async (id, file) => {
+        const formData = new FormData();
+        formData.append("imageFile", file);
+        const res = await axios.put(`${ADMIN_URL}/categories/${id}/image`, formData, authConfig());
+        return res.data;
+    },
+
+    removeCategoryImage: async (id) => {
+        const res = await axios.delete(`${ADMIN_URL}/categories/${id}/image`, authConfig());
+        return res.data;
+    },
+
     deleteCategory: async (id) => {
         await axios.delete(`${ADMIN_URL}/categories/${id}`, authConfig());
     },

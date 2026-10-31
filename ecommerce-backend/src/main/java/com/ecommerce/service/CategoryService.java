@@ -50,6 +50,35 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    public static String imageUrlOf(Category category) {
+        if (category.getImageData() == null || category.getImageData().length == 0) return null;
+        long v = category.getImageVersion() != null ? category.getImageVersion() : 0L;
+        return "/api/public/categories/" + category.getId() + "/image?v=" + v;
+    }
+
+    public Category getCategoryEntity(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+    }
+
+    public CategoryDTO updateCategoryImage(Long id, org.springframework.web.multipart.MultipartFile file)
+            throws java.io.IOException {
+        Category category = getCategoryEntity(id);
+        byte[] bytes = com.ecommerce.util.ImageValidator.readImage(file, 3L * 1024 * 1024);
+        category.setImageData(bytes);
+        category.setImageType(com.ecommerce.util.ImageValidator.contentType(bytes));
+        category.setImageVersion(System.currentTimeMillis());
+        return convertToCategoryDTO(categoryRepository.save(category));
+    }
+
+    public CategoryDTO removeCategoryImage(Long id) {
+        Category category = getCategoryEntity(id);
+        category.setImageData(null);
+        category.setImageType(null);
+        category.setImageVersion(System.currentTimeMillis());
+        return convertToCategoryDTO(categoryRepository.save(category));
+    }
+
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -65,7 +94,9 @@ public class CategoryService {
                 .stream()
                 .map(sub -> new SubCategoryDTO(sub.getId(), sub.getName()))
                 .collect(Collectors.toList());
-        return new CategoryDTO(category.getId(), category.getName(), category.getIcon(), subDtos);
+        CategoryDTO dto = new CategoryDTO(category.getId(), category.getName(), category.getIcon(), subDtos);
+        dto.setImageUrl(imageUrlOf(category));
+        return dto;
     }
 
     public List<CategoryWithProductsDTO> getCategoriesWithProducts(int productsPerCategory) {

@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {toast} from "react-toastify";
-import {Plus, Edit2, Trash2, X, FolderOpen, ChevronDown, ChevronRight} from 'lucide-react';
+import {Plus, Edit2, Trash2, X, FolderOpen, ChevronDown, ChevronRight, ImagePlus} from 'lucide-react';
 import { categoryApi } from '../../api/categoryApi'
+import { BASE_URL } from '../../api/config';
 
 export default function CategoryManagementPage() {
     const [categories, setCategories] = useState([]);
@@ -97,6 +98,41 @@ export default function CategoryManagementPage() {
                 console.error('Error deleting category:', error);
                 toast.error(error.response?.data?.message || 'Failed to delete category');
             }
+        }
+    };
+
+    const [uploadingId, setUploadingId] = useState(null);
+
+    const handleCategoryImage = async (category, file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please choose an image file');
+            return;
+        }
+        if (file.size > 3 * 1024 * 1024) {
+            toast.error('Image must be smaller than 3 MB');
+            return;
+        }
+        setUploadingId(category.id);
+        try {
+            await categoryApi.uploadCategoryImage(category.id, file);
+            await loadCategories();
+            toast.success('Category image updated');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploadingId(null);
+        }
+    };
+
+    const handleRemoveCategoryImage = async (category) => {
+        if (!window.confirm(`Remove the image of "${category.name}"? The emoji icon will be shown instead.`)) return;
+        try {
+            await categoryApi.removeCategoryImage(category.id);
+            await loadCategories();
+            toast.success('Category image removed');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to remove image');
         }
     };
 
@@ -208,16 +244,56 @@ export default function CategoryManagementPage() {
                                                 )}
                                             </button>
 
-                                            {/* Icon Display */}
-                                            <div className="text-3xl">
-                                                {category.icon || '📦'}
-                                            </div>
+                                            {/* Image (shown on the home-page slider); click to upload */}
+                                            <label
+                                                className="relative flex-shrink-0 w-14 h-16 sm:w-16 sm:h-20 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer group"
+                                                title="Upload category image"
+                                            >
+                                                {category.imageUrl ? (
+                                                    <img
+                                                        src={`${BASE_URL}${category.imageUrl}`}
+                                                        alt={category.name}
+                                                        className="w-full h-full object-cover object-top"
+                                                    />
+                                                ) : (
+                                                    <span className="text-3xl">{category.icon || '📦'}</span>
+                                                )}
+                                                <span className="absolute inset-0 bg-black/45 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                    <ImagePlus className="w-5 h-5"/>
+                                                </span>
+                                                {uploadingId === category.id && (
+                                                    <span className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                                                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-600"/>
+                                                    </span>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        handleCategoryImage(category, e.target.files?.[0]);
+                                                        e.target.value = '';
+                                                    }}
+                                                />
+                                            </label>
 
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-gray-800">{category.name}</h3>
+                                            <div className="min-w-0">
+                                                <h3 className="text-lg font-semibold text-gray-800 truncate">{category.name}</h3>
                                                 <span className="text-xs text-gray-400 mt-1 inline-block">
                                                     {category.subCategories?.length || 0} subcategories
                                                 </span>
+                                                <div className="text-xs mt-1">
+                                                    {category.imageUrl ? (
+                                                        <button
+                                                            onClick={() => handleRemoveCategoryImage(category)}
+                                                            className="text-red-500 hover:underline"
+                                                        >
+                                                            Remove image
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-gray-400">No image — click the box to upload</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 self-end sm:self-auto">

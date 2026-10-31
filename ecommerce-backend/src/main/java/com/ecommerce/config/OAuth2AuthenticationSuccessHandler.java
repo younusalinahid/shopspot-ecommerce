@@ -60,7 +60,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         final String finalEmail = email;
         final String finalName  = name;
 
-        User user = userRepository.findByEmail(finalEmail).orElseGet(() -> {
+        User user = userRepository.findByEmailIgnoreCase(finalEmail).orElseGet(() -> {
             User newUser = User.builder()
                     .email(finalEmail)
                     .fullName(finalName)
@@ -74,10 +74,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String token = jwtService.generateToken(user);
 
         if (!user.isActive()) {
-            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token + "&isRestricted=true");
+            // Tokens go in the URL fragment (#), which browsers never send to servers or in Referer headers
+            response.sendRedirect(frontendUrl + "/oauth2/callback#token=" + token + "&isRestricted=true");
         } else {
             String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
-            response.sendRedirect(frontendUrl + "/oauth2/callback?token=" + token
+            response.sendRedirect(frontendUrl + "/oauth2/callback#token=" + token
                     + "&refreshToken=" + refreshToken);
         }
     }

@@ -63,25 +63,45 @@ public class UserService {
 
     public UserProfileDTO updateProfile(Long userId, UpdateProfileRequest request) {
         User user = getUserById(userId);
-        if (request.getFullName() != null) user.setFullName(request.getFullName());
-        if (request.getPhone() != null) user.setPhone(request.getPhone());
-        if (request.getAddress() != null) user.setAddress(request.getAddress());
+        if (request.getFullName() != null) {
+            String name = request.getFullName().trim();
+            if (name.isEmpty() || name.length() > 100) throw new RuntimeException("Full name must be 1 to 100 characters");
+            user.setFullName(name);
+        }
+        if (request.getPhone() != null) {
+            if (request.getPhone().length() > 20) throw new RuntimeException("Phone number is too long");
+            user.setPhone(request.getPhone().trim());
+        }
+        if (request.getAddress() != null) {
+            if (request.getAddress().length() > 255) throw new RuntimeException("Address is too long");
+            user.setAddress(request.getAddress().trim());
+        }
         return toDTO(userRepository.save(user));
     }
 
     public UserProfileDTO updateProfileImage(Long userId, MultipartFile imageFile) throws IOException {
         User user = getUserById(userId);
-        user.setProfileImage(imageFile.getBytes());
+        user.setProfileImage(com.ecommerce.util.ImageValidator.readImage(imageFile, 2L * 1024 * 1024));
         return toDTO(userRepository.save(user));
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = getUserById(userId);
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+        if (request.getCurrentPassword() == null
+                || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
         }
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        String newPassword = request.getNewPassword();
+        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 72) {
+            throw new RuntimeException("New password must be 6 to 72 characters");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new RuntimeException("New password must be different from the current one");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        // Sign out other devices that might know the old password
+        refreshTokenRepository.revokeAllByUser(user);
     }
 
     private UserProfileDTO toDTO(User user) {

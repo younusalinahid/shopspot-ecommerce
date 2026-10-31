@@ -23,7 +23,9 @@ public class UserReportController {
         String email = body.get("email");
         String name = body.get("name");
 
-        if (message == null || message.isBlank() || email == null || name == null) {
+        if (message == null || message.isBlank() || email == null || name == null
+                || message.length() > 2000 || email.length() > 120 || name.length() > 100
+                || !email.contains("@")) {
             return ResponseEntity.badRequest().build();
         }
 

@@ -25,6 +25,20 @@ public class JwtService {
     private long expirationMs;
 
 
+    /** Fail fast with a clear message if JWT_SECRET is missing or too short for HS256. */
+    @jakarta.annotation.PostConstruct
+    void validateSecret() {
+        byte[] key;
+        try {
+            key = Decoders.BASE64.decode(secretKey);
+        } catch (Exception e) {
+            throw new IllegalStateException("JWT_SECRET must be a Base64 string", e);
+        }
+        if (key.length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be at least 32 bytes (256 bits) after Base64 decoding");
+        }
+    }
+
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", userDetails.getAuthorities()

@@ -35,7 +35,10 @@ public class SchemaMigrationRunner implements CommandLineRunner {
             // Orders created before COD existed got an empty payment method, which breaks
             // the admin and "My Orders" pages ("No enum constant PaymentMethod.").
             "UPDATE orders SET payment_method = 'CARD' WHERE payment_method IS NULL OR payment_method = ''",
-            "UPDATE orders SET cod_collected = 0 WHERE cod_collected IS NULL"
+            "UPDATE orders SET cod_collected = 0 WHERE cod_collected IS NULL",
+            // Site content uses Bangla text and the Taka sign, which need utf8mb4
+            "ALTER TABLE site_settings CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+            "ALTER TABLE info_pages CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
     );
 
     @Override

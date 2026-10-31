@@ -8,9 +8,18 @@ const OAuth2CallbackPage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = searchParams.get("token");
-        const error = searchParams.get("error");
-        const isRestricted = searchParams.get("isRestricted") === "true";
+        // Tokens arrive in the URL fragment (#token=...), which is never sent to servers.
+        // Fall back to the query string for older redirects.
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const param = (name) => hashParams.get(name) ?? searchParams.get(name);
+        const token = param("token");
+        const error = param("error");
+        const isRestricted = param("isRestricted") === "true";
+        const refreshToken = param("refreshToken");
+        // Remove tokens from the address bar and browser history
+        if (window.location.hash || window.location.search) {
+            window.history.replaceState(null, "", window.location.pathname);
+        }
 
         if (error === "deactivated") {
             toast.error("Your account has been deactivated. Please contact support.");
@@ -25,7 +34,6 @@ const OAuth2CallbackPage = () => {
 
         localStorage.setItem("token", token);
 
-        const refreshToken = searchParams.get("refreshToken");
         if (refreshToken) {
             localStorage.setItem("refreshToken", refreshToken);
         }

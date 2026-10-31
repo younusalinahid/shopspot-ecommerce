@@ -167,9 +167,28 @@ const HomePage = () => {
                                             }}
                                         >
                                             {categories.map((category) => (
+                                                category.imageUrl ? (
+                                                    <button
+                                                        type="button"
+                                                        key={category.id}
+                                                        className="group relative flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[140px] aspect-[4/5] snap-start overflow-hidden rounded-2xl bg-gray-200 dark:bg-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer text-left"
+                                                        onClick={() => handleCategoryClick(category.id, category.name)}
+                                                    >
+                                                        <img
+                                                            src={category.imageUrl}
+                                                            alt={category.name}
+                                                            loading="lazy"
+                                                            className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"/>
+                                                        <h3 className="absolute bottom-0 inset-x-0 p-3 font-semibold text-white text-sm leading-tight drop-shadow">
+                                                            {category.name}
+                                                        </h3>
+                                                    </button>
+                                                ) : (
                                                 <div
                                                     key={category.id}
-                                                    className={`${getCategoryCardStyles(category.color)} rounded-2xl p-6 text-center hover:shadow-lg dark:hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[150px] snap-start flex flex-col items-center cursor-pointer`}
+                                                    className={`${getCategoryCardStyles(category.color)} rounded-2xl p-6 text-center hover:shadow-lg dark:hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[140px] aspect-[4/5] snap-start flex flex-col items-center justify-center cursor-pointer`}
                                                     onClick={() => handleCategoryClick(category.id, category.name)}
                                                 >
                                                     <div
@@ -181,6 +200,7 @@ const HomePage = () => {
                                                         {category.name}
                                                     </h3>
                                                 </div>
+                                                )
                                             ))}
                                         </div>
                                     )}
