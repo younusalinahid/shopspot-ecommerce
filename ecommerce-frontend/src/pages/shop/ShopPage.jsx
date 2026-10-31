@@ -6,7 +6,7 @@ import ProductCard from '../../components/product/ProductCard';
 import {productService} from '../../api/productApi';
 import {useCategories} from '../../hooks/useCategory';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
     {value: 'newest', label: 'Newest first'},
@@ -241,7 +241,7 @@ export default function ShopPage() {
     );
 
     return (
-        <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
+        <div className="w-full px-3 sm:px-6 lg:px-8 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
             <div className="mb-5">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {selectedSub ? selectedSub.name : selectedCategory ? selectedCategory.name : 'Shop'}
@@ -252,7 +252,7 @@ export default function ShopPage() {
             </div>
 
             <div className="flex gap-6 lg:gap-8">
-                <aside className="hidden lg:block w-64 flex-shrink-0">
+                <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
                     <div className="sticky top-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 max-h-[calc(100vh-2rem)] overflow-y-auto">
                         {sidebar}
                     </div>
@@ -313,7 +313,7 @@ export default function ShopPage() {
                                     className="mt-3 text-cyan-600 hover:underline">Clear filters</button>
                         </div>
                     ) : (
-                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
                             {data?.content.map(product => <ProductCard key={product.id} product={product}/>)}
                         </div>
                     )}

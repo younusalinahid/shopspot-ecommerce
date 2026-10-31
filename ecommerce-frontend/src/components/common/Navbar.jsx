@@ -11,6 +11,15 @@ import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
 import {useSiteContent} from "../../hooks/useSiteContent";
 
+const MAIN_LINKS = [
+    {to: '/', label: 'Home', end: true},
+    {to: '/shop', label: 'Shop'},
+];
+
+const mainLinkClass = ({isActive}) => `px-4 lg:px-5 py-1.5 lg:py-2 rounded-full text-sm sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
+    ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
+    : 'text-white/90 hover:text-white hover:bg-white/15'}`;
+
 export default function Navbar() {
     const {storeName, logoUrl: siteLogoUrl} = useSiteContent();
     const [showAuthPage, setShowAuthPage] = useState(false);
@@ -267,7 +276,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Search Bar (Desktop) */}
-                        <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
+                        <div className="hidden lg:flex flex-1 min-w-[260px] max-w-2xl ml-4 xl:ml-8 mr-4 xl:mr-6">
                             <form onSubmit={handleSearchSubmit} className="relative w-full">
                                 <input
                                     type="text"
@@ -304,12 +313,21 @@ export default function Navbar() {
                             </form>
                         </div>
 
+                        {/* Main sections (desktop): right of the search bar */}
+                        <div className="hidden lg:flex items-center gap-2 mr-auto flex-shrink-0">
+                            {MAIN_LINKS.map(item => (
+                                <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
+                                    {item.label}
+                                </NavLink>
+                            ))}
+                        </div>
+
                         {/* Actions (Cart, Profile, Theme) */}
                         <div className="flex items-center flex-shrink-0 space-x-1 sm:space-x-4 lg:space-x-6">
                             <img
                                 src={playStoreButton}
                                 alt="Google Play"
-                                className="hidden lg:block w-auto h-12 cursor-pointer hover:scale-105 transition-transform duration-200"
+                                className="hidden 2xl:block w-auto h-12 cursor-pointer hover:scale-105 transition-transform duration-200"
                             />
 
                             <div
@@ -403,16 +421,10 @@ export default function Navbar() {
                         </form>
                     </div>
 
-                    {/* Main sections */}
-                    <div className="flex items-center gap-1 sm:gap-2 -mt-1 pb-2">
-                        {[
-                            {to: '/', label: 'Home', end: true},
-                            {to: '/shop', label: 'Shop'},
-                        ].map(item => (
-                            <NavLink key={item.to} to={item.to} end={item.end}
-                                     className={({isActive}) => `px-4 sm:px-5 py-1.5 rounded-full text-sm sm:text-base font-semibold transition-colors ${isActive
-                                         ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
-                                         : 'text-white/90 hover:text-white hover:bg-white/15'}`}>
+                    {/* Main sections (phones/tablets): under the search bar */}
+                    <div className="lg:hidden flex items-center gap-1 sm:gap-2 -mt-1 pb-2">
+                        {MAIN_LINKS.map(item => (
+                            <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
                                 {item.label}
                             </NavLink>
                         ))}
