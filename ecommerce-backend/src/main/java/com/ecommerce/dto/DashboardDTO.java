@@ -11,6 +11,8 @@ public class DashboardDTO {
     private long totalRevenue;
     private long totalOrders;
     private long totalProducts;
+    private long activeProducts;
+    private long outOfStockProducts;
     private long totalCustomers;
     private long revenueThisMonth;
     private long ordersThisMonth;

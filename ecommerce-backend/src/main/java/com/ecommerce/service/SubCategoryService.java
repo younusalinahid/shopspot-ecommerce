@@ -68,7 +68,13 @@ public class SubCategoryService {
     }
 
     public void deleteSubCategory(Long id) {
-        subCategoryRepository.deleteById(id);
+        var subCategory = subCategoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("SubCategory not found"));
+        if (subCategory.getProducts() != null && !subCategory.getProducts().isEmpty()) {
+            throw new RuntimeException("This subcategory still has " + subCategory.getProducts().size()
+                    + " product(s). Move or delete them first.");
+        }
+        subCategoryRepository.delete(subCategory);
     }
 
     public SubCategory getSubCategoryById(Long id) {

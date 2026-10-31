@@ -23,6 +23,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.ecommerce.repository.OrderRepository orderRepository;
+    private final com.ecommerce.repository.RefreshTokenRepository refreshTokenRepository;
+    private final com.ecommerce.repository.SearchHistoryRepository searchHistoryRepository;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -37,8 +40,21 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        User user = getUserById(id);
+        if (user.getRole() == com.ecommerce.model.type.Role.ADMIN) {
+            throw new RuntimeException("Admin accounts cannot be deleted");
+        }
+        long orderCount = orderRepository.countByUserId(id);
+        if (orderCount > 0) {
+            // Deleting would also delete the orders (cascade) and change sales history
+            throw new RuntimeException("This customer has " + orderCount
+                    + " order(s). Deactivate the account instead of deleting it.");
+        }
+        refreshTokenRepository.deleteAllByUser(user);
+        searchHistoryRepository.deleteAllByUserId(id);
+        userRepository.delete(user);
     }
 
     public UserProfileDTO getProfile(Long userId) {
@@ -93,7 +109,14 @@ public class UserService {
 
     public void toggleUserStatus(Long id) {
         User user = getUserById(id);
+        if (user.getRole() == com.ecommerce.model.type.Role.ADMIN) {
+            throw new RuntimeException("Admin accounts cannot be deactivated");
+        }
         user.setActive(!user.isActive());
         userRepository.save(user);
+        if (!user.isActive()) {
+            // Sign the customer out everywhere
+            refreshTokenRepository.revokeAllByUser(user);
+        }
     }
 }

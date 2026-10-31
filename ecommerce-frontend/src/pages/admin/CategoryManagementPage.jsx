@@ -92,11 +92,22 @@ export default function CategoryManagementPage() {
             try {
                 await categoryApi.deleteCategory(id);
                 await loadCategories();
-                toast('Category deleted successfully');
+                toast.success('Category deleted successfully');
             } catch (error) {
                 console.error('Error deleting category:', error);
-                toast('Failed to delete category: ' + (error.response?.data?.message || error.message));
+                toast.error(error.response?.data?.message || 'Failed to delete category');
             }
+        }
+    };
+
+    const handleDeleteSubCategory = async (sub) => {
+        if (!window.confirm(`Delete subcategory "${sub.name}"?`)) return;
+        try {
+            await categoryApi.deleteSubCategory(sub.id);
+            await loadCategories();
+            toast.success('Subcategory deleted');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to delete subcategory');
         }
     };
 
@@ -244,7 +255,8 @@ export default function CategoryManagementPage() {
                                                             <span className="text-xs text-gray-400">ID: {sub.id}</span>
                                                         </div>
                                                         <button
-                                                            onClick={() => alert('SubCategory delete coming soon')}
+                                                            onClick={() => handleDeleteSubCategory(sub)}
+                                                            aria-label={`Delete ${sub.name}`}
                                                             className="text-red-400 hover:text-red-600"
                                                         >
                                                             <Trash2 className="w-4 h-4"/>

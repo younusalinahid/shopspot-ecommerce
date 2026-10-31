@@ -21,7 +21,7 @@ const ProductManagementPage = () => {
 
     const EMPTY_FORM = {
         name: "", description: "", price: "",
-        stockQuantity: 0, discountPercent: 0, images: [],
+        stockQuantity: 0, discountPercent: 0, active: true, images: [],
     };
 
 
@@ -133,6 +133,7 @@ const ProductManagementPage = () => {
                 price: product.originalPrice > 0 ? product.originalPrice : product.price || "",
                 stockQuantity: product.stock || 0,
                 discountPercent: product.discountPercent || 0,
+                active: product.active !== false,
                 images: [],
             });
 
@@ -179,6 +180,7 @@ const ProductManagementPage = () => {
             fd.append("subCategoryId", selectedSubCategory);
             fd.append("stockQuantity", formData.stockQuantity);
             fd.append("discountPercent", formData.discountPercent);
+            fd.append("active", formData.active);
 
 
             if (formData.images?.[0]) fd.append("imageFile", formData.images[0]);
@@ -207,11 +209,15 @@ const ProductManagementPage = () => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
         try {
             setLoading(true);
-            await productService.deleteProduct(productId);
-            toast.success("Product deleted successfully");
+            const result = await productService.deleteProduct(productId);
+            if (result && result.deleted === false) {
+                toast.info(result.message || "Product was hidden from the store");
+            } else {
+                toast.success("Product deleted successfully");
+            }
             await fetchProducts();
-        } catch {
-            toast.error("Failed to delete product");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to delete product");
         } finally {
             setLoading(false);
         }
@@ -394,6 +400,22 @@ const ProductManagementPage = () => {
                                 <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleInputChange} min="0" disabled={loading} className={INPUT_CLS} placeholder="0" />
                                 <p className="text-xs text-gray-400 mt-1">0 = out of stock (customers cannot buy it)</p>
                             </Field>
+
+                            {editingProduct && (
+                                <label className="flex items-start gap-2 text-sm text-gray-700 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.active}
+                                        onChange={(e) => setFormData(prev => ({...prev, active: e.target.checked}))}
+                                        disabled={loading}
+                                        className="mt-0.5 w-4 h-4"
+                                    />
+                                    <span>
+                                        Visible in store
+                                        <span className="block text-xs text-gray-400">Untick to hide this product from customers without deleting it</span>
+                                    </span>
+                                </label>
+                            )}
 
 
                             <Field label="Category" required>

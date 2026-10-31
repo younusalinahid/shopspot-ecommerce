@@ -115,7 +115,8 @@ export const productService = {
 
     deleteProduct: async (id) => {
         try {
-            await axios.delete(`${ADMIN_BASE_URL}/${id}`, getAuthConfig());
+            const response = await axios.delete(`${ADMIN_BASE_URL}/${id}`, getAuthConfig());
+            return response.data; // { deleted, message }
         } catch (error) {
             console.error('Error deleting product:', error);
             throw error;

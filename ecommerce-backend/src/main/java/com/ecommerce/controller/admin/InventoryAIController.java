@@ -57,6 +57,11 @@ public class InventoryAIController {
             ));
         });
 
+        // Nothing has sold in 3 months: no need to call the AI
+        if (salesData.isEmpty()) {
+            return ResponseEntity.ok().header("Content-Type", "application/json").body("[]");
+        }
+
         String result = forecastService.getInventoryAlerts(salesData);
         return ResponseEntity.ok()
                 .header("Content-Type", "application/json")

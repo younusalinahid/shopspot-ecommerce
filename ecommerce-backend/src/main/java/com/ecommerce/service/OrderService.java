@@ -487,9 +487,26 @@ public class OrderService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    /** Admin status flow. PENDING = unpaid card checkout, so it can only be cancelled. */
+    private static final java.util.Map<OrderStatus, java.util.Set<OrderStatus>> ALLOWED_TRANSITIONS = java.util.Map.of(
+            OrderStatus.PENDING, java.util.EnumSet.of(OrderStatus.CANCELLED),
+            OrderStatus.CONFIRMED, java.util.EnumSet.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED),
+            OrderStatus.PAID, java.util.EnumSet.of(OrderStatus.PROCESSING, OrderStatus.CANCELLED),
+            OrderStatus.PROCESSING, java.util.EnumSet.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED),
+            OrderStatus.SHIPPED, java.util.EnumSet.of(OrderStatus.DELIVERED),
+            OrderStatus.DELIVERED, java.util.EnumSet.noneOf(OrderStatus.class),
+            OrderStatus.CANCELLED, java.util.EnumSet.noneOf(OrderStatus.class)
+    );
+
     public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = orderRepository.findByIdWithItems(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+        if (order.getStatus() == status) {
+            return toDTO(order);
+        }
+        if (!ALLOWED_TRANSITIONS.getOrDefault(order.getStatus(), java.util.Set.of()).contains(status)) {
+            throw new RuntimeException("Cannot change order status from " + order.getStatus() + " to " + status);
+        }
         if (status == OrderStatus.CANCELLED) {
             restoreStock(order);
         }
@@ -506,12 +523,12 @@ public class OrderService {
 
         if (order.getPaymentMethod() != PaymentMethod.COD)
             throw new RuntimeException("Not a COD order");
+        if (order.getStatus() != OrderStatus.SHIPPED && order.getStatus() != OrderStatus.DELIVERED)
+            throw new RuntimeException("Cash can only be collected when the order is shipped or delivered");
 
+        // Cash is collected at the door, so the order is delivered; the status must not go back to PAID
         order.setCodCollected(true);
-        if (order.getStatus() == OrderStatus.DELIVERED
-                || order.getStatus() == OrderStatus.SHIPPED) {
-            order.setStatus(OrderStatus.PAID);
-        }
+        order.setStatus(OrderStatus.DELIVERED);
         return toDTO(orderRepository.save(order));
     }
 

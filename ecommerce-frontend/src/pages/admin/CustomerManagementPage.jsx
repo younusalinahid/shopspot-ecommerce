@@ -65,8 +65,8 @@ const CustomerManagementPage = () => {
             await userApi.toggleStatus(user.id);
             toast.success(`${user.fullName} ${user.active ? "deactivated" : "activated"}`);
             fetchUsers();
-        } catch {
-            toast.error("Failed to update status");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to update status");
         }
     };
 
@@ -76,8 +76,8 @@ const CustomerManagementPage = () => {
             await userApi.deleteUser(user.id);
             toast.success("Customer deleted");
             fetchUsers();
-        } catch {
-            toast.error("Failed to delete customer");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to delete customer");
         }
     };
 

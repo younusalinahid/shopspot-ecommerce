@@ -19,7 +19,7 @@ const STATUS_CONFIG = {
 };
 
 const STATUS_TRANSITIONS = {
-    PENDING:    ['PROCESSING', 'CANCELLED'],
+    PENDING:    ['CANCELLED'],  // unpaid card checkout: can only be cancelled
     CONFIRMED:  ['PROCESSING', 'CANCELLED'],
     PAID:       ['PROCESSING', 'CANCELLED'],
     PROCESSING: ['SHIPPED',    'CANCELLED'],
@@ -67,8 +67,8 @@ export default function OrderManagementPage() {
             const updated = await orderApi.updateOrderStatus(orderId, newStatus);
             setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
             toast.success(`Order #${orderId} → ${STATUS_CONFIG[newStatus].label}`);
-        } catch {
-            toast.error('Status update failed');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Status update failed');
         } finally {
             setUpdating(null);
         }

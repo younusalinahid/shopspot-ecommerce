@@ -51,7 +51,7 @@ public class ProductService {
     }
 
     public List<ProductDTO> getAllProducts() {
-        return productRepository.findAll()
+        return productRepository.findByActiveTrue()
                 .stream()
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
@@ -62,6 +62,7 @@ public class ProductService {
 
         List<Product> products = productRepository.searchByNameOrSubCategory(query);
         for (Product product : products) {
+            if (!product.isActive()) continue;
             String imageData = null;
             if (product.getImageData() != null) {
                 imageData = Base64.getEncoder().encodeToString(product.getImageData());
@@ -103,6 +104,7 @@ public class ProductService {
     public List<ProductDTO> getProductsBySubCategory(Long subCategoryId) {
         return productRepository.findBySubCategoryId(subCategoryId)
                 .stream()
+                .filter(Product::isActive)
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -110,6 +112,7 @@ public class ProductService {
     public List<ProductDTO> getRecentProducts(int limit) {
         return productRepository.findTop8ByOrderByCreatedAtDesc()
                 .stream()
+                .filter(Product::isActive)
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -145,14 +148,18 @@ public class ProductService {
     }
 
 
-    public ProductDTO updateProduct(Long id, Product updated, Long subCategoryId, MultipartFile imageFile) throws IOException {
+    public ProductDTO updateProduct(Long id, Product updated, Long subCategoryId, Boolean active,
+                                    MultipartFile imageFile) throws IOException {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         product.setName(updated.getName());
         product.setDescription(updated.getDescription());
         product.setPrice(updated.getPrice());
-        product.setActive(updated.isActive());
+        // Only change visibility when the admin sends it (editing used to re-activate hidden products)
+        if (active != null) {
+            product.setActive(active);
+        }
         product.setStockQuantity(updated.getStockQuantity());
         product.setDiscountPercent(updated.getDiscountPercent());
 
@@ -169,7 +176,23 @@ public class ProductService {
         return productMapper.convertToDTO(productRepository.save(product));
     }
 
-    public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+    /**
+     * @return true if deleted; false if the product is referenced (orders, carts, reviews)
+     *         and was hidden (active = false) instead, so order history stays intact
+     */
+    public boolean deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        try {
+            productRepository.delete(product);
+            productRepository.flush();
+            return true;
+        } catch (org.springframework.dao.DataAccessException e) {
+            Product stillThere = productRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            stillThere.setActive(false);
+            productRepository.save(stillThere);
+            return false;
+        }
     }
 }

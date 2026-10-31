@@ -8,11 +8,11 @@ import org.springframework.data.repository.query.Param;
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     @Query("""
-    SELECT COUNT(oi) FROM OrderItem oi
+    SELECT COALESCE(SUM(oi.quantity), 0) FROM OrderItem oi
     WHERE oi.product.id = :productId
       AND MONTH(oi.order.createdAt) = :month
       AND YEAR(oi.order.createdAt) = :year
-      AND oi.order.status NOT IN ('CANCELLED')
+      AND oi.order.status NOT IN ('CANCELLED', 'PENDING')
     """)
     int countByProductIdAndOrderMonth(
             @Param("productId") Long productId,

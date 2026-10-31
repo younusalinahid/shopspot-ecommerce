@@ -49,6 +49,7 @@ public class AdminProductController {
             @RequestParam("subCategoryId") Long subCategoryId,
             @RequestParam(value = "stockQuantity", defaultValue = "0") int stockQuantity,
             @RequestParam(value = "discountPercent", defaultValue = "0") int discountPercent,
+            @RequestParam(value = "active", required = false) Boolean active,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
         Product product = new Product();
@@ -58,13 +59,19 @@ public class AdminProductController {
         product.setStockQuantity(stockQuantity);
         product.setDiscountPercent(discountPercent);
 
-        return ResponseEntity.ok(productService.updateProduct(id, product, subCategoryId, imageFile));
+        return ResponseEntity.ok(productService.updateProduct(id, product, subCategoryId, active, imageFile));
     }
 
+    /** Deletes the product, or hides it when orders/carts/reviews still reference it. */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(
+    public ResponseEntity<java.util.Map<String, Object>> deleteProduct(
             @PathVariable(name = "id") Long id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        boolean deleted = productService.deleteProduct(id);
+        return ResponseEntity.ok(java.util.Map.of(
+                "deleted", deleted,
+                "message", deleted
+                        ? "Product deleted"
+                        : "Product is used in orders, carts or reviews, so it was hidden from the store instead"
+        ));
     }
 }

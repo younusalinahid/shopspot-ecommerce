@@ -38,6 +38,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    long countByUserId(Long userId);
+
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product WHERE o.paymentMethod = :paymentMethod ORDER BY o.createdAt DESC")
     List<Order> findByPaymentMethodWithItems(@Param("paymentMethod") PaymentMethod paymentMethod);
 

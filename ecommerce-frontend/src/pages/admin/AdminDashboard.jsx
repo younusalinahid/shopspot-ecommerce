@@ -36,11 +36,12 @@ export default function AdminDashboard() {
         setActiveTab(getTabFromPath());
     }, [location.pathname]);
 
+    const [loadError, setLoadError] = useState(false);
+
     useEffect(() => {
         dashboardApi.getDashboard()
             .then(setDashboardData)
-            .catch(() => {
-            })
+            .catch(() => setLoadError(true))
             .finally(() => setLoading(false));
     }, []);
 
@@ -88,13 +89,13 @@ export default function AdminDashboard() {
             change: `${dashboardData.ordersThisMonth ?? 0} this month`,
             icon: ShoppingBag, color: 'bg-green-500',
             showButton: true,
-            buttonText: "View Low Stock",
-            onClick: scrollToLowStock
+            buttonText: "View Orders",
+            onClick: () => handleTabChange('orders')
         },
         {
             title: 'Total Products',
             value: dashboardData.totalProducts ?? 0,
-            change: 'Active products',
+            change: `${dashboardData.activeProducts ?? 0} active · ${dashboardData.outOfStockProducts ?? 0} out of stock`,
             icon: Package, color: 'bg-purple-500',
             showButton: true,
             buttonText: "View Low Stock",
@@ -110,6 +111,8 @@ export default function AdminDashboard() {
 
     const STATUS_COLORS = {
         PENDING: "bg-yellow-50 text-yellow-700",
+        CONFIRMED: "bg-teal-50 text-teal-700",
+        PAID: "bg-sky-50 text-sky-700",
         PROCESSING: "bg-blue-50 text-blue-700",
         SHIPPED: "bg-purple-50 text-purple-700",
         DELIVERED: "bg-green-50 text-green-700",
@@ -118,6 +121,8 @@ export default function AdminDashboard() {
 
     const STATUS_BADGE_COLORS = {
         PENDING: "bg-yellow-100 text-yellow-700",
+        CONFIRMED: "bg-teal-100 text-teal-700",
+        PAID: "bg-sky-100 text-sky-700",
         PROCESSING: "bg-blue-100 text-blue-700",
         SHIPPED: "bg-purple-100 text-purple-700",
         DELIVERED: "bg-green-100 text-green-700",
@@ -128,6 +133,12 @@ export default function AdminDashboard() {
         if (loading) return (
             <div className="flex items-center justify-center py-24">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"/>
+            </div>
+        );
+
+        if (loadError) return (
+            <div className="bg-red-50 text-red-700 rounded-lg p-6 text-center">
+                Could not load dashboard data. Please check that the backend is running and refresh.
             </div>
         );
 

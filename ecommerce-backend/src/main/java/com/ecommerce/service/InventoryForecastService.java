@@ -56,12 +56,21 @@ public class InventoryForecastService {
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) responseMap.get("choices");
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
 
-                return (String) message.get("content");
+                // The model sometimes wraps the JSON in ```json fences; strip them so the UI can parse it
+                String content = ((String) message.get("content")).trim();
+                if (content.startsWith("```")) {
+                    content = content.replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "");
+                }
+                return content;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "{\"error\": \"Failed to generate forecast: " + e.getMessage() + "\"}";
+            try {
+                return objectMapper.writeValueAsString(Map.of("error", "Failed to generate forecast: " + e.getMessage()));
+            } catch (Exception ignored) {
+                return "{\"error\": \"Failed to generate forecast\"}";
+            }
         }
         return "{\"error\": \"Unknown error occurred\"}";
     }

@@ -51,7 +51,13 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long id) {
-        categoryRepository.deleteById(id);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {
+            throw new RuntimeException("Delete or move its " + category.getSubCategories().size()
+                    + " subcategories first");
+        }
+        categoryRepository.delete(category);
     }
 
     private CategoryDTO convertToCategoryDTO(Category category) {
