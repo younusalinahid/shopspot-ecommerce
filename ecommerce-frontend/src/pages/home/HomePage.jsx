@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {ArrowRight} from 'lucide-react';
-import {Link, useNavigate, useSearchParams} from 'react-router-dom';
+import {useNavigate, useSearchParams} from 'react-router-dom';
+import CategorySidebar from '../../components/category/CategorySidebar';
 import {getActiveBanners} from "../../api/bannerApi";
 import Banner from "../../components/banner/Banner";
 import {useCategories} from "../../hooks/useCategory";
@@ -49,97 +50,163 @@ const HomePage = () => {
         navigate(`/shop?category=${categoryId}`);
     };
 
-    const handleViewAllFeatured = () => navigate('/shop');
-
-    const spinner = (
-        <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700 dark:border-emerald-400"/>
-        </div>
-    );
-
-    const grid = (products) => (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10">
-            {products.map(product => <ProductCard key={product.id} product={product}/>)}
-        </div>
-    );
-
-    const sectionHeader = (title, onSeeAll, linkLabel = 'See All') => (
-        <div className="flex items-end justify-between gap-4 mb-6">
-            <h2 className="font-bold text-gray-900 dark:text-white text-2xl sm:text-3xl tracking-tight">{title}</h2>
-            {onSeeAll && (
-                <button onClick={onSeeAll}
-                        className="flex items-center gap-1 font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-400 dark:hover:text-emerald-300 whitespace-nowrap">
-                    {linkLabel} <ArrowRight className="w-4 h-4"/>
-                </button>
-            )}
-        </div>
-    );
+    const handleViewAllFeatured = () => {
+        if (categories.length > 0) {
+            navigate(`/category/${categories[0].id}`, {
+                state: {categoryName: categories[0].name}
+            });
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
-            <div className="w-full px-3 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-24 sm:pb-16">
-                {/* Hero banner */}
-                <Banner/>
-
-                {/* Shop by category: pill chips like a filter bar */}
-                {categories.length > 0 && (
-                    <div className="mt-6 sm:mt-8 flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                        <Link to="/shop"
-                              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-emerald-900 text-white font-semibold text-sm sm:text-[15px] whitespace-nowrap hover:bg-emerald-800">
-                            All Products
-                        </Link>
-                        {categories.map(cat => (
-                            <Link key={cat.id} to={`/shop?category=${cat.id}`}
-                                  className="flex items-center gap-2 pl-1.5 pr-4 sm:pr-5 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 font-semibold text-sm sm:text-[15px] whitespace-nowrap hover:bg-emerald-50 hover:text-emerald-900 dark:hover:bg-gray-700 dark:hover:text-emerald-300 transition-colors">
-                                <span className="w-8 h-8 rounded-full overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                    {cat.imageUrl
-                                        ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover object-top"/>
-                                        : <span className="text-base">{cat.icon}</span>}
-                                </span>
-                                {cat.name}
-                            </Link>
-                        ))}
+        <div className="dark:bg-gray-900 transition-colors duration-300">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                <div className="flex flex-col lg:flex-row min-h-screen">
+                    {/* Sidebar */}
+                    <div className="lg:w-80 flex-shrink-0">
+                        <CategorySidebar categories={categories}/>
                     </div>
-                )}
 
-                {/* Recommended For You */}
-                {isAuthenticated() && (recLoading || recommendations.length > 0) && (
-                    <section className="mt-10 sm:mt-14">
-                        {sectionHeader('Recommended For You')}
-                        {recLoading ? spinner : grid(recommendations)}
-                    </section>
-                )}
+                    {/* Scrollable Main Content (min-w-0 stops wide images from stretching the page) */}
+                    <div className="flex-1 min-w-0 flex flex-col">
+                        {/* Main Content */}
+                        <div
+                            className="flex-grow bg-gray-50 dark:bg-gray-900 overflow-y-auto transition-colors duration-300">
+                            {/* Hero Banner Section */}
+                            <Banner/>
 
-                {/* Featured */}
-                <section className="mt-10 sm:mt-14">
-                    {sectionHeader('Products For You!', handleViewAllFeatured, 'View All')}
-                    {productsLoading ? spinner : productsError ? (
-                        <p className="text-center py-12 text-red-500 dark:text-red-400">Error loading products: {productsError}</p>
-                    ) : featuredProducts.length === 0 ? (
-                        <p className="text-center py-12 text-gray-500 dark:text-gray-400">No products available yet</p>
-                    ) : grid(featuredProducts)}
-                </section>
+                            {/* Recommended For You */}
+                            {isAuthenticated() && (
+                                <div className="px-3 sm:px-6 py-5 sm:py-8">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">✨</span>
+                                            <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl">
+                                                Recommended For You
+                                            </h2>
+                                        </div>
+                                    </div>
 
-                {/* One section per category */}
-                {categoryProductsLoading ? spinner : categoryProductsError ? (
-                    <p className="text-center py-12 text-red-500 dark:text-red-400">Error loading category products: {categoryProductsError}</p>
-                ) : categoryProducts.map(categoryData => (
-                    <section key={categoryData.id} className="mt-12 sm:mt-16">
-                        <div className="flex items-end justify-between gap-4 mb-6">
-                            <button type="button" onClick={() => handleCategorySeeAll(categoryData.id)}
-                                    className="group text-left min-w-0" title={`See all ${categoryData.name}`}>
-                                <h2 className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-800 dark:group-hover:text-emerald-400 text-2xl sm:text-3xl tracking-tight truncate transition-colors">
-                                    {categoryData.name}
-                                </h2>
-                            </button>
-                            <button onClick={() => handleCategorySeeAll(categoryData.id)}
-                                    className="flex items-center gap-1 font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-400 dark:hover:text-emerald-300 whitespace-nowrap">
-                                See All <ArrowRight className="w-4 h-4"/>
-                            </button>
+                                    {recLoading ? (
+                                        <div className="flex justify-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"/>
+                                        </div>
+                                    ) : recommendations.length === 0 ? null : (
+                                        <div className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                            {recommendations.map(product => (
+                                                <ProductCard key={product.id} product={product}/>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Featured Products */}
+                            <div className="px-3 sm:px-6 py-5 sm:py-8">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
+                                        Featured Products
+                                    </h2>
+                                    <button
+                                        onClick={handleViewAllFeatured}
+                                        className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
+                                    >
+                                        <span>View All</span>
+                                        <ArrowRight className="w-4 h-4"/>
+                                    </button>
+                                </div>
+
+                                {productsLoading ? (
+                                    <div className="flex justify-center items-center py-12">
+                                        <div
+                                            className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 dark:border-cyan-400 transition-colors duration-300"></div>
+                                    </div>
+                                ) : productsError ? (
+                                    <div
+                                        className="text-center py-12 text-red-500 dark:text-red-400 transition-colors duration-300">
+                                        Error loading products: {productsError}
+                                    </div>
+                                ) : featuredProducts.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                        No featured products available
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        {featuredProducts.map((product) => (
+                                            <ProductCard
+                                                key={product.id}
+                                                product={product}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Category-wise Products */}
+                            <div className="px-3 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-16">
+                                {categoryProductsLoading ? (
+                                    <div className="flex justify-center items-center py-12">
+                                        <div
+                                            className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 dark:border-cyan-400 transition-colors duration-300"></div>
+                                    </div>
+                                ) : categoryProductsError ? (
+                                    <div
+                                        className="text-center py-12 text-red-500 dark:text-red-400 transition-colors duration-300">
+                                        Error loading category products: {categoryProductsError}
+                                    </div>
+                                ) : categoryProducts.length === 0 ? (
+                                    <div
+                                        className="text-center py-12 text-gray-500 dark:text-gray-400 transition-colors duration-300">
+                                        No products available at the moment
+                                    </div>
+                                ) : (
+                                    <div className="space-y-12">
+                                        {categoryProducts.map((categoryData) => (
+                                            <div key={categoryData.id} className="space-y-6">
+                                                <div className="flex justify-between items-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCategorySeeAll(categoryData.id)}
+                                                        className="group flex items-center gap-3 min-w-0 text-left"
+                                                        title={`See all ${categoryData.name}`}
+                                                    >
+                                                        {categoryData.icon && (
+                                                            <div
+                                                                className={`w-10 h-10 ${categoryData.color} rounded-full flex items-center justify-center text-white text-xl`}>
+                                                                {categoryData.icon}
+                                                            </div>
+                                                        )}
+                                                        <h2 className="font-bold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 text-xl sm:text-2xl truncate transition-colors duration-300">
+                                                            {categoryData.name}
+                                                        </h2>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleCategorySeeAll(categoryData.id)}
+                                                        className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
+                                                    >
+                                                        <span>See All</span>
+                                                        <ArrowRight className="w-4 h-4"/>
+                                                    </button>
+                                                </div>
+
+                                                <div
+                                                    className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                                    {categoryData.products.map((product) => (
+                                                        <ProductCard
+                                                            key={product.id}
+                                                            product={product}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        {grid(categoryData.products)}
-                    </section>
-                ))}
+                    </div>
+                </div>
             </div>
             <OfferPopup/>
         </div>

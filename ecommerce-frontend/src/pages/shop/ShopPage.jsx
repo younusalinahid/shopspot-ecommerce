@@ -140,7 +140,7 @@ export default function ShopPage() {
     };
 
     const rowCls = (active) => `w-full flex justify-between items-start gap-2 px-3 py-2.5 rounded-lg text-left text-base transition-colors ${active
-        ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-300 font-bold'
+        ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 font-bold'
         : 'font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
     const inputCls = 'w-full min-w-0 px-3 py-2 text-base rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
 
@@ -180,8 +180,8 @@ export default function ShopPage() {
                                             <li key={sub.id}>
                                                 <button onClick={() => update({category: cat.id, sub: sub.id})}
                                                         className={`w-full text-left pl-4 pr-2 py-2 text-[15px] transition-colors ${String(sub.id) === subCategoryId
-                                                            ? 'text-emerald-900 dark:text-emerald-300 font-bold'
-                                                            : 'font-medium text-gray-600 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-400'}`}>
+                                                            ? 'text-cyan-700 dark:text-cyan-300 font-bold'
+                                                            : 'font-medium text-gray-600 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400'}`}>
                                                     {sub.name}
                                                 </button>
                                             </li>
@@ -218,7 +218,7 @@ export default function ShopPage() {
                            value={priceDraft.max} aria-label="Maximum price" className={inputCls}
                            onChange={e => setPriceDraft(d => ({...d, max: e.target.value}))}/>
                     <button type="submit"
-                            className="px-4 py-2 text-base font-medium rounded-lg bg-emerald-900 hover:bg-emerald-800 text-white flex-shrink-0">
+                            className="px-4 py-2 text-base font-medium rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white flex-shrink-0">
                         Go
                     </button>
                 </form>
@@ -228,12 +228,12 @@ export default function ShopPage() {
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Availability</h3>
                 <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={inStock} onChange={e => update({stock: e.target.checked})}
-                           className="w-5 h-5 rounded text-emerald-800 focus:ring-emerald-700"/>
+                           className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
                     In stock only
                 </label>
                 <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={onSale} onChange={e => update({sale: e.target.checked})}
-                           className="w-5 h-5 rounded text-emerald-800 focus:ring-emerald-700"/>
+                           className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
                     On sale (discounted)
                 </label>
             </section>
@@ -241,9 +241,9 @@ export default function ShopPage() {
     );
 
     return (
-        <div className="w-full min-h-screen bg-white dark:bg-gray-900 px-3 sm:px-6 lg:px-10 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
+        <div className="w-full px-3 sm:px-6 lg:px-8 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
             <div className="mb-6">
-                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {selectedSub ? selectedSub.name : selectedCategory ? selectedCategory.name : 'Shop'}
                 </h1>
                 <p className="text-base text-gray-500 dark:text-gray-400 mt-1.5">
@@ -253,7 +253,7 @@ export default function ShopPage() {
 
             <div className="flex gap-6 lg:gap-8">
                 <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0">
-                    <div className="sticky top-4 bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
+                    <div className="sticky top-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
                         {sidebar}
                     </div>
                 </aside>
@@ -264,41 +264,22 @@ export default function ShopPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
                             <input type="search" value={searchText} onChange={e => setSearchText(e.target.value)}
                                    placeholder="Search in shop..." aria-label="Search products" maxLength={100}
-                                   className="w-full pl-11 pr-4 py-3 text-base rounded-full border border-transparent bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-emerald-700 focus:bg-white dark:focus:bg-gray-800 outline-none"/>
+                                   className="w-full pl-11 pr-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"/>
                         </div>
                         <div className="flex gap-3">
                             <button onClick={() => setFiltersOpen(true)}
-                                    className="lg:hidden flex items-center gap-2 px-5 py-3 text-base font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                                    className="lg:hidden flex items-center gap-2 px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                                 <SlidersHorizontal className="w-4 h-4"/> Filters
                                 {activeChips.length > 0 && (
-                                    <span className="bg-emerald-900 text-white text-xs rounded-full px-1.5">{activeChips.length}</span>
+                                    <span className="bg-cyan-600 text-white text-xs rounded-full px-1.5">{activeChips.length}</span>
                                 )}
                             </button>
                             <select value={sort} onChange={e => update({sort: e.target.value === 'newest' ? '' : e.target.value})}
                                     aria-label="Sort products"
-                                    className="flex-1 sm:flex-none pl-5 pr-10 py-3 text-base font-semibold rounded-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:border-emerald-700 outline-none cursor-pointer">
+                                    className="flex-1 sm:flex-none px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
-                    </div>
-
-                    {/* Quick filter pills */}
-                    <div className="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1 scrollbar-hide">
-                        {[
-                            {label: 'On sale', active: onSale, change: {sale: !onSale}},
-                            {label: 'In stock', active: inStock, change: {stock: !inStock}},
-                            ...PRICE_RANGES.slice(0, 4).map(r => {
-                                const active = minPrice === r.min && maxPrice === r.max;
-                                return {label: r.label, active, change: active ? {min: '', max: ''} : {min: r.min, max: r.max}};
-                            }),
-                        ].map(pill => (
-                            <button key={pill.label} onClick={() => update(pill.change)} aria-pressed={pill.active}
-                                    className={`px-4 py-2 rounded-full text-sm sm:text-[15px] font-semibold whitespace-nowrap transition-colors ${pill.active
-                                        ? 'bg-emerald-900 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
-                                {pill.label}
-                            </button>
-                        ))}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 mb-6 text-base min-h-[2rem]">
@@ -309,7 +290,7 @@ export default function ShopPage() {
                         )}
                         {activeChips.map(chip => (
                             <button key={chip.key} onClick={() => update(chip.clear)}
-                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-300 hover:bg-emerald-100">
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded-full bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100">
                                 {chip.label} <X className="w-3.5 h-3.5"/>
                             </button>
                         ))}
@@ -323,16 +304,16 @@ export default function ShopPage() {
                         <div className="text-center py-16 text-red-500">{error}</div>
                     ) : loading && !data ? (
                         <div className="flex justify-center py-16">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"/>
+                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"/>
                         </div>
                     ) : data && data.content.length === 0 ? (
                         <div className="text-center py-16">
                             <p className="text-gray-600 dark:text-gray-300 font-medium">No products match these filters.</p>
                             <button onClick={() => setParams(new URLSearchParams())}
-                                    className="mt-3 text-emerald-800 hover:underline">Clear filters</button>
+                                    className="mt-3 text-cyan-600 hover:underline">Clear filters</button>
                         </div>
                     ) : (
-                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
                             {data?.content.map(product => <ProductCard key={product.id} product={product}/>)}
                         </div>
                     )}
@@ -346,7 +327,7 @@ export default function ShopPage() {
                             {pageNumbers.map(p => (
                                 <button key={p} onClick={() => goToPage(p)} aria-current={p === page ? 'page' : undefined}
                                         className={`min-w-[2.25rem] px-3 py-1.5 rounded-lg text-sm ${p === page
-                                            ? 'bg-emerald-900 text-white'
+                                            ? 'bg-cyan-600 text-white'
                                             : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                                     {p + 1}
                                 </button>
@@ -374,7 +355,7 @@ export default function ShopPage() {
                         <div className="flex-1 overflow-y-auto p-4">{sidebar}</div>
                         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                             <button onClick={() => setFiltersOpen(false)}
-                                    className="w-full py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-medium">
+                                    className="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium">
                                 Show {data ? data.totalElements : ''} products
                             </button>
                         </div>

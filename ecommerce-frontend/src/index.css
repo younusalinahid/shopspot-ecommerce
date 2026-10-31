@@ -21,12 +21,3 @@ body {
 button, input, select, textarea {
     font-family: inherit;
 }
-
-/* Horizontal chip rows scroll without a visible scrollbar */
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
