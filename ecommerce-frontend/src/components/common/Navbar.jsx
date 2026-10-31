@@ -2,7 +2,7 @@ import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera} from "lucide-rea
 import {useEffect, useState, useRef} from 'react';
 import {useNavigate, useLocation, Link, NavLink} from 'react-router-dom';
 import {productService} from '../../api/productApi';
-import logo from "../../assets/logo/logo-6.png";
+import logo from "../../assets/logo/logo-mark.png";
 import playStoreButton from "../../assets/images/get-play-store-icon.png";
 import AuthPage from "../../pages/auth/AuthPage";
 import {useTheme} from "../../context/ThemeContext";
@@ -259,24 +259,20 @@ export default function Navbar() {
             <nav
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
                 <div className="w-full px-3 sm:px-4 lg:px-8">
-                    <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-3 lg:gap-5 h-16 sm:h-[72px] lg:h-20">
                         {/* Logo */}
-                        <div className="flex items-center min-w-0">
-                            <Link to="/" className="flex items-center min-w-0 space-x-1 lg:space-x-2">
-                                {siteLogoUrl ? (
-                                    <img src={siteLogoUrl} alt={`${storeName} logo`}
-                                         className="h-10 sm:h-12 lg:h-14 w-auto max-w-[140px] object-contain flex-shrink-0 my-2 sm:my-4 lg:my-5"/>
-                                ) : (
-                                    <img src={logo} alt={`${storeName} logo`}
-                                         className="w-14 h-14 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex-shrink-0"/>
-                                )}
-                                <span
-                                    className={`text-white font-bold text-base sm:text-2xl lg:text-3xl truncate ${siteLogoUrl ? 'ml-1 sm:ml-2' : '-ml-6 sm:-ml-10'}`}>{storeName}</span>
+                        <div className="flex items-center min-w-0 flex-shrink lg:flex-shrink-0">
+                            <Link to="/" className="flex items-center min-w-0 gap-2 lg:gap-3">
+                                <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
+                                     className="h-10 sm:h-12 lg:h-14 w-auto max-w-[120px] object-contain flex-shrink-0"/>
+                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl xl:text-[1.75rem] leading-none truncate">
+                                    {storeName}
+                                </span>
                             </Link>
                         </div>
 
                         {/* Search Bar (Desktop) */}
-                        <div className="hidden lg:flex flex-1 min-w-[260px] max-w-2xl ml-4 xl:ml-8 mr-4 xl:mr-6">
+                        <div className="hidden lg:flex flex-1 min-w-0 max-w-2xl">
                             <form onSubmit={handleSearchSubmit} className="relative w-full">
                                 <input
                                     type="text"
@@ -284,7 +280,7 @@ export default function Navbar() {
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                                     placeholder="Search products, brands, and categories..."
-                                    className="w-full pl-6 pr-16 py-3 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/50 text-gray-800 text-lg shadow-lg transition-all duration-300"
+                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 text-gray-800 placeholder-gray-500 text-base shadow-md transition-all duration-300"
                                 />
                                 {renderSearchResults()}
 
@@ -314,7 +310,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Main sections (desktop): right of the search bar */}
-                        <div className="hidden lg:flex items-center gap-2 mr-auto flex-shrink-0">
+                        <div className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0">
                             {MAIN_LINKS.map(item => (
                                 <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
                                     {item.label}
@@ -323,11 +319,11 @@ export default function Navbar() {
                         </div>
 
                         {/* Actions (Cart, Profile, Theme) */}
-                        <div className="flex items-center flex-shrink-0 space-x-1 sm:space-x-4 lg:space-x-6">
+                        <div className="flex items-center flex-shrink-0 ml-auto gap-1 sm:gap-3 lg:gap-4">
                             <img
                                 src={playStoreButton}
                                 alt="Google Play"
-                                className="hidden 2xl:block w-auto h-12 cursor-pointer hover:scale-105 transition-transform duration-200"
+                                className="hidden 2xl:block w-auto h-11 cursor-pointer hover:scale-105 transition-transform duration-200"
                             />
 
                             <div
@@ -337,10 +333,10 @@ export default function Navbar() {
                                 aria-label="Open cart"
                             >
                                 <ShoppingCart
-                                    className="text-white w-7 h-7 sm:w-10 sm:h-10 group-hover:scale-110 transition-transform duration-200"/>
+                                    className="text-white w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform duration-200"/>
                                 {cartCount > 0 && (
                                     <span
-                                        className="absolute -top-1 -right-1 flex justify-center items-center bg-red-500 rounded-full w-5 h-5 sm:w-6 sm:h-6 font-bold text-xs sm:text-sm text-white shadow-lg">
+                                        className="absolute -top-0.5 -right-0.5 flex justify-center items-center bg-red-500 rounded-full min-w-[1.25rem] h-5 px-1 font-bold text-xs text-white shadow">
                                         {cartCount}
                                     </span>
                                 )}
@@ -351,20 +347,20 @@ export default function Navbar() {
                             ) : (
                                 <button
                                     onClick={() => setShowAuthPage(true)}
-                                    className="hidden lg:flex items-center space-x-2 bg-white/20 hover:bg-white/30 px-6 py-3 rounded-full text-white font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+                                    className="hidden lg:flex items-center gap-2 bg-white/20 hover:bg-white/30 h-11 px-5 rounded-full text-white font-semibold whitespace-nowrap transition-colors duration-300"
                                 >
-                                    <User size={24}/>
+                                    <User size={20}/>
                                     <span>Sign In</span>
                                 </button>
                             )}
 
                             <button
                                 onClick={toggleTheme}
-                                className="hidden sm:block p-2 sm:p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 hover:scale-110 shadow-lg"
+                                className="hidden sm:flex items-center justify-center w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-300"
                                 aria-label="Toggle theme"
                             >
-                                {isDark ? <Sun className="text-yellow-400 w-5 h-5 sm:w-6 sm:h-6"/> :
-                                    <Moon className="text-white w-5 h-5 sm:w-6 sm:h-6"/>}
+                                {isDark ? <Sun className="text-yellow-400 w-5 h-5"/> :
+                                    <Moon className="text-white w-5 h-5"/>}
                             </button>
 
                             <button

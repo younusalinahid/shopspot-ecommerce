@@ -113,7 +113,7 @@ const InventoryAlerts = () => {
                     </div>
                 </div>
                 <span
-                    className="self-start sm:self-center text-[10px] uppercase font-bold tracking-wider bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
+                    className="self-start sm:self-center text-xs uppercase font-bold tracking-wider bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
                     Admin Only
                 </span>
             </div>
@@ -152,7 +152,7 @@ const InventoryAlerts = () => {
                                             {productName}
                                         </h3>
                                         <span
-                                            className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold tracking-wide uppercase ${
+                                            className={`shrink-0 px-2.5 py-1 rounded-full text-xs md:text-xs font-bold tracking-wide uppercase ${
                                                 isHighDemand ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-amber-50 text-amber-700 border border-amber-100'
                                             }`}>
                                             🔥 {demandStatus} DEMAND

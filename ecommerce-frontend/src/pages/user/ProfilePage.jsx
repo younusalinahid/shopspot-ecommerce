@@ -247,7 +247,7 @@ const ProfilePage = () => {
                                 <div key={label} className="p-1">
                                     <Icon className="w-5 h-5 text-cyan-500 mx-auto mb-1" />
                                     <p className="text-lg font-bold text-gray-900 dark:text-white">{value}</p>
-                                    <p className="text-[11px] text-gray-400 font-medium">{label}</p>
+                                    <p className="text-xs text-gray-400 font-medium">{label}</p>
                                 </div>
                             ))}
                         </div>

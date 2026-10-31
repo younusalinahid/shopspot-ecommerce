@@ -51,7 +51,7 @@ const CompareFloatingButton = () => {
                     <GitCompare className="w-6 h-6 animate-pulse" />
 
                     {compareCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-md border border-white z-20">
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold shadow-md border border-white z-20">
                             {compareCount}
                         </span>
                     )}

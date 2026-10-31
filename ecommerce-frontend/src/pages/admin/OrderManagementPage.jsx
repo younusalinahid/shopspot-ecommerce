@@ -181,7 +181,7 @@ export default function OrderManagementPage() {
                         >
                             <Icon className="w-3.5 h-3.5" />
                             {label}
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full
                                 ${active ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>
                                 {count}
                             </span>
@@ -294,7 +294,7 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                             <p className="text-sm text-gray-600 mt-0.5">
                                 {addr.fullName} · {addr.phone}
                                 {order.guestOrder && (
-                                    <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
                                         Guest
                                     </span>
                                 )}

@@ -317,7 +317,7 @@ const ProductDetailsPage = () => {
                                         {hasDiscount && (
                                             <>
                                                 <span className="text-base text-gray-400 line-through">৳ {product.originalPrice?.toFixed(2)}</span>
-                                                <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold animate-bounce">{discountPercentage}% OFF</span>
+                                                <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold animate-bounce">{discountPercentage}% OFF</span>
                                             </>
                                         )}
                                     </div>
@@ -390,7 +390,7 @@ const ProductDetailsPage = () => {
                                         <Truck className="w-8 h-8 text-cyan-600"/>
                                         <div>
                                             <h4 className="text-xs font-semibold text-gray-900 dark:text-white">Free Delivery</h4>
-                                            <p className="text-[11px] text-gray-600 dark:text-gray-400">Within 2-3 days</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">Within 2-3 days</p>
                                         </div>
                                     </div>
                                     {/* 7 Days Return Policy Section */}
@@ -398,7 +398,7 @@ const ProductDetailsPage = () => {
                                         <RefreshCw className="w-8 h-8 text-amber-600 animate-spin-slow"/>
                                         <div>
                                             <h4 className="text-xs font-semibold text-gray-900 dark:text-white">7 Days Return</h4>
-                                            <p className="text-[11px] text-gray-600 dark:text-gray-400">Easy return & refund policy</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">Easy return & refund policy</p>
                                         </div>
                                     </div>
                                 </div>
@@ -421,7 +421,7 @@ const ProductDetailsPage = () => {
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 sticky top-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center justify-between">
                                 <span>Related Products</span>
-                                <span className="text-[11px] font-medium text-cyan-600 bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-1 rounded-full">Recommended</span>
+                                <span className="text-xs font-medium text-cyan-600 bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-1 rounded-full">Recommended</span>
                             </h2>
 
                             {isRelatedLoading ? (
@@ -466,7 +466,7 @@ const ProductDetailsPage = () => {
                                                         <div className="min-w-0">
                                                             <span className="text-xs font-extrabold text-gray-900 dark:text-white block">৳ {item.price?.toFixed(2)}</span>
                                                             {itemHasDiscount && (
-                                                                <span className="text-[10px] text-gray-400 line-through block">৳ {item.originalPrice?.toFixed(2)}</span>
+                                                                <span className="text-xs text-gray-400 line-through block">৳ {item.originalPrice?.toFixed(2)}</span>
                                                             )}
                                                         </div>
                                                         <button onClick={async () => {
@@ -480,7 +480,7 @@ const ProductDetailsPage = () => {
 
                                                 {/* Discount Tag */}
                                                 {itemHasDiscount && (
-                                                    <span className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-md shadow-sm">
+                                                    <span className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-extrabold px-1.5 py-0.5 rounded-md shadow-sm">
                                                         {itemDiscount}% OFF
                                                     </span>
                                                 )}
@@ -527,7 +527,7 @@ const ProductDetailsPage = () => {
                                                 ৳ {Number(item.price).toFixed(2)}
                                             </span>
                                             {itemHasDiscount && (
-                                                <span className="text-[10px] text-gray-400 line-through">
+                                                <span className="text-xs text-gray-400 line-through">
                                                     ৳ {Number(item.originalPrice).toFixed(2)}
                                                 </span>
                                             )}

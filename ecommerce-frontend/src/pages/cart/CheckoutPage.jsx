@@ -656,7 +656,7 @@ function CheckoutContent() {
                                 )}
 
                                 {/* Trust badges */}
-                                <div className="pt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-400 font-medium">
+                                <div className="pt-2 grid grid-cols-2 gap-2 text-xs text-gray-400 font-medium">
                                     <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-green-500" /> SSL Secured</div>
                                     <div className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-blue-500" /> Fast Delivery</div>
                                 </div>

@@ -75,7 +75,7 @@ const Footer = () => {
                                    className={`relative group p-2.5 bg-slate-800 ${hover} rounded-md transition duration-300`}>
                                     <Icon size={20}/>
                                     <span
-                                        className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">{label}</span>
+                                        className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">{label}</span>
                                 </a>
                             );
                         })}
