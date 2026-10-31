@@ -496,7 +496,7 @@ function OrderDetailsSidebar({order, onClose}) {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.productName}</p>
-                                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                    <p className="text-xs text-gray-500">Qty: {item.quantity}{item.size && ` · Size: ${item.size}`}</p>
                                 </div>
                                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                     ৳{(item.priceAtPurchase * item.quantity).toLocaleString()}

@@ -21,8 +21,17 @@ const ProductManagementPage = () => {
 
     const EMPTY_FORM = {
         name: "", description: "", price: "",
-        stockQuantity: 0, discountPercent: 0, active: true, images: [],
+        stockQuantity: 0, discountPercent: 0, active: true, images: [], sizes: [],
     };
+
+    // Quick size sets; the admin can still add or remove single sizes
+    const SIZE_PRESETS = [
+        {label: "Clothing (S–XXL)", sizes: ["S", "M", "L", "XL", "XXL"]},
+        {label: "Panjabi / Kurta (38–46)", sizes: ["38", "40", "42", "44", "46"]},
+        {label: "Kids (2–12 yrs)", sizes: ["2Y", "4Y", "6Y", "8Y", "10Y", "12Y"]},
+        {label: "Free size", sizes: ["FREE SIZE"]},
+    ];
+    const ALL_SIZE_CHIPS = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "38", "40", "42", "44", "46", "FREE SIZE"];
 
 
     const [formData, setFormData] = useState(EMPTY_FORM);
@@ -135,6 +144,7 @@ const ProductManagementPage = () => {
                 discountPercent: product.discountPercent || 0,
                 active: product.active !== false,
                 images: [],
+                sizes: product.sizes || [],
             });
 
 
@@ -181,6 +191,8 @@ const ProductManagementPage = () => {
             fd.append("stockQuantity", formData.stockQuantity);
             fd.append("discountPercent", formData.discountPercent);
             fd.append("active", formData.active);
+            // empty string = this product has no sizes
+            fd.append("sizes", (formData.sizes || []).join(","));
 
 
             if (formData.images?.[0]) fd.append("imageFile", formData.images[0]);
@@ -317,7 +329,12 @@ const ProductManagementPage = () => {
                         <tbody>
                         {filteredProducts.map(p => (
                             <tr key={p.id} className="hover:bg-gray-50 border-b">
-                                <td className="p-3 font-medium">{p.name}</td>
+                                <td className="p-3 font-medium">
+                                    {p.name}
+                                    {p.sizes?.length > 0 && (
+                                        <span className="block text-xs font-normal text-gray-500 mt-0.5">Sizes: {p.sizes.join(", ")}</span>
+                                    )}
+                                </td>
                                 <td className="p-3">
                                     <span className="font-semibold">৳{p.price}</span>
                                     {p.originalPrice > 0 && p.originalPrice !== p.price && (
@@ -399,6 +416,57 @@ const ProductManagementPage = () => {
                             <Field label="Stock Quantity">
                                 <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleInputChange} min="0" disabled={loading} className={INPUT_CLS} placeholder="0" />
                                 <p className="text-xs text-gray-400 mt-1">0 = out of stock (customers cannot buy it)</p>
+                            </Field>
+
+                            <Field label="Sizes">
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {SIZE_PRESETS.map(preset => (
+                                        <button type="button" key={preset.label} disabled={loading}
+                                                onClick={() => setFormData(prev => ({...prev, sizes: preset.sizes}))}
+                                                className="px-2.5 py-1 rounded-full text-xs font-medium border border-cyan-200 text-cyan-700 hover:bg-cyan-50">
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                    {formData.sizes?.length > 0 && (
+                                        <button type="button" onClick={() => setFormData(prev => ({...prev, sizes: []}))}
+                                                className="px-2.5 py-1 rounded-full text-xs font-medium text-red-500 hover:bg-red-50">
+                                            No sizes
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[...new Set([...ALL_SIZE_CHIPS, ...(formData.sizes || [])])].map(size => {
+                                        const on = formData.sizes?.includes(size);
+                                        return (
+                                            <button type="button" key={size} disabled={loading} aria-pressed={on}
+                                                    onClick={() => setFormData(prev => ({
+                                                        ...prev,
+                                                        sizes: on ? prev.sizes.filter(s => s !== size) : [...(prev.sizes || []), size],
+                                                    }))}
+                                                    className={`min-w-[2.5rem] px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${on
+                                                        ? "bg-cyan-600 border-cyan-600 text-white"
+                                                        : "bg-white border-gray-300 text-gray-700 hover:border-cyan-500"}`}>
+                                                {size}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <input type="text" disabled={loading} placeholder="Other size, press Enter (e.g. 48 or 14Y)"
+                                       className={`${INPUT_CLS} mt-2`} maxLength={12}
+                                       onKeyDown={e => {
+                                           if (e.key !== "Enter") return;
+                                           e.preventDefault();
+                                           const v = e.currentTarget.value.trim().toUpperCase();
+                                           if (v && !formData.sizes?.includes(v)) {
+                                               setFormData(prev => ({...prev, sizes: [...(prev.sizes || []), v]}));
+                                           }
+                                           e.currentTarget.value = "";
+                                       }}/>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {formData.sizes?.length
+                                        ? `Customers must choose one of: ${formData.sizes.join(", ")}`
+                                        : "No sizes: customers add it to cart directly (e.g. sarees, fabrics)"}
+                                </p>
                             </Field>
 
                             {editingProduct && (

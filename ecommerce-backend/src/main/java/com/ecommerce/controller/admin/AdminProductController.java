@@ -27,6 +27,7 @@ public class AdminProductController {
             @RequestParam("subCategoryId") Long subCategoryId,
             @RequestParam(value = "stockQuantity", defaultValue = "0") int stockQuantity,
             @RequestParam(value = "discountPercent", defaultValue = "0") int discountPercent,
+            @RequestParam(value = "sizes", required = false) String sizes,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
         Product product = new Product();
@@ -35,6 +36,7 @@ public class AdminProductController {
         product.setPrice(price);
         product.setStockQuantity(stockQuantity);
         product.setDiscountPercent(discountPercent);
+        product.setSizes(Product.normalizeSizes(sizes));
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(productService.createProduct(product, subCategoryId, imageFile));
@@ -50,6 +52,7 @@ public class AdminProductController {
             @RequestParam(value = "stockQuantity", defaultValue = "0") int stockQuantity,
             @RequestParam(value = "discountPercent", defaultValue = "0") int discountPercent,
             @RequestParam(value = "active", required = false) Boolean active,
+            @RequestParam(value = "sizes", required = false) String sizes,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
         Product product = new Product();
@@ -59,7 +62,7 @@ public class AdminProductController {
         product.setStockQuantity(stockQuantity);
         product.setDiscountPercent(discountPercent);
 
-        return ResponseEntity.ok(productService.updateProduct(id, product, subCategoryId, active, imageFile));
+        return ResponseEntity.ok(productService.updateProduct(id, product, subCategoryId, active, sizes, imageFile));
     }
 
     /** Deletes the product, or hides it when orders/carts/reviews still reference it. */

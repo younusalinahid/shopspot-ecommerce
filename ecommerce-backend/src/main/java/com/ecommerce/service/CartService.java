@@ -62,13 +62,16 @@ public class CartService {
                 throw new RuntimeException("Product is out of stock");
             }
 
+            String size = product.resolveSize(request.getSize());
+
             Cart cart = cartRepository.findByUserId(userId)
                     .orElseGet(() -> createNewCart(userId));
 
             Optional<CartItem> existingItem = cartItemRepository
-                    .findByCartIdAndProductId(cart.getId(), request.getProductId());
+                    .findByCartIdAndProductIdAndSize(cart.getId(), request.getProductId(), size);
 
-            int alreadyInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+            // Stock is per product, so count every size of it that is already in the cart
+            int alreadyInCart = cartItemRepository.sumQuantityByCartIdAndProductId(cart.getId(), product.getId());
             ensureEnoughStock(product, alreadyInCart + request.getQuantity());
 
             if (existingItem.isPresent()) {
@@ -80,7 +83,7 @@ public class CartService {
                         .cart(cart)
                         .product(product)
                         .quantity(request.getQuantity())
-                        .size(request.getSize())
+                        .size(size)
                         .color(request.getColor())
                         .build();
                 cartItemRepository.save(newItem);
@@ -165,7 +168,10 @@ public class CartService {
         if (quantity <= 0) {
             cartItemRepository.delete(cartItem);
         } else {
-            ensureEnoughStock(cartItem.getProduct(), quantity);
+            // other sizes of the same product share its stock
+            int otherSizes = cartItemRepository.sumQuantityByCartIdAndProductId(
+                    cartItem.getCart().getId(), cartItem.getProduct().getId()) - cartItem.getQuantity();
+            ensureEnoughStock(cartItem.getProduct(), otherSizes + quantity);
             cartItem.setQuantity(quantity);
             cartItemRepository.save(cartItem);
         }

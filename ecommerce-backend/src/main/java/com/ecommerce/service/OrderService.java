@@ -181,7 +181,7 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("Some products in your cart are no longer available"));
             lines.add(new OrderLine(product,
                     item.getQuantity() != null ? item.getQuantity() : 0,
-                    item.getSize(), item.getColor()));
+                    product.resolveSize(item.getSize()), item.getColor()));
         }
 
         ShippingAddress shippingAddress = ShippingAddress.builder()

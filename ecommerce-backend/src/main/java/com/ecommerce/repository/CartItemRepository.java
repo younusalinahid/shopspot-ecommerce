@@ -19,6 +19,16 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.id = :productId")
     Optional<CartItem> findByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
 
+    /** Same product in another size is a separate cart line. */
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.id = :productId "
+            + "AND ((:size IS NULL AND ci.size IS NULL) OR ci.size = :size)")
+    Optional<CartItem> findByCartIdAndProductIdAndSize(@Param("cartId") Long cartId,
+                                                       @Param("productId") Long productId,
+                                                       @Param("size") String size);
+
+    @Query("SELECT COALESCE(SUM(ci.quantity), 0) FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.id = :productId")
+    int sumQuantityByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
+
     @Query("SELECT ci FROM CartItem ci JOIN FETCH ci.product WHERE ci.cart.id = :cartId")
     List<CartItem> findByCartIdWithProduct(@Param("cartId") Long cartId);
 

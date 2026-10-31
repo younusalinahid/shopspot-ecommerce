@@ -12,6 +12,7 @@ public class ProductWithCategoryDTO {
     private int     price;
     private int     originalPrice;
     private int     discountPercent;
+    private java.util.List<String> sizes = new java.util.ArrayList<>();
     private int     stock;
     private boolean active;
     private Instant createdAt;

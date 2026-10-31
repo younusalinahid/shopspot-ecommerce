@@ -22,6 +22,7 @@ public class ProductMapper {
         dto.setCreatedAt(product.getCreatedAt());
         dto.setDiscountPercent(product.getDiscountPercent());
         dto.setStock(product.getStockQuantity());
+        dto.setSizes(new java.util.ArrayList<>(product.sizeList()));
 
         int originalPrice = product.getPrice();
         if (product.getDiscountPercent() > 0) {

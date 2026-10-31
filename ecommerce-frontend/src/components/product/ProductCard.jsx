@@ -21,7 +21,12 @@ export default function ProductCard({ product, showDiscount = false }) {
             toast.info('This product is out of stock');
             return;
         }
-        addToCart(product.id, 1).then((result) => {
+        if (product.sizes?.length > 1) {
+            toast.info('Please choose a size');
+            navigate(`/product/${product.id}`);
+            return;
+        }
+        addToCart(product.id, 1, product.sizes?.[0] || null).then((result) => {
             if (result?.success) toast.success('Added to cart!');
             else if (!result?.deactivated) toast.error(result?.error || 'Failed to add');
         }).catch(() => {

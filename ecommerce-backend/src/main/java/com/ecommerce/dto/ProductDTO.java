@@ -23,4 +23,6 @@ public class ProductDTO {
     private Long    subCategoryId;
     private String  subCategoryName;
     private String  categoryName;
+    /** Sizes to choose from; empty when the product has no size options. */
+    private java.util.List<String> sizes = new java.util.ArrayList<>();
 }

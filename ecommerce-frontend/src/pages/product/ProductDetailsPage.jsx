@@ -17,6 +17,8 @@ const ProductDetailsPage = () => {
     const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
+    const [selectedSize, setSelectedSize] = useState(null);
+    const [sizeError, setSizeError] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [error, setError] = useState(null);
@@ -125,7 +127,25 @@ const ProductDetailsPage = () => {
         fetchAll();
     }, [productId]);
 
-    useEffect(() => { if (product) setQuantity(1); }, [product]);
+    useEffect(() => {
+        if (!product) return;
+        setQuantity(1);
+        // One size only: pick it for the customer
+        setSelectedSize(product.sizes?.length === 1 ? product.sizes[0] : null);
+        setSizeError(false);
+    }, [product]);
+
+    const needsSize = (product?.sizes?.length || 0) > 0;
+    /** Returns false (and highlights the size picker) when a size is still missing. */
+    const checkSize = () => {
+        if (needsSize && !selectedSize) {
+            setSizeError(true);
+            toast.info('Please choose a size');
+            document.getElementById('size-picker')?.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return false;
+        }
+        return true;
+    };
 
     useEffect(() => {
         if (!product) return;
@@ -146,10 +166,10 @@ const ProductDetailsPage = () => {
     }, [product]);
 
     const handleAddToCart = async () => {
-        if (addingToCart || !product) return;
+        if (addingToCart || !product || !checkSize()) return;
         setAddingToCart(true);
         try {
-            const result = await addToCart(product.id, quantity);
+            const result = await addToCart(product.id, quantity, needsSize ? selectedSize : null);
             if (!result?.success) { toast.error(result?.error || 'Failed to add product to cart'); return; }
             toast.success('Product added to cart successfully!');
             window.dispatchEvent(new CustomEvent("cartItemAdded", {detail: {productName: product.name}}));
@@ -158,10 +178,10 @@ const ProductDetailsPage = () => {
     };
 
     const handleBuyNow = async () => {
-        if (addingToCart || !product) return;
+        if (addingToCart || !product || !checkSize()) return;
         setAddingToCart(true);
         try {
-            const result = await addToCart(product.id, quantity);
+            const result = await addToCart(product.id, quantity, needsSize ? selectedSize : null);
             if (result?.success) { navigate('/cart'); } else { toast.error(result?.error || 'Failed to add product to cart'); }
         } catch { toast.error('Failed to add product to cart'); }
         finally { setAddingToCart(false); }
@@ -339,6 +359,36 @@ const ProductDetailsPage = () => {
                                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-4 hover:line-clamp-none transition-all duration-300 cursor-pointer">{product.description || 'No description available.'}</p>
                                 </div>
+
+                                {/* Size */}
+                                {needsSize && (
+                                    <div id="size-picker"
+                                         className={`p-3 rounded-xl border transition-colors ${sizeError
+                                             ? 'border-red-400 bg-red-50/60 dark:bg-red-900/10'
+                                             : 'border-gray-100 dark:border-gray-700/40 bg-blue-50/30 dark:bg-gray-800/20'}`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                                Size: {selectedSize
+                                                    ? <span className="text-gray-900 dark:text-white">{selectedSize}</span>
+                                                    : <span className={sizeError ? 'text-red-500' : 'text-gray-400'}>choose one</span>}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Size">
+                                            {product.sizes.map(size => {
+                                                const active = selectedSize === size;
+                                                return (
+                                                    <button key={size} type="button" role="radio" aria-checked={active}
+                                                            onClick={() => { setSelectedSize(size); setSizeError(false); }}
+                                                            className={`min-w-[3rem] px-3 py-2 rounded-lg border text-sm font-semibold transition-all ${active
+                                                                ? 'bg-gray-900 border-gray-900 text-white dark:bg-white dark:text-gray-900 dark:border-white'
+                                                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:border-gray-900 dark:hover:border-white'}`}>
+                                                        {size}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Quantity */}
                                 <div className="flex items-center space-x-4 bg-blue-50/30 dark:bg-gray-800/20 p-3 rounded-xl border border-gray-100 dark:border-gray-700/40">

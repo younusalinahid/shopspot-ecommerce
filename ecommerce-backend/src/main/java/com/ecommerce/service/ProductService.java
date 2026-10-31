@@ -128,7 +128,7 @@ public class ProductService {
                     ? p.getSubCategory().getCategory().getName()
                     : null;
 
-            return new ProductWithCategoryDTO(
+            ProductWithCategoryDTO row = new ProductWithCategoryDTO(
                     p.getId(),
                     p.getName(),
                     p.getDescription(),
@@ -147,12 +147,14 @@ public class ProductService {
                             ? p.getSubCategory().getCategory().getId() : null,
                     p.getSubCategory() != null ? p.getSubCategory().getId() : null
             );
+            row.setSizes(new java.util.ArrayList<>(p.sizeList()));
+            return row;
         }).collect(Collectors.toList());
     }
 
 
     public ProductDTO updateProduct(Long id, Product updated, Long subCategoryId, Boolean active,
-                                    MultipartFile imageFile) throws IOException {
+                                    String sizes, MultipartFile imageFile) throws IOException {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -165,6 +167,10 @@ public class ProductService {
         }
         product.setStockQuantity(updated.getStockQuantity());
         product.setDiscountPercent(updated.getDiscountPercent());
+        // null = not sent (keep); "" = remove all sizes
+        if (sizes != null) {
+            product.setSizes(Product.normalizeSizes(sizes));
+        }
 
         if (subCategoryId != null) {
             SubCategory subCategory = subCategoryRepository.findById(subCategoryId)

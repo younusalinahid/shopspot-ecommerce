@@ -385,7 +385,12 @@ const Chatbot = () => {
                         <div className="p-2 pt-1.5">
                             <button type="button" disabled={outOfStock}
                                     onClick={async () => {
-                                        const r = await addToCart(p.id, 1);
+                                        if (p.sizes?.length > 1) {
+                                            toast.info("Please choose a size");
+                                            closeAndGo(`/product/${p.id}`);
+                                            return;
+                                        }
+                                        const r = await addToCart(p.id, 1, p.sizes?.[0] || null);
                                         if (r?.success) toast.success("Added to cart!");
                                         else if (!r?.deactivated) toast.error(r?.error || "Could not add to cart");
                                     }}
