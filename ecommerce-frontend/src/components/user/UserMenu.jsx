@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { User, LogOut, ShoppingBag } from "lucide-react";
 import {Link, useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
+import {useLanguage} from '../../context/LanguageContext';
 
 export default function UserMenu() {
+    const {t} = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -77,17 +79,17 @@ export default function UserMenu() {
                     </div>
 
                     <Link to="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <User className="mr-3" size={16}/> Profile
+                        <User className="mr-3" size={16}/> {t('user.profile')}
                     </Link>
                     <Link to="/orders" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <ShoppingBag className="mr-3" size={16}/> My Orders
+                        <ShoppingBag className="mr-3" size={16}/> {t('user.orders')}
                     </Link>
                     {/*<Link to="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">*/}
                     {/*    <Settings className="mr-3" size={16}/> Settings*/}
                     {/*</Link>*/}
 
                     <button onClick={handleLogout} className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <LogOut className="mr-3" size={16}/> Logout
+                        <LogOut className="mr-3" size={16}/> {t('user.logout')}
                     </button>
                 </div>
             )}

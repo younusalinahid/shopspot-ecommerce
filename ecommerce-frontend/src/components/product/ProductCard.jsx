@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
 import { toast } from 'react-toastify';
 import {imageSrc} from '../../utils/imageSrc';
+import {useLanguage} from '../../context/LanguageContext';
 
 export default function ProductCard({ product, showDiscount = false }) {
+    const {t} = useLanguage();
 
     const [imageError, setImageError] = useState(false);
     const { addToCart } = useCart();
@@ -18,19 +20,19 @@ export default function ProductCard({ product, showDiscount = false }) {
         e.preventDefault();
         e.stopPropagation();
         if (isOutOfStock) {
-            toast.info('This product is out of stock');
+            toast.info(t('toast.outOfStock'));
             return;
         }
         if (product.sizes?.length > 1) {
-            toast.info('Please choose a size');
+            toast.info(t('toast.chooseSize'));
             navigate(`/product/${product.id}`);
             return;
         }
         addToCart(product.id, 1, product.sizes?.[0] || null).then((result) => {
-            if (result?.success) toast.success('Added to cart!');
-            else if (!result?.deactivated) toast.error(result?.error || 'Failed to add');
+            if (result?.success) toast.success(t('toast.addedToCart'));
+            else if (!result?.deactivated) toast.error(result?.error || t('toast.addFailed'));
         }).catch(() => {
-            toast.error('Failed to add');
+            toast.error(t('toast.addFailed'));
         });
     };
 
@@ -41,7 +43,7 @@ export default function ProductCard({ product, showDiscount = false }) {
         const existingList = JSON.parse(localStorage.getItem('productCompareList') || '[]');
 
         if (existingList.length >= 5) {
-            toast.error("You can compare up to 5 products only!");
+            toast.error(t('toast.compareMax'));
             return;
         }
 
@@ -50,9 +52,9 @@ export default function ProductCard({ product, showDiscount = false }) {
         if (!isExists) {
             const newList = [...existingList, product];
             localStorage.setItem('productCompareList', JSON.stringify(newList));
-            toast.success('Added to compare list!');
+            toast.success(t('toast.compareAdded'));
         } else {
-            toast.info('Already in compare list!');
+            toast.info(t('toast.compareExists'));
         }
     };
 
@@ -74,7 +76,7 @@ export default function ProductCard({ product, showDiscount = false }) {
 
                 {isOutOfStock && (
                     <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-gray-900/80 text-white text-xs sm:text-xs font-semibold px-2 py-1 rounded-md z-10">
-                        Out of stock
+                        {t('product.outOfStock')}
                     </span>
                 )}
 
@@ -84,7 +86,7 @@ export default function ProductCard({ product, showDiscount = false }) {
                         <div onClick={handleAddToCart} aria-label="Add to cart" aria-disabled={isOutOfStock} role="button" className={`p-2.5 sm:p-3 bg-white text-gray-900 rounded-full shadow-xl transition-all ${isOutOfStock ? "opacity-40 cursor-not-allowed" : "hover:bg-cyan-500 hover:text-white cursor-pointer"}`}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                         </div>
-                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Add to Cart</span>
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">{t('product.addToCart')}</span>
                     </div>
 
                     {/* Compare with Tooltip */}
@@ -92,7 +94,7 @@ export default function ProductCard({ product, showDiscount = false }) {
                         <div onClick={handleCompare} aria-label="Add to compare" role="button" className="p-2.5 sm:p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
                         </div>
-                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Compare</span>
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">{t('product.compare')}</span>
                     </div>
                 </div>
             </div>
@@ -107,7 +109,7 @@ export default function ProductCard({ product, showDiscount = false }) {
                     <div className="flex items-center gap-1">
                         <p className="text-gray-900 dark:text-white font-bold text-base sm:text-lg">৳{Number(product.price).toFixed(2)}</p>
                         {hasDiscount && (
-                            <span className="bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">{discountPercentage}% OFF</span>
+                            <span className="bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">{discountPercentage}% {t('product.off')}</span>
                         )}
                     </div>
                 </div>

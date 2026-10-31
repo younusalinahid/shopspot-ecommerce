@@ -13,6 +13,7 @@ import {
     Wallet, Banknote, ArrowRight, Info
 } from 'lucide-react';
 import {useSiteContent} from '../../hooks/useSiteContent';
+import {useLanguage} from '../../context/LanguageContext';
 
 const stripePromise = loadStripe(
     process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -45,6 +46,7 @@ export default function CheckoutPage() {
 
 function CheckoutContent() {
     const {delivery} = useSiteContent();
+    const {t} = useLanguage();
     const navigate = useNavigate();
     const { cart, loading: cartLoading, clearCart } = useCart();
     const isGuest = !isAuthenticated();
@@ -263,9 +265,9 @@ function CheckoutContent() {
 
                     {/* Progress Step Header */}
                     <div className="flex items-center gap-3 mb-8 bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <StepBadge n={1} label="Shipping Details" active={step === 1} done={step > 1} />
+                        <StepBadge n={1} label={t('co.shippingDetails')} active={step === 1} done={step > 1} />
                         <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                        <StepBadge n={2} label="Payment Method" active={step === 2} done={false} />
+                        <StepBadge n={2} label={t('co.paymentMethod')} active={step === 2} done={false} />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -276,8 +278,8 @@ function CheckoutContent() {
                                     {isGuest && (
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-5 py-4">
                                             <p className="text-sm text-blue-900 dark:text-blue-200">
-                                                <span className="font-semibold">Checking out as a guest.</span>{' '}
-                                                No account needed. Log in to save addresses and see your order history.
+                                                <span className="font-semibold">{t('co.guest')}</span>{' '}
+                                                {t('co.guestNote')}
                                             </p>
                                             <button
                                                 type="button"
@@ -287,7 +289,7 @@ function CheckoutContent() {
                                                 }}
                                                 className="text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 whitespace-nowrap"
                                             >
-                                                Log in instead
+                                                {t('co.loginInstead')}
                                             </button>
                                         </div>
                                     )}
@@ -296,7 +298,7 @@ function CheckoutContent() {
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
                                             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                                 <MapPin className="w-5 h-5 text-blue-600" />
-                                                Saved Addresses
+                                                {t('co.savedAddresses')}
                                             </h2>
                                             <div className="space-y-3">
                                                 {addresses.map(addr => (
@@ -358,17 +360,17 @@ function CheckoutContent() {
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700 transition-all">
                                             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
                                                 <MapPin className="w-5 h-5 text-blue-600" />
-                                                {addresses.length === 0 ? 'Shipping Address' : 'New Address Details'}
+                                                {addresses.length === 0 ? t('co.shippingAddress') : 'New Address Details'}
                                             </h2>
 
                                             <div className="space-y-4">
                                                 <p className="text-xs text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
-                                                    Please enter your checkout details accurately.
+                                                    {t('co.enterDetails')}
                                                 </p>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Full Name *</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.fullName')}</label>
                                                         <input
                                                             type="text" name="fullName" placeholder="e.g. Younus Ali"
                                                             value={newAddrForm.fullName} onChange={handleNewAddrChange}
@@ -380,7 +382,7 @@ function CheckoutContent() {
 
                                                     {isGuest && (
                                                         <div className="md:col-span-2">
-                                                            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Email *</label>
+                                                            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.email')}</label>
                                                             <input
                                                                 type="email" name="email" placeholder="e.g. you@example.com"
                                                                 value={newAddrForm.email} onChange={handleNewAddrChange}
@@ -388,11 +390,11 @@ function CheckoutContent() {
                                                                 ${formErrors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-100'}`}
                                                             />
                                                             {formErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">⚠️ {formErrors.email}</p>}
-                                                            <p className="text-xs text-gray-400 mt-1">We will send your order confirmation here.</p>
+                                                            <p className="text-xs text-gray-400 mt-1">{t('co.emailNote')}</p>
                                                         </div>
                                                     )}
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Phone Number *</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.phone')}</label>
                                                         <input
                                                             type="text" name="phone" placeholder="e.g. 01XXXXXXXXX"
                                                             value={newAddrForm.phone} onChange={handleNewAddrChange}
@@ -403,7 +405,7 @@ function CheckoutContent() {
                                                     </div>
 
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Street Address *</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.street')}</label>
                                                         <input
                                                             type="text" name="addressLine" placeholder="House# 12, Road# 5"
                                                             value={newAddrForm.addressLine} onChange={handleNewAddrChange}
@@ -414,7 +416,7 @@ function CheckoutContent() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Area / Thana</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.area')}</label>
                                                         <input type="text" name="area" placeholder="e.g. Mirpur"
                                                                value={newAddrForm.area || ''} onChange={handleNewAddrChange}
                                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -422,7 +424,7 @@ function CheckoutContent() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">City *</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.city')}</label>
                                                         <input type="text" name="city" placeholder="e.g. Dhaka"
                                                                value={newAddrForm.city} onChange={handleNewAddrChange}
                                                                className={`w-full px-4 py-2.5 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-2
@@ -432,7 +434,7 @@ function CheckoutContent() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">District</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.district')}</label>
                                                         <input type="text" name="district" placeholder="e.g. Dhaka"
                                                                value={newAddrForm.district || ''} onChange={handleNewAddrChange}
                                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -440,7 +442,7 @@ function CheckoutContent() {
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">Postal Code</label>
+                                                        <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1 uppercase">{t('co.postal')}</label>
                                                         <input type="text" name="postalCode" placeholder="e.g. 1216"
                                                                value={newAddrForm.postalCode || ''} onChange={handleNewAddrChange}
                                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -454,7 +456,7 @@ function CheckoutContent() {
                                                            className="w-4 h-4 rounded text-blue-600 border-gray-300 dark:border-gray-600 focus:ring-blue-500"
                                                     />
                                                     <label htmlFor="saveAddress" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-                                                        Save this address for future purchases
+                                                        {t('co.saveAddress')}
                                                     </label>
                                                 </div>}
                                             </div>
@@ -467,7 +469,7 @@ function CheckoutContent() {
                                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
                                         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2 pb-2 border-b border-gray-100 dark:border-gray-700">
                                             <Wallet className="w-5 h-5 text-blue-600" />
-                                            Choose Payment Method
+                                            {t('co.choosePayment')}
                                         </h2>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -487,9 +489,9 @@ function CheckoutContent() {
                                                         <CheckCircle2 className="w-5 h-5 text-blue-500 fill-blue-100 dark:fill-transparent" />
                                                     )}
                                                 </div>
-                                                <p className="font-semibold text-gray-900 dark:text-white">Credit / Debit Card</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white">{t('co.card')}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Secure payment via Stripe
+                                                    {t('co.cardNote')}
                                                 </p>
                                             </div>
 
@@ -509,9 +511,9 @@ function CheckoutContent() {
                                                         <CheckCircle2 className="w-5 h-5 text-green-500 fill-green-100 dark:fill-transparent" />
                                                     )}
                                                 </div>
-                                                <p className="font-semibold text-gray-900 dark:text-white">Cash on Delivery</p>
+                                                <p className="font-semibold text-gray-900 dark:text-white">{t('co.cod')}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Pay when you receive the product
+                                                    {t('co.codNote')}
                                                 </p>
                                             </div>
                                         </div>
@@ -566,23 +568,23 @@ function CheckoutContent() {
 
                                 <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-4">
                                     <div className="flex justify-between">
-                                        <span>Subtotal</span>
+                                        <span>{t('co.subtotal')}</span>
                                         <span className="font-semibold text-gray-900 dark:text-white">৳{subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Shipping Delivery</span>
+                                        <span>{t('co.shipping')}</span>
                                         <span className={`font-semibold ${shipping === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
-                                            {shipping === 0 ? 'FREE' : `৳${shipping.toFixed(2)}`}
+                                            {shipping === 0 ? t('cart.free') : `৳${shipping.toFixed(2)}`}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>Tax Estimated (7%)</span>
+                                        <span>{t('co.tax')}</span>
                                         <span className="font-semibold text-gray-900 dark:text-white">৳{tax.toFixed(2)}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex justify-between text-lg font-extrabold text-gray-900 dark:text-white">
-                                    <span>Total Payable</span>
+                                    <span>{t('co.totalPayable')}</span>
                                     <span className="text-blue-600 dark:text-blue-400">৳{total.toFixed(2)}</span>
                                 </div>
 
@@ -626,7 +628,7 @@ function CheckoutContent() {
                                                 <Loader2 className="w-5 h-5 animate-spin" />
                                             ) : (
                                                 <>
-                                                    Next: Choose Payment Method
+                                                    {t('co.next')}
                                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                                 </>
                                             )}
@@ -659,8 +661,8 @@ function CheckoutContent() {
 
                                 {/* Trust badges */}
                                 <div className="pt-2 grid grid-cols-2 gap-2 text-xs text-gray-400 font-medium">
-                                    <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-green-500" /> SSL Secured</div>
-                                    <div className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-blue-500" /> Fast Delivery</div>
+                                    <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5 text-green-500" /> {t('co.secured')}</div>
+                                    <div className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-blue-500" /> {t('co.fastDelivery')}</div>
                                 </div>
                             </div>
                         </div>

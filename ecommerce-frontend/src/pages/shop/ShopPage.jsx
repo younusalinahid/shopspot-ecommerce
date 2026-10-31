@@ -5,28 +5,30 @@ import {Search, SlidersHorizontal, X, ChevronDown, ChevronRight, ChevronLeft} fr
 import ProductCard from '../../components/product/ProductCard';
 import {productService} from '../../api/productApi';
 import {useCategories} from '../../hooks/useCategory';
+import {useLanguage} from '../../context/LanguageContext';
 
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
-    {value: 'newest', label: 'Newest first'},
-    {value: 'price_asc', label: 'Price: low to high'},
-    {value: 'price_desc', label: 'Price: high to low'},
-    {value: 'discount', label: 'Biggest discount'},
-    {value: 'name', label: 'Name: A to Z'},
+    {value: 'newest', label: 'sort.newest'},
+    {value: 'price_asc', label: 'sort.price_asc'},
+    {value: 'price_desc', label: 'sort.price_desc'},
+    {value: 'discount', label: 'sort.discount'},
+    {value: 'name', label: 'sort.name'},
 ];
 
 const PRICE_RANGES = [
-    {label: 'Under ৳1,000', min: '', max: '999'},
-    {label: '৳1,000 – ৳3,000', min: '1000', max: '3000'},
-    {label: '৳3,000 – ৳5,000', min: '3000', max: '5000'},
-    {label: '৳5,000 – ৳10,000', min: '5000', max: '10000'},
-    {label: 'Over ৳10,000', min: '10000', max: ''},
+    {label: 'price.under1000', min: '', max: '999'},
+    {label: 'price.1000_3000', min: '1000', max: '3000'},
+    {label: 'price.3000_5000', min: '3000', max: '5000'},
+    {label: 'price.5000_10000', min: '5000', max: '10000'},
+    {label: 'price.over10000', min: '10000', max: ''},
 ];
 
 const taka = (n) => `৳${Number(n || 0).toLocaleString('en-IN')}`;
 
 export default function ShopPage() {
+    const {t} = useLanguage();
     const [params, setParams] = useSearchParams();
     const {categories} = useCategories();
 
@@ -113,11 +115,11 @@ export default function ShopPage() {
         (minPrice || maxPrice) && {
             key: 'price',
             label: minPrice && maxPrice ? `${taka(minPrice)} – ${taka(maxPrice)}`
-                : minPrice ? `From ${taka(minPrice)}` : `Up to ${taka(maxPrice)}`,
+                : minPrice ? t('shop.from', {amount: taka(minPrice)}) : t('shop.upTo', {amount: taka(maxPrice)}),
             clear: {min: '', max: ''},
         },
-        inStock && {key: 'stock', label: 'In stock', clear: {stock: ''}},
-        onSale && {key: 'sale', label: 'On sale', clear: {sale: ''}},
+        inStock && {key: 'stock', label: t('shop.inStockChip'), clear: {stock: ''}},
+        onSale && {key: 'sale', label: t('shop.onSaleChip'), clear: {sale: ''}},
     ].filter(Boolean);
 
     const totalPages = data?.totalPages || 0;
@@ -147,11 +149,11 @@ export default function ShopPage() {
     const sidebar = (
         <div className="space-y-8">
             <section>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Categories</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t('shop.categories')}</h3>
                 <ul className="space-y-1">
                     <li>
                         <button onClick={() => update({category: '', sub: ''})} className={rowCls(!categoryId)}>
-                            <span>All products</span>
+                            <span>{t('shop.allProducts')}</span>
                             {data && <span className="text-gray-400 font-medium">{allCount}</span>}
                         </button>
                     </li>
@@ -195,7 +197,7 @@ export default function ShopPage() {
             </section>
 
             <section>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Price</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t('shop.price')}</h3>
                 <ul className="space-y-1 mb-4">
                     {PRICE_RANGES.map(r => {
                         const active = minPrice === r.min && maxPrice === r.max;
@@ -203,7 +205,7 @@ export default function ShopPage() {
                             <li key={r.label}>
                                 <button onClick={() => update(active ? {min: '', max: ''} : {min: r.min, max: r.max})}
                                         className={rowCls(active)}>
-                                    {r.label}
+                                    {t(r.label)}
                                 </button>
                             </li>
                         );
@@ -219,22 +221,22 @@ export default function ShopPage() {
                            onChange={e => setPriceDraft(d => ({...d, max: e.target.value}))}/>
                     <button type="submit"
                             className="px-4 py-2 text-base font-medium rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white flex-shrink-0">
-                        Go
+                        {t('shop.go')}
                     </button>
                 </form>
             </section>
 
             <section>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Availability</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t('shop.availability')}</h3>
                 <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={inStock} onChange={e => update({stock: e.target.checked})}
                            className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
-                    In stock only
+                    {t('shop.inStockOnly')}
                 </label>
                 <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={onSale} onChange={e => update({sale: e.target.checked})}
                            className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
-                    On sale (discounted)
+                    {t('shop.onSale')}
                 </label>
             </section>
         </div>
@@ -244,10 +246,10 @@ export default function ShopPage() {
         <div className="w-full px-3 sm:px-6 lg:px-8 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
             <div className="mb-6">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                    {selectedSub ? selectedSub.name : selectedCategory ? selectedCategory.name : 'Shop'}
+                    {selectedSub ? selectedSub.name : selectedCategory ? selectedCategory.name : t('shop.title')}
                 </h1>
                 <p className="text-base text-gray-500 dark:text-gray-400 mt-1.5">
-                    {selectedCategory ? `All products in ${selectedCategory.name}` : 'Browse our full collection'}
+                    {selectedCategory ? t('shop.allIn', {name: selectedCategory.name}) : t('shop.subtitle')}
                 </p>
             </div>
 
@@ -263,13 +265,13 @@ export default function ShopPage() {
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
                             <input type="search" value={searchText} onChange={e => setSearchText(e.target.value)}
-                                   placeholder="Search in shop..." aria-label="Search products" maxLength={100}
+                                   placeholder={t('shop.search')} aria-label="Search products" maxLength={100}
                                    className="w-full pl-11 pr-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"/>
                         </div>
                         <div className="flex gap-3">
                             <button onClick={() => setFiltersOpen(true)}
                                     className="lg:hidden flex items-center gap-2 px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                                <SlidersHorizontal className="w-4 h-4"/> Filters
+                                <SlidersHorizontal className="w-4 h-4"/> {t('shop.filters')}
                                 {activeChips.length > 0 && (
                                     <span className="bg-cyan-600 text-white text-xs rounded-full px-1.5">{activeChips.length}</span>
                                 )}
@@ -277,7 +279,7 @@ export default function ShopPage() {
                             <select value={sort} onChange={e => update({sort: e.target.value === 'newest' ? '' : e.target.value})}
                                     aria-label="Sort products"
                                     className="flex-1 sm:flex-none px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{t(o.label)}</option>)}
                             </select>
                         </div>
                     </div>
@@ -285,7 +287,7 @@ export default function ShopPage() {
                     <div className="flex flex-wrap items-center gap-2 mb-6 text-base min-h-[2rem]">
                         {data && (
                             <span className="text-gray-600 dark:text-gray-400 mr-1">
-                                {data.totalElements} product{data.totalElements === 1 ? '' : 's'}
+                                {t(data.totalElements === 1 ? 'shop.product' : 'shop.products', {count: data.totalElements})}
                             </span>
                         )}
                         {activeChips.map(chip => (
@@ -296,7 +298,7 @@ export default function ShopPage() {
                         ))}
                         {activeChips.length > 1 && (
                             <button onClick={() => setParams(new URLSearchParams())}
-                                    className="text-gray-500 hover:text-red-500 underline">Clear all</button>
+                                    className="text-gray-500 hover:text-red-500 underline">{t('shop.clearAll')}</button>
                         )}
                     </div>
 
@@ -308,9 +310,9 @@ export default function ShopPage() {
                         </div>
                     ) : data && data.content.length === 0 ? (
                         <div className="text-center py-16">
-                            <p className="text-gray-600 dark:text-gray-300 font-medium">No products match these filters.</p>
+                            <p className="text-gray-600 dark:text-gray-300 font-medium">{t('shop.noMatch')}</p>
                             <button onClick={() => setParams(new URLSearchParams())}
-                                    className="mt-3 text-cyan-600 hover:underline">Clear filters</button>
+                                    className="mt-3 text-cyan-600 hover:underline">{t('shop.clearFilters')}</button>
                         </div>
                     ) : (
                         <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
@@ -346,7 +348,7 @@ export default function ShopPage() {
                     <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersOpen(false)}/>
                     <div className="relative ml-auto w-full max-w-xs h-full bg-white dark:bg-gray-800 shadow-xl flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                            <h2 className="font-semibold text-gray-900 dark:text-white">Filters</h2>
+                            <h2 className="font-semibold text-gray-900 dark:text-white">{t('shop.filters')}</h2>
                             <button onClick={() => setFiltersOpen(false)} aria-label="Close filters"
                                     className="p-1 text-gray-500 hover:text-gray-800 dark:hover:text-white">
                                 <X className="w-5 h-5"/>
@@ -356,7 +358,7 @@ export default function ShopPage() {
                         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                             <button onClick={() => setFiltersOpen(false)}
                                     className="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium">
-                                Show {data ? data.totalElements : ''} products
+                                {t('shop.show', {count: data ? data.totalElements : ''})}
                             </button>
                         </div>
                     </div>

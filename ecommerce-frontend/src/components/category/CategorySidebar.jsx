@@ -1,8 +1,10 @@
 import { ChevronRight, ChevronDown, Grid3X3, X, Sparkles } from "lucide-react";
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import {useLanguage} from '../../context/LanguageContext';
 
 export default function CategorySidebar({ categories = [] }) {
+    const {t} = useLanguage();
     const [openIndex, setOpenIndex] = useState(null);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -61,11 +63,11 @@ export default function CategorySidebar({ categories = [] }) {
                     <div className="mb-8">
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                Categories
+                                {t('home.categories')}
                             </h2>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Discover {categories.length} amazing categories
+                            {t('home.discover', {count: categories.length})}
                         </p>
                     </div>
 
@@ -91,7 +93,7 @@ export default function CategorySidebar({ categories = [] }) {
                                             {category.name}
                                         </span>
                                         <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
-                                            {category.subCategories?.length || 0} items
+                                            {t('home.items', {count: category.subCategories?.length || 0})}
                                         </p>
                                     </div>
 

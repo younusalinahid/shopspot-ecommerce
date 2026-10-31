@@ -7,21 +7,34 @@ import {toast} from "react-toastify";
 import {chatApi} from "../../api/chatApi";
 import {useCart} from "../../context/CartContext";
 import {imageSrc} from "../../utils/imageSrc";
+import {useLanguage} from "../../context/LanguageContext";
 
 const STORAGE_KEY = "shopspot-chat";
-const GREETING = {
-    role: "assistant",
-    content: "Hi! 👋 I'm the **ShopSpot assistant**.\nAsk me about products, prices, offers, delivery or returns. You can type or tap the 🎤 mic to talk — English, বাংলা or Banglish all work!",
+// The greeting is shown in the current site language and never sent to the AI
+const GREETING = {role: "assistant", content: "", greeting: true};
+const GREETING_TEXT = {
+    en: "Hi! 👋 I'm the **ShopSpot assistant**.\nAsk me about products, prices, offers, delivery or returns. You can type or tap the 🎤 mic to talk — English, বাংলা or Banglish all work!",
+    bn: "হ্যালো! 👋 আমি **ShopSpot সহকারী**।\nপণ্য, দাম, অফার, ডেলিভারি বা রিটার্ন নিয়ে জিজ্ঞেস করুন। লিখতে পারেন বা 🎤 মাইকে চাপ দিয়ে বলতে পারেন — বাংলা, English বা Banglish সব চলবে!",
 };
 
-const QUICK_REPLIES = [
-    {label: "🔥 Today's deals", text: "Show me discounted products"},
-    {label: "👗 Sarees under ৳10,000", text: "Show sarees under 10000 taka"},
-    {label: "🚚 Delivery charge?", text: "What is the delivery charge and how long does delivery take?"},
-    {label: "↩️ Return policy", text: "What is your return policy?"},
-    {label: "🧒 Kids wear", text: "Show kids wear"},
-    {label: "🇧🇩 বাংলায় বলুন", text: "আমাকে বাংলায় সাহায্য করুন। নতুন কী আছে?"},
-];
+const QUICK_REPLIES = {
+    en: [
+        {label: "🔥 Today's deals", text: "Show me discounted products"},
+        {label: "👗 Sarees under ৳10,000", text: "Show sarees under 10000 taka"},
+        {label: "🚚 Delivery charge?", text: "What is the delivery charge and how long does delivery take?"},
+        {label: "↩️ Return policy", text: "What is your return policy?"},
+        {label: "🧒 Kids wear", text: "Show kids wear"},
+        {label: "🇧🇩 বাংলায় বলুন", text: "আমাকে বাংলায় সাহায্য করুন। নতুন কী আছে?"},
+    ],
+    bn: [
+        {label: "🔥 আজকের অফার", text: "ছাড়ে কোন কোন পণ্য আছে?"},
+        {label: "👗 ১০,০০০ টাকার নিচে শাড়ি", text: "১০০০০ টাকার নিচে শাড়ি দেখান"},
+        {label: "🚚 ডেলিভারি চার্জ কত?", text: "ডেলিভারি চার্জ কত আর কত দিনে পাব?"},
+        {label: "↩️ রিটার্ন নীতি", text: "আপনাদের রিটার্ন নীতি কী?"},
+        {label: "🧒 বাচ্চাদের পোশাক", text: "বাচ্চাদের পোশাক দেখান"},
+        {label: "🇬🇧 Speak English", text: "Please help me in English. What's new?"},
+    ],
+};
 
 // Browser voice APIs (Chrome / Edge / Safari). Not available in every browser.
 const SpeechRecognition = typeof window !== "undefined"
@@ -66,6 +79,7 @@ const toSpeech = (text) => (text || "")
     .trim();
 
 const Chatbot = () => {
+    const {lang, t} = useLanguage();
     const navigate = useNavigate();
     const {addToCart} = useCart();
     const [isOpen, setIsOpen] = useState(false);
@@ -166,7 +180,7 @@ const Chatbot = () => {
         setLoading(true);
         try {
             const history = updated
-                .filter(m => m !== GREETING && !m.hidden)
+                .filter(m => !m.greeting && !m.hidden)
                 .map(({role, content: c}) => ({role, content: c}));
             const response = await chatApi.sendMessage(history);
             const reply = {role: "assistant", content: response.message, products: response.products || []};
@@ -395,7 +409,7 @@ const Chatbot = () => {
                                         else if (!r?.deactivated) toast.error(r?.error || "Could not add to cart");
                                     }}
                                     className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-xs font-semibold">
-                                <ShoppingCart className="w-3.5 h-3.5"/> {outOfStock ? "Sold out" : "Add"}
+                                <ShoppingCart className="w-3.5 h-3.5"/> {outOfStock ? t('chat.soldOut') : t('chat.add')}
                             </button>
                         </div>
                     </div>
@@ -423,11 +437,11 @@ const Chatbot = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-bold leading-tight flex items-center gap-1.5 whitespace-nowrap">
-                                <span className="truncate">ShopSpot AI</span>
+                                <span className="truncate">{t('chat.title')}</span>
                                 <Sparkles className="w-3.5 h-3.5 text-yellow-200 flex-shrink-0"/>
                             </p>
                             <p className="text-xs text-emerald-50/90">
-                                {listening ? "Listening… speak now" : loading ? "Typing…" : "Online · AI powered"}
+                                {listening ? t('chat.listening') : loading ? t('chat.typing') : t('chat.online')}
                             </p>
                         </div>
                         {canSpeak && (
@@ -457,10 +471,10 @@ const Chatbot = () => {
                     {/* Voice picker */}
                     {showVoiceSettings && (
                         <div className="px-4 py-3 bg-emerald-50 dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-700 text-sm">
-                            <label htmlFor="chat-voice" className="block font-semibold text-gray-800 dark:text-gray-100 mb-1.5">Assistant voice</label>
+                            <label htmlFor="chat-voice" className="block font-semibold text-gray-800 dark:text-gray-100 mb-1.5">{t('chat.voice')}</label>
                             <select id="chat-voice" value={voiceName} onChange={e => chooseVoice(e.target.value)}
                                     className="w-full px-3 py-2 rounded-xl border border-emerald-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-emerald-500">
-                                <option value="">Automatic (female voice)</option>
+                                <option value="">{t('chat.voiceAuto')}</option>
                                 {voices.map(v => (
                                     <option key={v.name} value={v.name}>
                                         {v.name.replace(/^(Microsoft|Google) /, "")} · {/^bn/i.test(v.lang) ? "Bangla" : v.lang}{isFemale(v) ? " · female" : ""}
@@ -490,7 +504,7 @@ const Chatbot = () => {
                                         <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${isUser
                                             ? "bg-emerald-600 text-white rounded-br-md"
                                             : "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm rounded-bl-md"}`}>
-                                            {isUser ? msg.content : renderContent(msg.content)}
+                                            {isUser ? msg.content : renderContent(msg.greeting ? GREETING_TEXT[lang] : msg.content)}
                                         </div>
                                         {!isUser && msg.products?.length > 0 && productCards(msg.products)}
                                         {!isUser && canSpeak && index > 0 && (
@@ -498,8 +512,8 @@ const Chatbot = () => {
                                                 onClick={() => (speakingIndex === realIndex ? stopSpeaking() : speak(msg.content, realIndex))}
                                                 className="mt-1 ml-1 inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400">
                                                 {speakingIndex === realIndex
-                                                    ? <><Square className="w-3 h-3"/> Stop</>
-                                                    : <><Volume2 className="w-3 h-3"/> Listen</>}
+                                                    ? <><Square className="w-3 h-3"/> {t('chat.stop')}</>
+                                                    : <><Volume2 className="w-3 h-3"/> {t('chat.listen')}</>}
                                             </button>
                                         )}
                                     </div>
@@ -522,7 +536,7 @@ const Chatbot = () => {
 
                         {showQuickReplies && (
                             <div className="flex flex-wrap gap-2 pl-9">
-                                {QUICK_REPLIES.map(q => (
+                                {QUICK_REPLIES[lang].map(q => (
                                     <button key={q.label} onClick={() => send(q.text)}
                                             className="px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-gray-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium hover:bg-emerald-50 dark:hover:bg-gray-700 transition-colors">
                                         {q.label}
@@ -556,7 +570,7 @@ const Chatbot = () => {
                                             send(input);
                                         }
                                     }}
-                                    placeholder={listening ? "Listening…" : "Ask anything…"}
+                                    placeholder={listening ? t('chat.listening') : t('chat.placeholder')}
                                     rows={1}
                                     maxLength={1000}
                                     disabled={loading}
@@ -590,7 +604,7 @@ const Chatbot = () => {
                                 <Send className="w-4 h-4"/>
                             </button>
                         </div>
-                        <p className="text-[10px] text-center text-gray-400 mt-2">AI can make mistakes. Check prices on the product page.</p>
+                        <p className="text-[10px] text-center text-gray-400 mt-2">{t('chat.disclaimer')}</p>
                     </div>
                 </div>
             )}
@@ -600,7 +614,7 @@ const Chatbot = () => {
                 {showTooltip && !isOpen && (
                     <div className="hidden sm:block absolute bottom-3 right-full mr-3 animate-fadeIn">
                         <div className="bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-xl whitespace-nowrap shadow-lg">
-                            Need help? Ask me or talk to me 🎤
+                            {t('chat.tooltip')}
                         </div>
                     </div>
                 )}

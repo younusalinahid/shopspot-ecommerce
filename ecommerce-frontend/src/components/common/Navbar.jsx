@@ -8,14 +8,15 @@ import {useTheme} from "../../context/ThemeContext";
 import UserMenu from "../user/UserMenu";
 import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
+import {useLanguage} from "../../context/LanguageContext";
 import {useSiteContent} from "../../hooks/useSiteContent";
 import SITE_CONTENT_DEFAULTS from "./siteContentDefaults";
 
 // Header links. "Deals" is the Shop page filtered to discounted products.
 const NAV_LINKS = [
-    {to: '/', label: 'Home', isActive: (loc) => loc.pathname === '/'},
-    {to: '/shop', label: 'Shop', isActive: (loc) => loc.pathname === '/shop' && !new URLSearchParams(loc.search).get('sale')},
-    {to: '/shop?sale=1', label: 'Deals', isActive: (loc) => loc.pathname === '/shop' && new URLSearchParams(loc.search).get('sale') === '1'},
+    {to: '/', label: 'nav.home', isActive: (loc) => loc.pathname === '/'},
+    {to: '/shop', label: 'nav.shop', isActive: (loc) => loc.pathname === '/shop' && !new URLSearchParams(loc.search).get('sale')},
+    {to: '/shop?sale=1', label: 'nav.deals', isActive: (loc) => loc.pathname === '/shop' && new URLSearchParams(loc.search).get('sale') === '1'},
 ];
 
 /** True for light backgrounds (e.g. yellow), so the top bar can switch to dark text. */
@@ -37,6 +38,7 @@ export default function Navbar() {
     const [showAuthPage, setShowAuthPage] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const {isDark, toggleTheme} = useTheme();
+    const {lang, setLang, t} = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const {cart, fetchCart} = useCart();
@@ -294,7 +296,7 @@ export default function Navbar() {
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                placeholder={mobile ? 'Search products...' : 'Search products, categories...'}
+                placeholder={mobile ? t('nav.searchShort') : t('nav.search')}
                 aria-label="Search products"
                 className="w-full h-11 pl-5 pr-28 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] dark:shadow-none focus:border-emerald-700 focus:shadow-[0_4px_16px_rgba(6,78,59,0.18)] focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
             />
@@ -306,7 +308,7 @@ export default function Navbar() {
                     onClick={() => (mobile ? mobileImageInputRef : desktopImageInputRef).current?.click()}
                     disabled={imageSearchLoading}
                     className="group/ai relative flex items-center gap-1 h-8 pl-2 pr-2.5 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-xs font-bold shadow-md shadow-fuchsia-500/30 ring-2 ring-white dark:ring-gray-800 hover:scale-105 transition-transform disabled:opacity-70"
-                    title="AI image search: upload a photo to find similar products"
+                    title={t('nav.aiSearch')}
                     aria-label="AI image search"
                 >
                     {imageSearchLoading
@@ -365,7 +367,7 @@ export default function Navbar() {
                             className={`hidden md:flex items-center gap-1.5 ${topBarHover} whitespace-nowrap`}
                             aria-label="Toggle theme">
                         {isDark ? <Sun size={14}/> : <Moon size={14}/>}
-                        {isDark ? 'Light mode' : 'Dark mode'}
+                        {isDark ? t('nav.lightMode') : t('nav.darkMode')}
                     </button>
                 </div>
             </div>
@@ -392,7 +394,7 @@ export default function Navbar() {
                         <div className="hidden lg:flex items-center gap-1">
                             {NAV_LINKS.map(item => (
                                 <Link key={item.label} to={item.to} className={navLinkCls(item.isActive(location))}>
-                                    {item.label}
+                                    {t(item.label)}
                                 </Link>
                             ))}
                         </div>
@@ -404,6 +406,19 @@ export default function Navbar() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-1 sm:gap-2 ml-auto lg:ml-0 flex-shrink-0">
+                            {/* Language switch: English / বাংলা */}
+                            <div role="group" aria-label={t('nav.language')}
+                                 className="flex items-center h-9 p-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs sm:text-sm font-semibold">
+                                {[{code: 'en', label: 'EN'}, {code: 'bn', label: 'বাং'}].map(opt => (
+                                    <button key={opt.code} type="button" onClick={() => setLang(opt.code)}
+                                            aria-pressed={lang === opt.code}
+                                            className={`h-8 px-2.5 sm:px-3 rounded-full transition-colors ${lang === opt.code
+                                                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100'}`}>
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
                             {isLoggedIn ? (
                                 <UserMenu/>
                             ) : (
@@ -412,7 +427,7 @@ export default function Navbar() {
                                     className="hidden sm:flex items-center gap-2 h-11 px-3 rounded-full text-gray-800 dark:text-gray-100 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                 >
                                     <User size={21}/>
-                                    <span>Account</span>
+                                    <span>{t('nav.account')}</span>
                                 </button>
                             )}
 
@@ -430,7 +445,7 @@ export default function Navbar() {
                                         </span>
                                     )}
                                 </span>
-                                <span className="hidden sm:inline">Cart</span>
+                                <span className="hidden sm:inline">{t('nav.cart')}</span>
                             </button>
 
                             <button
@@ -456,7 +471,7 @@ export default function Navbar() {
                     <div className="px-4 py-5 space-y-4">
                         <div className="grid grid-cols-3 gap-2">
                             {NAV_LINKS.map(item => (
-                                <Link key={item.label} to={item.to}
+                                <Link key={t(item.label)} to={item.to}
                                       className={`text-center py-3 rounded-xl font-semibold ${item.isActive(location)
                                           ? 'bg-emerald-900 text-white'
                                           : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100'}`}>
@@ -471,12 +486,12 @@ export default function Navbar() {
                                     onClick={() => setShowAuthPage(true)}
                                     className="col-span-2 flex items-center justify-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white py-3 rounded-xl font-semibold transition-colors"
                                 >
-                                    <User size={20}/> Sign In / Register
+                                    <User size={20}/> {t('nav.signIn')}
                                 </button>
                             )}
                             {[
-                                {to: "/compare", label: "Compare"},
-                                ...(isLoggedIn ? [{to: "/orders", label: "My Orders"}] : []),
+                                {to: "/compare", label: t('nav.compare')},
+                                ...(isLoggedIn ? [{to: "/orders", label: t('nav.myOrders')}] : []),
                             ].map(item => (
                                 <Link key={item.to} to={item.to}
                                       className="text-center py-3 rounded-xl font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
@@ -486,7 +501,7 @@ export default function Navbar() {
                             <button onClick={toggleTheme}
                                     className="flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                                 {isDark ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5"/>}
-                                {isDark ? 'Light mode' : 'Dark mode'}
+                                {isDark ? t('nav.lightMode') : t('nav.darkMode')}
                             </button>
                         </div>
                     </div>

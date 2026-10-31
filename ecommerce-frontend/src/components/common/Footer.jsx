@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Facebook, Instagram, Youtube, MapPin, Mail, Phone, MessageCircle, Send, X, X as CloseIcon, Music2} from 'lucide-react';
 import {useSiteContent} from '../../hooks/useSiteContent';
+import {useLanguage} from '../../context/LanguageContext';
 
 const SOCIALS = [
     {key: 'facebookUrl', label: 'Facebook', Icon: Facebook, hover: 'hover:bg-[#1877F2]'},
@@ -16,6 +17,7 @@ const SOCIALS = [
 const safeUrl = (url) => (typeof url === 'string' && /^https?:\/\//i.test(url.trim()) ? url.trim() : null);
 
 const Footer = () => {
+    const {t} = useLanguage();
     const {settings: s, pages: allPages} = useSiteContent();
     const [openPage, setOpenPage] = useState(null);
     const modalRef = useRef(null);
@@ -82,11 +84,11 @@ const Footer = () => {
                     </div>
                 </div>
 
-                {renderSection('Shopping', 'SHOPPING')}
-                {renderSection('Services', 'SERVICES')}
+                {renderSection(t('footer.shopping'), 'SHOPPING')}
+                {renderSection(t('footer.services'), 'SERVICES')}
 
                 <div>
-                    <h4 className="font-bold mb-5 uppercase tracking-wider">Contact Us</h4>
+                    <h4 className="font-bold mb-5 uppercase tracking-wider">{t('footer.contact')}</h4>
                     <ul className="space-y-4 text-sm text-gray-400">
                         {s.contactAddress && (
                             <li className="flex items-center gap-2">

@@ -5,9 +5,11 @@ import {Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, CreditCard} fr
 import {toast} from 'react-toastify';
 import {imageSrc} from '../../utils/imageSrc';
 import {useSiteContent} from '../../hooks/useSiteContent';
+import {useLanguage} from '../../context/LanguageContext';
 
 const CartPage = () => {
     const {delivery} = useSiteContent();
+    const {t} = useLanguage();
     const {cart, isGuest, updateCartItem, removeCartItem, clearCart} = useCart();
     const [updatingItems, setUpdatingItems] = useState({});
 
@@ -61,7 +63,7 @@ const CartPage = () => {
                     <div className="text-center">
                         <div
                             className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mb-4"></div>
-                        <p className="text-gray-600 dark:text-gray-400">Loading cart...</p>
+                        <p className="text-gray-600 dark:text-gray-400">{t('cart.loading')}</p>
                     </div>
                 </div>
             </div>
@@ -79,16 +81,16 @@ const CartPage = () => {
                                 <ShoppingBag className="w-12 h-12 text-gray-400"/>
                             </div>
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                                Your cart is empty
+                                {t('cart.empty')}
                             </h2>
                             <p className="text-gray-600 dark:text-gray-400 mb-8">
-                                Start shopping to add items to your cart
+                                {t('cart.emptyNote')}
                             </p>
                             <Link
                                 to="/"
                                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
                             >
-                                Continue Shopping
+                                {t('cart.continue')}
                             </Link>
                         </div>
                     </div>
@@ -110,10 +112,10 @@ const CartPage = () => {
                     {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                            Shopping Cart
+                            {t('cart.title')}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400">
-                            {cart.totalItems} {cart.totalItems === 1 ? 'item' : 'items'}
+                            {t(cart.totalItems === 1 ? 'cart.item' : 'cart.items', {count: cart.totalItems})}
                         </p>
                     </div>
 
@@ -159,7 +161,7 @@ const CartPage = () => {
                                                     {item.size && (
                                                         <span
                                                             className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
-                              Size: {item.size}
+                              {t('cart.size')}: {item.size}
                             </span>
                                                     )}
                                                     {item.color && (
@@ -201,7 +203,7 @@ const CartPage = () => {
 
                                                 {/* Item Total */}
                                                 <div className="text-right">
-                                                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
+                                                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('cart.subtotal')}</p>
                                                     <p className="font-bold text-base sm:text-xl text-gray-900 dark:text-white">
                                                         ৳{(getProductPrice(item) * item.quantity).toFixed(2)}
                                                     </p>
@@ -214,7 +216,7 @@ const CartPage = () => {
                                             <button
                                                 onClick={() => handleRemoveItem(item.id, getProductName(item))}
                                                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Remove item"
+                                                title={t('cart.remove')}
                                                 aria-label="Remove item"
                                             >
                                                 <Trash2 size={20}/>
@@ -230,7 +232,7 @@ const CartPage = () => {
                                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-semibold transition-colors"
                             >
                                 <Trash2 size={18}/>
-                                Clear Cart
+                                {t('cart.clear')}
                             </button>
                         </div>
 
@@ -238,40 +240,40 @@ const CartPage = () => {
                         <div className="lg:col-span-1">
                             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-4">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                                    Order Summary
+                                    {t('cart.summary')}
                                 </h2>
 
                                 {/* Price Breakdown */}
                                 <div className="space-y-3 mb-6">
                                     <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                                        <span>Subtotal</span>
+                                        <span>{t('cart.subtotal')}</span>
                                         <span className="font-semibold">৳{subtotal.toFixed(2)}</span>
                                     </div>
 
                                     <div className="flex justify-between text-gray-700 dark:text-gray-300">
                     <span className="flex items-center gap-1">
-                      <Truck size={16}/> Shipping
+                      <Truck size={16}/> {t('cart.shipping')}
                     </span>
                                         <span className={`font-semibold ${shipping === 0 ? 'text-green-600' : ''}`}>
-                      {shipping === 0 ? 'FREE' : `৳${shipping.toFixed(2)}`}
+                      {shipping === 0 ? t('cart.free') : `৳${shipping.toFixed(2)}`}
                     </span>
                                     </div>
 
                                     {shipping > 0 && delivery.freeMin > 0 && (
                                         <p className="text-sm text-blue-600 dark:text-blue-400">
-                                            Add ৳{(delivery.freeMin - subtotal + 1).toFixed(2)} more for free shipping
+                                            {t('cart.addMore', {amount: (delivery.freeMin - subtotal + 1).toFixed(2)})}
                                         </p>
                                     )}
 
                                     <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                                        <span>Tax (7%)</span>
+                                        <span>{t('cart.tax')}</span>
                                         <span className="font-semibold">৳{tax.toFixed(2)}</span>
                                     </div>
 
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                                         <div
                                             className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
-                                            <span>Total</span>
+                                            <span>{t('cart.total')}</span>
                                             <span>৳{total.toFixed(2)}</span>
                                         </div>
                                     </div>
@@ -282,16 +284,16 @@ const CartPage = () => {
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Truck className="w-4 h-4 text-green-600"/>
                                         <span>{delivery.fee === 0
-                                            ? 'Free shipping on every order'
-                                            : delivery.freeMin > 0 ? `Free shipping over ৳${delivery.freeMin}` : `Delivery ৳${delivery.fee} per order`}</span>
+                                            ? t('cart.freeAlways')
+                                            : delivery.freeMin > 0 ? t('cart.freeOver', {min: delivery.freeMin}) : t('cart.flatFee', {fee: delivery.fee})}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Shield className="w-4 h-4 text-blue-600"/>
-                                        <span>30-day return policy</span>
+                                        <span>{t('cart.returns')}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <CreditCard className="w-4 h-4 text-purple-600"/>
-                                        <span>Secure payment</span>
+                                        <span>{t('cart.secure')}</span>
                                     </div>
                                 </div>
 
@@ -301,7 +303,7 @@ const CartPage = () => {
                                         to="/checkout"
                                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors"
                                     >
-                                        {isGuest ? 'Checkout as Guest' : 'Proceed to Checkout'}
+                                        {t('cart.checkout')}
                                     </Link>
 
                                     {isGuest && (
@@ -325,7 +327,7 @@ const CartPage = () => {
                                         to="/"
                                         className="block w-full text-center border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 py-3 px-6 rounded-lg font-semibold transition-colors"
                                     >
-                                        Continue Shopping
+                                        {t('cart.continue')}
                                     </Link>
                                 </div>
                             </div>

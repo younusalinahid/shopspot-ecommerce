@@ -4,7 +4,7 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+                sans: ["Inter", "Hind Siliguri", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
                 heading: ["Cormorant Garamond", "serif"],
             },
 

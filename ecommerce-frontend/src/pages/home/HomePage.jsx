@@ -12,8 +12,10 @@ import {toast} from "react-toastify";
 import OfferPopup from "../../components/common/OfferPopup";
 import { useRecommendations } from "../../hooks/useRecommendations";
 import { isAuthenticated } from "../../api/authApi";
+import {useLanguage} from '../../context/LanguageContext';
 
 const HomePage = () => {
+    const {t} = useLanguage();
     const navigate = useNavigate();
     const {categories} = useCategories();
     const {products: featuredProducts, loading: productsLoading, error: productsError} = useProducts(8);
@@ -82,7 +84,7 @@ const HomePage = () => {
                                         <div className="flex items-center gap-2">
                                             <span className="text-2xl">✨</span>
                                             <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl">
-                                                Recommended For You
+                                                {t('home.recommended')}
                                             </h2>
                                         </div>
                                     </div>
@@ -105,13 +107,13 @@ const HomePage = () => {
                             <div className="px-3 sm:px-6 py-5 sm:py-8">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
-                                        Featured Products
+                                        {t('home.featured')}
                                     </h2>
                                     <button
                                         onClick={handleViewAllFeatured}
                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                     >
-                                        <span>View All</span>
+                                        <span>{t('home.viewAll')}</span>
                                         <ArrowRight className="w-4 h-4"/>
                                     </button>
                                 </div>
@@ -128,7 +130,7 @@ const HomePage = () => {
                                     </div>
                                 ) : featuredProducts.length === 0 ? (
                                     <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                                        No featured products available
+                                        {t('home.noFeatured')}
                                     </div>
                                 ) : (
                                     <div
@@ -158,7 +160,7 @@ const HomePage = () => {
                                 ) : categoryProducts.length === 0 ? (
                                     <div
                                         className="text-center py-12 text-gray-500 dark:text-gray-400 transition-colors duration-300">
-                                        No products available at the moment
+                                        {t('home.noProducts')}
                                     </div>
                                 ) : (
                                     <div className="space-y-12">
@@ -185,7 +187,7 @@ const HomePage = () => {
                                                         onClick={() => handleCategorySeeAll(categoryData.id)}
                                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                                     >
-                                                        <span>See All</span>
+                                                        <span>{t('home.seeAll')}</span>
                                                         <ArrowRight className="w-4 h-4"/>
                                                     </button>
                                                 </div>

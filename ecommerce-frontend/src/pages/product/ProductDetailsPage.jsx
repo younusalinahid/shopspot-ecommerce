@@ -10,9 +10,11 @@ import ReviewSection from "../../components/product/ReviewSection";
 import {getReviewSummary} from '../../api/reviewApi';
 import {imageSrc} from '../../utils/imageSrc';
 import {useSiteContent} from '../../hooks/useSiteContent';
+import {useLanguage} from '../../context/LanguageContext';
 
 const ProductDetailsPage = () => {
     const {delivery} = useSiteContent();
+    const {t} = useLanguage();
     const {productId} = useParams();
     const navigate = useNavigate();
     const {addToCart, loading} = useCart();
@@ -142,7 +144,7 @@ const ProductDetailsPage = () => {
     const checkSize = () => {
         if (needsSize && !selectedSize) {
             setSizeError(true);
-            toast.info('Please choose a size');
+            toast.info(t('toast.chooseSize'));
             document.getElementById('size-picker')?.scrollIntoView({behavior: 'smooth', block: 'center'});
             return false;
         }
@@ -172,10 +174,10 @@ const ProductDetailsPage = () => {
         setAddingToCart(true);
         try {
             const result = await addToCart(product.id, quantity, needsSize ? selectedSize : null);
-            if (!result?.success) { toast.error(result?.error || 'Failed to add product to cart'); return; }
-            toast.success('Product added to cart successfully!');
+            if (!result?.success) { toast.error(result?.error || t('pd.addFailed')); return; }
+            toast.success(t('pd.addedToCart'));
             window.dispatchEvent(new CustomEvent("cartItemAdded", {detail: {productName: product.name}}));
-        } catch { toast.error('Failed to add product to cart'); }
+        } catch { toast.error(t('pd.addFailed')); }
         finally { setAddingToCart(false); }
     };
 
@@ -184,8 +186,8 @@ const ProductDetailsPage = () => {
         setAddingToCart(true);
         try {
             const result = await addToCart(product.id, quantity, needsSize ? selectedSize : null);
-            if (result?.success) { navigate('/cart'); } else { toast.error(result?.error || 'Failed to add product to cart'); }
-        } catch { toast.error('Failed to add product to cart'); }
+            if (result?.success) { navigate('/cart'); } else { toast.error(result?.error || t('pd.addFailed')); }
+        } catch { toast.error(t('pd.addFailed')); }
         finally { setAddingToCart(false); }
     };
 
@@ -242,9 +244,9 @@ const ProductDetailsPage = () => {
     if (error || !product) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Product Not Found</h2>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('pd.notFound')}</h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{error || 'The product does not exist.'}</p>
-                <button onClick={() => navigate('/')} className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg">Go Back Home</button>
+                <button onClick={() => navigate('/')} className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg">{t('pd.goHome')}</button>
             </div>
         </div>
     );
@@ -262,7 +264,7 @@ const ProductDetailsPage = () => {
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <button onClick={() => navigate(-1)} className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white group">
                         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform"/>
-                        <span>Back</span>
+                        <span>{t('pd.back')}</span>
                     </button>
                 </div>
             </div>
@@ -295,7 +297,7 @@ const ProductDetailsPage = () => {
                                         ) : (
                                             <div className="w-full h-96 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg">
                                                 <span className="text-6xl text-gray-400 mb-4">📦</span>
-                                                <p className="text-gray-500 dark:text-gray-400">No Image Available</p>
+                                                <p className="text-gray-500 dark:text-gray-400">{t('pd.noImage')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -352,14 +354,14 @@ const ProductDetailsPage = () => {
                                 <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl">
                                     <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${hasStock ? 'bg-green-500' : 'bg-red-500'}`}/>
                                     <span className={`text-sm font-semibold ${hasStock ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                        {isUnlimited ? 'In Stock (Unlimited)' : hasStock ? `${stockCount} items in stock` : 'Out of stock'}
+                                        {isUnlimited ? t('pd.inStockUnlimited') : hasStock ? t('pd.inStock', {count: stockCount}) : t('product.outOfStock')}
                                     </span>
                                 </div>
 
                                 {/* Description */}
                                 <div className="bg-blue-50/50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700/30">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-4 hover:line-clamp-none transition-all duration-300 cursor-pointer">{product.description || 'No description available.'}</p>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">{t('pd.description')}</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-4 hover:line-clamp-none transition-all duration-300 cursor-pointer">{product.description || t('pd.noDescription')}</p>
                                 </div>
 
                                 {/* Size */}
@@ -370,9 +372,9 @@ const ProductDetailsPage = () => {
                                              : 'border-gray-100 dark:border-gray-700/40 bg-blue-50/30 dark:bg-gray-800/20'}`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                Size: {selectedSize
+                                                {t('pd.size')}: {selectedSize
                                                     ? <span className="text-gray-900 dark:text-white">{selectedSize}</span>
-                                                    : <span className={sizeError ? 'text-red-500' : 'text-gray-400'}>choose one</span>}
+                                                    : <span className={sizeError ? 'text-red-500' : 'text-gray-400'}>{t('pd.chooseOne')}</span>}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Size">
@@ -394,7 +396,7 @@ const ProductDetailsPage = () => {
 
                                 {/* Quantity */}
                                 <div className="flex items-center space-x-4 bg-blue-50/30 dark:bg-gray-800/20 p-3 rounded-xl border border-gray-100 dark:border-gray-700/40">
-                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Quantity:</span>
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('pd.quantity')}</span>
                                     <div className="flex items-center space-x-2 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
                                         <button onClick={decreaseQuantity} disabled={quantity <= 1} className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
                                             <Minus className="w-3 h-3"/>
@@ -411,11 +413,11 @@ const ProductDetailsPage = () => {
                                     <button onClick={handleAddToCart} disabled={!hasStock || addingToCart || loading}
                                             className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center space-x-2 disabled:bg-gray-400">
                                         <ShoppingCart className="w-4 h-4"/>
-                                        <span>{addingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                                        <span>{addingToCart ? '...' : t('pd.addToCart')}</span>
                                     </button>
                                     <button onClick={handleBuyNow} disabled={!hasStock || addingToCart || loading}
                                             className="flex-1 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 text-white dark:text-gray-900 py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center disabled:bg-gray-400">
-                                        <span>{addingToCart ? 'Adding...' : 'Buy Now'}</span>
+                                        <span>{addingToCart ? '...' : t('pd.buyNow')}</span>
                                     </button>
                                 </div>
 
@@ -428,11 +430,11 @@ const ProductDetailsPage = () => {
                                     </button>
                                     <button onClick={handleShare} className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-sm border border-blue-100/50">
                                         <Share2 className="w-3.5 h-3.5"/>
-                                        <span>Share</span>
+                                        <span>{t('pd.share')}</span>
                                     </button>
                                     <button onClick={() => addToCompare(product)} className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-sm border border-blue-100/50">
                                         <GitCompare className="w-3.5 h-3.5"/>
-                                        <span>Compare</span>
+                                        <span>{t('pd.compare')}</span>
                                     </button>
                                 </div>
 
@@ -443,12 +445,12 @@ const ProductDetailsPage = () => {
                                         <div>
                                             {/* Same rule as checkout (set in Admin -> Site Content) */}
                                             <h4 className="text-xs font-semibold text-gray-900 dark:text-white">
-                                                {delivery.chargeFor(product.price) === 0 ? 'Free Delivery' : `Delivery ৳${delivery.fee}`}
+                                                {delivery.chargeFor(product.price) === 0 ? t('pd.freeDelivery') : t('pd.delivery', {fee: delivery.fee})}
                                             </h4>
                                             <p className="text-xs text-gray-600 dark:text-gray-400">
                                                 {delivery.chargeFor(product.price) === 0 || delivery.freeMin <= 0
-                                                    ? '3–5 business days'
-                                                    : `Free on orders over ৳${delivery.freeMin}`}
+                                                    ? t('pd.deliveryDays')
+                                                    : t('pd.freeOver', {min: delivery.freeMin})}
                                             </p>
                                         </div>
                                     </div>
@@ -456,8 +458,8 @@ const ProductDetailsPage = () => {
                                     <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-orange-50 to-amber-100 dark:from-amber-900/10 dark:to-orange-900/10 rounded-xl">
                                         <RefreshCw className="w-8 h-8 text-amber-600 animate-spin-slow"/>
                                         <div>
-                                            <h4 className="text-xs font-semibold text-gray-900 dark:text-white">7 Days Return</h4>
-                                            <p className="text-xs text-gray-600 dark:text-gray-400">Easy return & refund policy</p>
+                                            <h4 className="text-xs font-semibold text-gray-900 dark:text-white">{t('pd.returns')}</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">{t('pd.returnsNote')}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -479,8 +481,8 @@ const ProductDetailsPage = () => {
                     <div className="lg:col-span-1">
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 sticky top-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center justify-between">
-                                <span>Related Products</span>
-                                <span className="text-xs font-medium text-cyan-600 bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-1 rounded-full">Recommended</span>
+                                <span>{t('pd.related')}</span>
+                                <span className="text-xs font-medium text-cyan-600 bg-cyan-50 dark:bg-cyan-950/60 px-2.5 py-1 rounded-full">{t('pd.recommended')}</span>
                             </h2>
 
                             {isRelatedLoading ? (
@@ -488,7 +490,7 @@ const ProductDetailsPage = () => {
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"/>
                                 </div>
                             ) : relatedProducts.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-8 bg-gray-50 dark:bg-gray-900/40 rounded-xl">No related products found.</p>
+                                <p className="text-sm text-gray-500 text-center py-8 bg-gray-50 dark:bg-gray-900/40 rounded-xl">{t('pd.noRelated')}</p>
                             ) : (
                                 <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                                     {relatedProducts.map((item) => {
@@ -556,7 +558,7 @@ const ProductDetailsPage = () => {
                 {/* Recently Viewed Products */}
                 {recentlyViewed.length > 0 && (
                     <div className="mt-10 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5">Recently Viewed</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-5">{t('pd.recentlyViewed')}</h2>
                         <div className="flex space-x-4 overflow-x-auto pb-2 custom-scrollbar">
                             {recentlyViewed.map((item) => {
                                 const itemId = item.id || item._id;
