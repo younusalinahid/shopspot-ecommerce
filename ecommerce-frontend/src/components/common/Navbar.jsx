@@ -18,6 +18,15 @@ const NAV_LINKS = [
     {to: '/shop?sale=1', label: 'Deals', isActive: (loc) => loc.pathname === '/shop' && new URLSearchParams(loc.search).get('sale') === '1'},
 ];
 
+/** True for light backgrounds (e.g. yellow), so the top bar can switch to dark text. */
+const isLightColor = (hex) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return false;
+    const n = parseInt(m[1], 16);
+    const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
+};
+
 const navLinkCls = (active) => `relative px-3 xl:px-4 py-2 text-[15px] xl:text-base font-semibold whitespace-nowrap rounded-full transition-colors ${active
     ? 'text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30'
     : 'text-gray-700 dark:text-gray-200 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`;
@@ -272,6 +281,11 @@ export default function Navbar() {
     const announcementLinkText = pick('announcementLinkText');
     const announcementLinkUrl = pick('announcementLinkUrl');
     const isInternalLink = announcementLinkUrl?.startsWith('/');
+    const topBarLight = isLightColor(pick('topBarColor'));
+    const topBarText = topBarLight ? 'text-gray-800' : 'text-white/90';
+    const topBarStrong = topBarLight ? 'text-gray-950' : 'text-white';
+    // full class names so Tailwind generates them
+    const topBarHover = topBarLight ? 'hover:text-gray-950' : 'hover:text-white';
 
     const searchForm = (mobile) => (
         <form onSubmit={handleSearchSubmit} className="relative w-full">
@@ -320,16 +334,16 @@ export default function Navbar() {
         <>
             {/* Announcement bar */}
             {showTopBar && (
-            <div className="w-full text-white/90 text-xs sm:text-sm" style={{backgroundColor: pick('topBarColor')}}>
+            <div className={`w-full ${topBarText} text-xs sm:text-sm`} style={{backgroundColor: pick('topBarColor')}}>
                 <div className="w-full px-3 sm:px-6 lg:px-10 h-9 flex items-center justify-between gap-4">
                     <div className="hidden md:flex items-center gap-5 min-w-0">
                         {phone && (
-                            <a href={`tel:${phone.replace(/[^+0-9]/g, '')}`} className="flex items-center gap-1.5 hover:text-white whitespace-nowrap">
+                            <a href={`tel:${phone.replace(/[^+0-9]/g, '')}`} className={`flex items-center gap-1.5 ${topBarHover} whitespace-nowrap`}>
                                 <Phone size={14}/> {phone}
                             </a>
                         )}
                         {email && (
-                            <a href={`mailto:${email}`} className="hidden xl:flex items-center gap-1.5 hover:text-white truncate">
+                            <a href={`mailto:${email}`} className={`hidden xl:flex items-center gap-1.5 ${topBarHover} truncate`}>
                                 <Mail size={14}/> {email}
                             </a>
                         )}
@@ -340,15 +354,15 @@ export default function Navbar() {
                             <>
                                 <span className="mx-2 sm:mx-3 opacity-50">|</span>
                                 {isInternalLink ? (
-                                    <Link to={announcementLinkUrl} className="font-semibold text-white hover:underline underline-offset-2">{announcementLinkText}</Link>
+                                    <Link to={announcementLinkUrl} className={`font-semibold ${topBarStrong} hover:underline underline-offset-2`}>{announcementLinkText}</Link>
                                 ) : (
-                                    <a href={announcementLinkUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:underline underline-offset-2">{announcementLinkText}</a>
+                                    <a href={announcementLinkUrl} target="_blank" rel="noopener noreferrer" className={`font-semibold ${topBarStrong} hover:underline underline-offset-2`}>{announcementLinkText}</a>
                                 )}
                             </>
                         )}
                     </p>
                     <button onClick={toggleTheme}
-                            className="hidden md:flex items-center gap-1.5 hover:text-white whitespace-nowrap"
+                            className={`hidden md:flex items-center gap-1.5 ${topBarHover} whitespace-nowrap`}
                             aria-label="Toggle theme">
                         {isDark ? <Sun size={14}/> : <Moon size={14}/>}
                         {isDark ? 'Light mode' : 'Dark mode'}

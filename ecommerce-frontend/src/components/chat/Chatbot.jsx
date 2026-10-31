@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {
-    Bot, X, Send, Mic, Square, Volume2, VolumeX, RotateCcw, ShoppingCart, Sparkles, ExternalLink,
+    Bot, X, Send, Mic, Square, Volume2, VolumeX, RotateCcw, ShoppingCart, Sparkles, ExternalLink, Settings2,
 } from "lucide-react";
 import {toast} from "react-toastify";
 import {chatApi} from "../../api/chatApi";
@@ -38,7 +38,22 @@ const loadHistory = () => {
     }
 };
 
-const hasBangla = (text) => /[ঀ-৿]/.test(text || "");
+const hasBangla = (text) => /[\u0980-\u09FF]/.test(text || "");
+
+// Female voices that ship with Windows, macOS, Android and Chrome
+const FEMALE = /female|woman|zira|aria|jenny|michelle|sonia|libby|maisie|natasha|clara|emma|ava|samantha|victoria|karen|moira|tessa|fiona|serena|veena|heera|neerja|swara|tanishaa|nabanita|google us english|google uk english female|google \u09AC\u09BE\u0982\u09B2\u09BE/i;
+const MALE = /\bmale\b|david|mark|guy|ryan|daniel|alex|fred|george|james|thomas|bashkar|pradeep|ravi|prabhat/i;
+const isFemale = (v) => FEMALE.test(v.name) && !MALE.test(v.name.replace(/female/i, ""));
+
+/** User's chosen voice if it fits the language, otherwise the best female voice for it. */
+const pickVoice = (voices, bangla, preferredName) => {
+    const forLang = voices.filter(v => (bangla ? /^bn/i : /^en/i).test(v.lang || ""));
+    return forLang.find(v => v.name === preferredName)
+        || forLang.find(isFemale)
+        || forLang.find(v => !MALE.test(v.name))
+        || forLang[0]
+        || null;
+};
 
 /** Plain text for the speech engine: no markdown, link targets or emoji. */
 const toSpeech = (text) => (text || "")
@@ -62,6 +77,9 @@ const Chatbot = () => {
     const [voiceLang, setVoiceLang] = useState(() => localStorage.getItem("chat-voice-lang") || "en");
     const [autoSpeak, setAutoSpeak] = useState(() => localStorage.getItem("chat-auto-speak") === "1");
     const [speakingIndex, setSpeakingIndex] = useState(null);
+    const [voices, setVoices] = useState([]);
+    const [voiceName, setVoiceName] = useState(() => localStorage.getItem("chat-voice") || "");
+    const [showVoiceSettings, setShowVoiceSettings] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const recognitionRef = useRef(null);
@@ -106,18 +124,15 @@ const Chatbot = () => {
         const utter = new SpeechSynthesisUtterance(clean);
         const bangla = hasBangla(clean);
         utter.lang = bangla ? "bn-BD" : "en-US";
-        const voices = window.speechSynthesis.getVoices();
-        const voice = bangla
-            ? voices.find(v => v.lang?.toLowerCase().startsWith("bn"))
-            : voices.find(v => /en[-_](US|GB|IN)/i.test(v.lang) && /female|zira|samantha|google/i.test(v.name))
-            || voices.find(v => v.lang?.toLowerCase().startsWith("en"));
+        const voice = pickVoice(window.speechSynthesis.getVoices(), bangla, voiceName);
         if (voice) utter.voice = voice;
         utter.rate = 1;
+        utter.pitch = 1.05;
         utter.onend = () => setSpeakingIndex(null);
         utter.onerror = () => setSpeakingIndex(null);
         setSpeakingIndex(index);
         window.speechSynthesis.speak(utter);
-    }, []);
+    }, [voiceName]);
 
     useEffect(() => {
         if (!isOpen) stopSpeaking();
@@ -125,8 +140,13 @@ const Chatbot = () => {
 
     // Voices load asynchronously in Chrome
     useEffect(() => {
-        if (canSpeak) window.speechSynthesis.getVoices();
+        if (!canSpeak) return undefined;
+        const load = () => setVoices(window.speechSynthesis.getVoices()
+            .filter(v => /^(en|bn)/i.test(v.lang || "")));
+        load();
+        window.speechSynthesis.addEventListener?.("voiceschanged", load);
         return () => {
+            window.speechSynthesis.removeEventListener?.("voiceschanged", load);
             if (canSpeak) window.speechSynthesis.cancel();
             recognitionRef.current?.abort?.();
         };
@@ -252,6 +272,23 @@ const Chatbot = () => {
         toast.info(next ? "Replies will be read aloud" : "Voice replies off", {autoClose: 1200});
     };
 
+    const chooseVoice = (name) => {
+        setVoiceName(name);
+        localStorage.setItem("chat-voice", name);
+        if (!canSpeak) return;
+        const all = window.speechSynthesis.getVoices();
+        const picked = all.find(x => x.name === name) || pickVoice(all, false, "");
+        const bangla = /^bn/i.test(picked?.lang || "");
+        const u = new SpeechSynthesisUtterance(bangla ? "\u09B9\u09CD\u09AF\u09BE\u09B2\u09CB! \u0986\u09AE\u09BF \u09B6\u09AA\u09B8\u09CD\u09AA\u099F \u09B8\u09B9\u0995\u09BE\u09B0\u09C0\u0964" : "Hi! I'm your ShopSpot assistant.");
+        if (picked) {
+            u.voice = picked;
+            u.lang = picked.lang;
+        }
+        u.pitch = 1.05;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+    };
+
     const resetChat = () => {
         stopSpeaking();
         setMessages([GREETING]);
@@ -372,7 +409,7 @@ const Chatbot = () => {
                     className="mb-3 w-[calc(100vw-2rem)] sm:w-[400px] h-[min(640px,calc(100vh-7rem))] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden animate-fadeIn"
                     role="dialog" aria-label="ShopSpot assistant">
                     {/* Header */}
-                    <div className="relative bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 px-4 py-3.5 flex items-center gap-3 text-white">
+                    <div className="relative bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 px-3.5 py-3.5 flex items-center gap-2.5 text-white">
                         <div className="relative">
                             <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
                                 <Bot className="w-6 h-6"/>
@@ -380,13 +417,21 @@ const Chatbot = () => {
                             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-300 border-2 border-emerald-600 rounded-full"/>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-bold leading-tight flex items-center gap-1.5">
-                                ShopSpot Assistant <Sparkles className="w-3.5 h-3.5 text-yellow-200"/>
+                            <p className="font-bold leading-tight flex items-center gap-1.5 whitespace-nowrap">
+                                <span className="truncate">ShopSpot AI</span>
+                                <Sparkles className="w-3.5 h-3.5 text-yellow-200 flex-shrink-0"/>
                             </p>
                             <p className="text-xs text-emerald-50/90">
                                 {listening ? "Listening… speak now" : loading ? "Typing…" : "Online · AI powered"}
                             </p>
                         </div>
+                        {canSpeak && (
+                            <button onClick={() => setShowVoiceSettings(o => !o)} title="Choose voice"
+                                    aria-label="Voice settings" aria-expanded={showVoiceSettings}
+                                    className={`p-2 rounded-full transition-colors ${showVoiceSettings ? "bg-white text-emerald-700" : "hover:bg-white/20"}`}>
+                                <Settings2 className="w-4 h-4"/>
+                            </button>
+                        )}
                         {canSpeak && (
                             <button onClick={toggleAutoSpeak} title={autoSpeak ? "Voice replies on" : "Voice replies off"}
                                     aria-label="Toggle voice replies" aria-pressed={autoSpeak}
@@ -403,6 +448,26 @@ const Chatbot = () => {
                             <X className="w-4 h-4"/>
                         </button>
                     </div>
+
+                    {/* Voice picker */}
+                    {showVoiceSettings && (
+                        <div className="px-4 py-3 bg-emerald-50 dark:bg-gray-900 border-b border-emerald-100 dark:border-gray-700 text-sm">
+                            <label htmlFor="chat-voice" className="block font-semibold text-gray-800 dark:text-gray-100 mb-1.5">Assistant voice</label>
+                            <select id="chat-voice" value={voiceName} onChange={e => chooseVoice(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-xl border border-emerald-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-sm focus:outline-none focus:border-emerald-500">
+                                <option value="">Automatic (female voice)</option>
+                                {voices.map(v => (
+                                    <option key={v.name} value={v.name}>
+                                        {v.name.replace(/^(Microsoft|Google) /, "")} · {/^bn/i.test(v.lang) ? "Bangla" : v.lang}{isFemale(v) ? " · female" : ""}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                Picking a voice plays a short sample. Voices come from your device; Bangla replies
+                                use a Bangla voice when one is installed.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-gray-50 dark:bg-gray-900">
