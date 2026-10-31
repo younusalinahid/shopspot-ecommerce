@@ -93,14 +93,14 @@ export default function ProductCard({ product, showDiscount = false }) {
             </div>
 
             <div className="mt-2 sm:mt-4 px-1 cursor-pointer flex flex-col items-center justify-center text-center" onClick={() => navigate(`/product/${product.id}`)}>
-                <h3 className="text-gray-800 dark:text-gray-100 font-medium text-sm truncate w-full">{product.name}</h3>
+                <h3 className="text-gray-800 dark:text-gray-100 font-semibold text-sm sm:text-base truncate w-full" title={product.name}>{product.name}</h3>
 
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1">
                     {hasDiscount && (
-                        <span className="text-gray-400 line-through text-xs">৳{Number(product.originalPrice).toFixed(2)}</span>
+                        <span className="text-gray-400 line-through text-xs sm:text-sm">৳{Number(product.originalPrice).toFixed(2)}</span>
                     )}
                     <div className="flex items-center gap-1">
-                        <p className="text-gray-900 dark:text-white font-bold text-sm sm:text-base">৳{Number(product.price).toFixed(2)}</p>
+                        <p className="text-gray-900 dark:text-white font-bold text-base sm:text-lg">৳{Number(product.price).toFixed(2)}</p>
                         {hasDiscount && (
                             <span className="bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">{discountPercentage}% OFF</span>
                         )}

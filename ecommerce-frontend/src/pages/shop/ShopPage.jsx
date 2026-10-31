@@ -139,16 +139,16 @@ export default function ShopPage() {
         update({min, max});
     };
 
-    const rowCls = (active) => `w-full flex justify-between gap-2 px-3 py-2 rounded-lg text-left transition-colors ${active
+    const rowCls = (active) => `w-full flex justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-base transition-colors ${active
         ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 font-semibold'
         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
-    const inputCls = 'w-full min-w-0 px-2 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
+    const inputCls = 'w-full min-w-0 px-3 py-2 text-base rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
 
     const sidebar = (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <section>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Categories</h3>
-                <ul className="space-y-1 text-sm">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Categories</h3>
+                <ul className="space-y-1">
                     <li>
                         <button onClick={() => update({category: '', sub: ''})} className={rowCls(!categoryId)}>
                             <span>All products</span>
@@ -179,7 +179,7 @@ export default function ShopPage() {
                                         {cat.subCategories.map(sub => (
                                             <li key={sub.id}>
                                                 <button onClick={() => update({category: cat.id, sub: sub.id})}
-                                                        className={`w-full text-left pl-3 pr-2 py-1.5 text-sm transition-colors ${String(sub.id) === subCategoryId
+                                                        className={`w-full text-left pl-4 pr-2 py-2 text-[15px] transition-colors ${String(sub.id) === subCategoryId
                                                             ? 'text-cyan-700 dark:text-cyan-300 font-semibold'
                                                             : 'text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400'}`}>
                                                     {sub.name}
@@ -195,8 +195,8 @@ export default function ShopPage() {
             </section>
 
             <section>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Price</h3>
-                <ul className="space-y-1 text-sm mb-3">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Price</h3>
+                <ul className="space-y-1 mb-4">
                     {PRICE_RANGES.map(r => {
                         const active = minPrice === r.min && maxPrice === r.max;
                         return (
@@ -218,22 +218,22 @@ export default function ShopPage() {
                            value={priceDraft.max} aria-label="Maximum price" className={inputCls}
                            onChange={e => setPriceDraft(d => ({...d, max: e.target.value}))}/>
                     <button type="submit"
-                            className="px-3 py-1.5 text-sm rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white flex-shrink-0">
+                            className="px-4 py-2 text-base font-medium rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white flex-shrink-0">
                         Go
                     </button>
                 </form>
             </section>
 
             <section>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Availability</h3>
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 py-1 cursor-pointer">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Availability</h3>
+                <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={inStock} onChange={e => update({stock: e.target.checked})}
-                           className="rounded text-cyan-600 focus:ring-cyan-500"/>
+                           className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
                     In stock only
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 py-1 cursor-pointer">
+                <label className="flex items-center gap-3 text-base text-gray-700 dark:text-gray-300 py-1.5 cursor-pointer">
                     <input type="checkbox" checked={onSale} onChange={e => update({sale: e.target.checked})}
-                           className="rounded text-cyan-600 focus:ring-cyan-500"/>
+                           className="w-5 h-5 rounded text-cyan-600 focus:ring-cyan-500"/>
                     On sale (discounted)
                 </label>
             </section>
@@ -242,18 +242,18 @@ export default function ShopPage() {
 
     return (
         <div className="w-full px-3 sm:px-6 lg:px-8 py-6 sm:py-8 scroll-mt-4" ref={topRef}>
-            <div className="mb-5">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="mb-6">
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {selectedSub ? selectedSub.name : selectedCategory ? selectedCategory.name : 'Shop'}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-base text-gray-500 dark:text-gray-400 mt-1.5">
                     {selectedCategory ? `All products in ${selectedCategory.name}` : 'Browse our full collection'}
                 </p>
             </div>
 
             <div className="flex gap-6 lg:gap-8">
-                <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
-                    <div className="sticky top-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 max-h-[calc(100vh-2rem)] overflow-y-auto">
+                <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0">
+                    <div className="sticky top-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
                         {sidebar}
                     </div>
                 </aside>
@@ -261,14 +261,14 @@ export default function ShopPage() {
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row gap-3 mb-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"/>
                             <input type="search" value={searchText} onChange={e => setSearchText(e.target.value)}
                                    placeholder="Search in shop..." aria-label="Search products" maxLength={100}
-                                   className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"/>
+                                   className="w-full pl-11 pr-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none"/>
                         </div>
                         <div className="flex gap-3">
                             <button onClick={() => setFiltersOpen(true)}
-                                    className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                    className="lg:hidden flex items-center gap-2 px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                                 <SlidersHorizontal className="w-4 h-4"/> Filters
                                 {activeChips.length > 0 && (
                                     <span className="bg-cyan-600 text-white text-xs rounded-full px-1.5">{activeChips.length}</span>
@@ -276,13 +276,13 @@ export default function ShopPage() {
                             </button>
                             <select value={sort} onChange={e => update({sort: e.target.value === 'newest' ? '' : e.target.value})}
                                     aria-label="Sort products"
-                                    className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                    className="flex-1 sm:flex-none px-4 py-3 text-base rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 mb-5 text-sm min-h-[1.75rem]">
+                    <div className="flex flex-wrap items-center gap-2 mb-6 text-base min-h-[2rem]">
                         {data && (
                             <span className="text-gray-600 dark:text-gray-400 mr-1">
                                 {data.totalElements} product{data.totalElements === 1 ? '' : 's'}
@@ -290,7 +290,7 @@ export default function ShopPage() {
                         )}
                         {activeChips.map(chip => (
                             <button key={chip.key} onClick={() => update(chip.clear)}
-                                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100">
+                                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-medium rounded-full bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100">
                                 {chip.label} <X className="w-3.5 h-3.5"/>
                             </button>
                         ))}
@@ -313,7 +313,7 @@ export default function ShopPage() {
                                     className="mt-3 text-cyan-600 hover:underline">Clear filters</button>
                         </div>
                     ) : (
-                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+                        <div className={`grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
                             {data?.content.map(product => <ProductCard key={product.id} product={product}/>)}
                         </div>
                     )}
