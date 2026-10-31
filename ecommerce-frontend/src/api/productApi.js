@@ -29,6 +29,12 @@ const getFormDataConfig = () => {
 
 export const productService = {
 
+    /** Shop page: search, filter, sort and paginate. Returns {content, totalElements, totalPages, ...}. */
+    browseShop: async (params, signal) => {
+        const response = await axios.get(`${PUBLIC_BASE_URL}/shop`, {params, signal});
+        return response.data;
+    },
+
     getAllProducts: async () => {
         try {
             const response = await axios.get(PUBLIC_BASE_URL);

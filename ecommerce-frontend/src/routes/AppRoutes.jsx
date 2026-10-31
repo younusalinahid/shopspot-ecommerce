@@ -21,6 +21,7 @@ import LoginRedirect from "../pages/auth/LoginRedirect";
 
 
 import ProductComparePage from "../pages/product/ProductComparePage";
+import ShopPage from "../pages/shop/ShopPage";
 
 export default function AppRoutes() {
     return (
@@ -29,6 +30,7 @@ export default function AppRoutes() {
             {/* ================= USER PUBLIC ================= */}
             <Route element={<MainLayout/>}>
                 <Route path="/" element={<Home/>}/>
+                <Route path="/shop" element={<ShopPage/>}/>
                 <Route path="/search" element={<SearchResultsPage/>}/>
                 <Route path="/subcategory/:subCategoryId" element={<ProductList/>}/>
                 <Route path="/product/:productId" element={<ProductDetails/>}/>

@@ -21,9 +21,32 @@ public class ProductController {
 
     private final RecommendationService recommendationService;
 
+    private final com.ecommerce.service.ShopService shopService;
+
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    /**
+     * Shop page listing: search + filters + sort + pagination.
+     * sort: newest (default), price_asc, price_desc, discount, name
+     */
+    @GetMapping("/shop")
+    public ResponseEntity<com.ecommerce.dto.ShopPageDTO> shop(
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "subCategoryId", required = false) Long subCategoryId,
+            @RequestParam(name = "minPrice", required = false) Integer minPrice,
+            @RequestParam(name = "maxPrice", required = false) Integer maxPrice,
+            @RequestParam(name = "inStock", defaultValue = "false") boolean inStock,
+            @RequestParam(name = "onSale", defaultValue = "false") boolean onSale,
+            @RequestParam(name = "sort", defaultValue = "newest") String sort,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "12") int size) {
+        if (q != null && q.length() > 100) q = q.substring(0, 100);
+        return ResponseEntity.ok(shopService.browse(q, categoryId, subCategoryId, minPrice, maxPrice,
+                inStock, onSale, sort, page, size));
     }
 
     @GetMapping("/{productId}")

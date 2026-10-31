@@ -45,10 +45,9 @@ const HomePage = () => {
             });
     }, []);
 
-    const handleCategorySeeAll = (categoryId, categoryName) => {
-        navigate(`/category/${categoryId}`, {
-            state: {categoryName}
-        });
+    // Category titles and "See All" open the Shop page filtered to that category
+    const handleCategorySeeAll = (categoryId) => {
+        navigate(`/shop?category=${categoryId}`);
     };
 
     const handleViewAllFeatured = () => {
@@ -166,19 +165,24 @@ const HomePage = () => {
                                         {categoryProducts.map((categoryData) => (
                                             <div key={categoryData.id} className="space-y-6">
                                                 <div className="flex justify-between items-center">
-                                                    <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCategorySeeAll(categoryData.id)}
+                                                        className="group flex items-center gap-3 min-w-0 text-left"
+                                                        title={`See all ${categoryData.name}`}
+                                                    >
                                                         {categoryData.icon && (
                                                             <div
                                                                 className={`w-10 h-10 ${categoryData.color} rounded-full flex items-center justify-center text-white text-xl`}>
                                                                 {categoryData.icon}
                                                             </div>
                                                         )}
-                                                        <h2 className="font-bold text-gray-900 dark:text-white text-xl sm:text-2xl transition-colors duration-300">
+                                                        <h2 className="font-bold text-gray-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 text-xl sm:text-2xl truncate transition-colors duration-300">
                                                             {categoryData.name}
                                                         </h2>
-                                                    </div>
+                                                    </button>
                                                     <button
-                                                        onClick={() => handleCategorySeeAll(categoryData.id, categoryData.name)}
+                                                        onClick={() => handleCategorySeeAll(categoryData.id)}
                                                         className="flex items-center space-x-1 font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors duration-300"
                                                     >
                                                         <span>See All</span>

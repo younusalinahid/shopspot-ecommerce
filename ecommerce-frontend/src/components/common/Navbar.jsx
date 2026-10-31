@@ -1,6 +1,6 @@
 import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera} from "lucide-react";
 import {useEffect, useState, useRef} from 'react';
-import {useNavigate, useLocation, Link} from 'react-router-dom';
+import {useNavigate, useLocation, Link, NavLink} from 'react-router-dom';
 import {productService} from '../../api/productApi';
 import logo from "../../assets/logo/logo-6.png";
 import playStoreButton from "../../assets/images/get-play-store-icon.png";
@@ -402,6 +402,21 @@ export default function Navbar() {
                             </div>
                         </form>
                     </div>
+
+                    {/* Main sections */}
+                    <div className="flex items-center gap-1 sm:gap-2 -mt-1 pb-2">
+                        {[
+                            {to: '/', label: 'Home', end: true},
+                            {to: '/shop', label: 'Shop'},
+                        ].map(item => (
+                            <NavLink key={item.to} to={item.to} end={item.end}
+                                     className={({isActive}) => `px-4 sm:px-5 py-1.5 rounded-full text-sm sm:text-base font-semibold transition-colors ${isActive
+                                         ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
+                                         : 'text-white/90 hover:text-white hover:bg-white/15'}`}>
+                                {item.label}
+                            </NavLink>
+                        ))}
+                    </div>
                 </div>
             </nav>
 
@@ -439,6 +454,7 @@ export default function Navbar() {
                         <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                             {[
                                 {to: "/", label: "Home"},
+                                {to: "/shop", label: "Shop"},
                                 {to: "/cart", label: `Cart${cartCount ? ` (${cartCount})` : ""}`},
                                 {to: "/compare", label: "Compare"},
                                 ...(isLoggedIn ? [{to: "/orders", label: "My Orders"}] : []),
