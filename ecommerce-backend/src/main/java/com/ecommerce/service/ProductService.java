@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -63,10 +62,7 @@ public class ProductService {
         List<Product> products = productRepository.searchByNameOrSubCategory(query);
         for (Product product : products) {
             if (!product.isActive()) continue;
-            String imageData = null;
-            if (product.getImageData() != null) {
-                imageData = Base64.getEncoder().encodeToString(product.getImageData());
-            }
+            String imageData = com.ecommerce.util.ImageUrls.product(product.getId(), product.getImageData());
             results.add(new SearchResultDTO(
                     product.getId(),
                     product.getName(),
@@ -94,6 +90,13 @@ public class ProductService {
             ));
         }
         return results;
+    }
+
+    /** Raw product image for /api/public/products/{id}/image. */
+    public byte[] getProductImage(Long productId) {
+        return productRepository.findById(productId)
+                .map(Product::getImageData)
+                .orElse(null);
     }
 
     public ProductDTO getProductById(Long productId) {

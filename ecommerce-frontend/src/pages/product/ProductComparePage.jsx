@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import {imageSrc} from '../../utils/imageSrc';
 
 const ProductComparePage = () => {
     const navigate = useNavigate();
@@ -70,7 +71,7 @@ const ProductComparePage = () => {
                                         <button onClick={() => removeFromCompare(item.id || item._id)}
                                                 className="absolute top-4 right-4 text-slate-300 hover:text-rose-500">
                                             <Trash2 className="w-4 h-4"/></button>
-                                        <img src={item.imageData ? (item.imageData.startsWith('data:') ? item.imageData : `data:image/jpeg;base64,${item.imageData}`) : ''}
+                                        <img src={imageSrc(item.imageData)}
                                              alt={item.name}
                                              className="w-28 h-28 object-cover rounded-2xl mx-auto shadow-md"/>
                                         <p className="mt-3 text-sm font-bold text-slate-900 dark:text-white">{item.name}</p>

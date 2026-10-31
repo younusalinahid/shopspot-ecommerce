@@ -18,6 +18,18 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * The browser closed the connection (page changed, tab closed, slow network).
+     * Nothing can be sent back, so just note it instead of logging a long stack trace.
+     */
+    @ExceptionHandler({
+            org.apache.catalina.connector.ClientAbortException.class,
+            org.springframework.web.context.request.async.AsyncRequestNotUsableException.class
+    })
+    public void handleClientAbort(Exception ex) {
+        log.debug("Client closed the connection: {}", ex.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse> handleIllegalArgument(IllegalArgumentException ex) {
         ApiResponse response = new ApiResponse(false, ex.getMessage());

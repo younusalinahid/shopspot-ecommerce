@@ -9,6 +9,7 @@ import {
 import { productService } from '../api/productApi';
 import { isAuthenticated } from '../api/authApi';
 import { toast } from "react-toastify";
+import {imageSrc} from '../utils/imageSrc';
 
 const CartContext = createContext();
 
@@ -51,8 +52,7 @@ const guestItemId = (productId, size, color) => `guest-${productId}-${size || ''
 
 // The product API returns raw base64; the cart page expects a data URL (same as the server cart)
 const toImageSrc = (imageData) => {
-    if (!imageData) return null;
-    return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
+    return imageSrc(imageData);
 };
 
 export const CartProvider = ({ children }) => {

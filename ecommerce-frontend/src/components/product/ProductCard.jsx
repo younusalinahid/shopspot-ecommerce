@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
 import { toast } from 'react-toastify';
+import {imageSrc} from '../../utils/imageSrc';
 
 export default function ProductCard({ product, showDiscount = false }) {
 
@@ -52,7 +53,7 @@ export default function ProductCard({ product, showDiscount = false }) {
 
     const hasDiscount = Boolean(product.originalPrice && Number(product.originalPrice) > Number(product.price));
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
-    const imageSource = product.imageData ? (product.imageData.startsWith('data:') ? product.imageData : `data:image/jpeg;base64,${product.imageData}`) : null;
+    const imageSource = imageSrc(product.imageData);
 
     return (
         <div className="group w-full relative">

@@ -6,7 +6,6 @@ import com.ecommerce.model.SubCategory;
 import com.ecommerce.model.Category;
 import org.springframework.stereotype.Component;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,11 +34,7 @@ public class ProductMapper {
             dto.setOriginalPrice(0);
         }
 
-        if (product.getImageData() != null) {
-            dto.setImageData(
-                    Base64.getEncoder().encodeToString(product.getImageData())
-            );
-        }
+        dto.setImageData(com.ecommerce.util.ImageUrls.product(product.getId(), product.getImageData()));
 
         SubCategory sub = product.getSubCategory();
         if (sub != null) {

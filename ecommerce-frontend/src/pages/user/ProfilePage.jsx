@@ -9,6 +9,7 @@ import {
     Shield, Calendar, Package, AlertTriangle, Send
 } from "lucide-react";
 import { toast } from "react-toastify";
+import {imageSrc} from '../../utils/imageSrc';
 
 const TABS = [
     { id: "profile", label: "Profile Info", icon: User },
@@ -423,7 +424,7 @@ const ProfilePage = () => {
                                                     {order.items?.slice(0, 2).map(item => (
                                                         item.productImage && (
                                                             <img key={item.id}
-                                                                 src={`data:image/jpeg;base64,${item.productImage}`}
+                                                                 src={imageSrc(item.productImage)}
                                                                  alt={item.productName}
                                                                  className="w-12 h-12 rounded-lg object-cover border-2 border-white dark:border-gray-800 shadow-sm"
                                                             />
@@ -466,7 +467,7 @@ const ProfilePage = () => {
                                                 <Link to={`/product/${item.productId}`} className="flex-shrink-0">
                                                     {item.productImage ? (
                                                         <img
-                                                            src={`data:image/jpeg;base64,${item.productImage}`}
+                                                            src={imageSrc(item.productImage)}
                                                             alt={item.productName}
                                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                                         />

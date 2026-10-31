@@ -49,6 +49,21 @@ public class ProductController {
                 inStock, onSale, sort, page, size));
     }
 
+    @GetMapping("/{productId}/image")
+    public ResponseEntity<byte[]> getProductImage(@PathVariable Long productId) {
+        byte[] image = productService.getProductImage(productId);
+        if (image == null || image.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(
+                        com.ecommerce.util.ImageValidator.contentType(image)))
+                // URLs carry ?v=<hash of the image>, so a long cache is safe
+                .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofDays(30)).cachePublic())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(image);
+    }
+
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getProductById(productId));

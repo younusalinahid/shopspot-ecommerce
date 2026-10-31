@@ -588,11 +588,8 @@ public class OrderService {
                 if (item.getProduct() != null) {
                     itemDTO.setProductId(item.getProduct().getId());
                     itemDTO.setProductName(item.getProduct().getName());
-                    if (item.getProduct().getImageData() != null) {
-                        itemDTO.setProductImage(
-                                Base64.getEncoder().encodeToString(item.getProduct().getImageData())
-                        );
-                    }
+                    itemDTO.setProductImage(com.ecommerce.util.ImageUrls.product(
+                            item.getProduct().getId(), item.getProduct().getImageData()));
                 }
                 return itemDTO;
             }).collect(Collectors.toList()));

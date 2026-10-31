@@ -8,7 +8,6 @@ import com.ecommerce.model.CartItem;
 import com.ecommerce.model.Product;
 import org.springframework.stereotype.Component;
 
-import java.util.Base64;
 import java.util.stream.Collectors;
 
 @Component
@@ -61,7 +60,7 @@ public class CartMapper {
             return createEmptyProductDTO();
         }
 
-        String imageData = convertImageData(product.getImageData());
+        String imageData = com.ecommerce.util.ImageUrls.product(product.getId(), product.getImageData());
 
         ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
@@ -76,24 +75,6 @@ public class CartMapper {
         dto.setImageData(imageData);
 
         return dto;
-    }
-
-    private String convertImageData(byte[] imageBytes) {
-        if (imageBytes == null || imageBytes.length == 0) {
-            return null;
-        }
-
-        try {
-            String imageString = new String(imageBytes);
-            if (imageString.startsWith("data:image/")) {
-                return imageString;
-            }
-
-            return "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageBytes);
-        } catch (Exception e) {
-            System.err.println("Error converting image data: " + e.getMessage());
-            return null;
-        }
     }
 
     private ProductDTO createEmptyProductDTO() {

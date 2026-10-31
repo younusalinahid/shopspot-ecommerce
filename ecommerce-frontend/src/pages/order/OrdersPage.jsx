@@ -10,6 +10,7 @@ import {
     TrendingUp, Sparkles, User,
     Phone, Home, Navigation
 } from 'lucide-react';
+import {imageSrc} from '../../utils/imageSrc';
 
 const STATUS = {
     PENDING: {
@@ -487,7 +488,7 @@ function OrderDetailsSidebar({order, onClose}) {
                                 <div
                                     className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
                                     {item.productImage ? (
-                                        <img src={`data:image/jpeg;base64,${item.productImage}`} alt={item.productName}
+                                        <img src={imageSrc(item.productImage)} alt={item.productName}
                                              className="w-full h-full object-cover"/>
                                     ) : (
                                         <Package className="w-5 h-5 text-gray-400 m-3"/>
@@ -561,7 +562,7 @@ function OrderCard({order, expanded, onToggle, onCancel, cancelling, index, onVi
                                 <div key={item.id}
                                      className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden flex-shrink-0">
                                     {item.productImage ? (
-                                        <img src={`data:image/jpeg;base64,${item.productImage}`} alt={item.productName}
+                                        <img src={imageSrc(item.productImage)} alt={item.productName}
                                              className="w-full h-full object-cover"/>
                                     ) : (
                                         <Package className="w-6 h-6 text-gray-400 m-4"/>

@@ -44,8 +44,6 @@ public class ProductWithCategoryDTO {
         this.categoryId = categoryId;
         this.subCategoryId = subCategoryId;
 
-        if (imageData != null) {
-            this.imageData = java.util.Base64.getEncoder().encodeToString(imageData);
-        }
+        this.imageData = com.ecommerce.util.ImageUrls.product(id, imageData);
     }
 }

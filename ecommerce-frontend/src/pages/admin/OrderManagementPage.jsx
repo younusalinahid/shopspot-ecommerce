@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import { toast } from 'react-toastify';
+import {imageSrc} from '../../utils/imageSrc';
 
 const STATUS_CONFIG = {
     PENDING:    { label: 'Pending',    color: 'bg-yellow-100 text-yellow-800', icon: Clock        },
@@ -395,7 +396,7 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                                     <div className="w-11 h-11 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
                                         {item.productImage
                                             ? <img
-                                                src={`data:image/jpeg;base64,${item.productImage}`}
+                                                src={imageSrc(item.productImage)}
                                                 alt={item.productName}
                                                 className="w-full h-full object-cover"
                                             />

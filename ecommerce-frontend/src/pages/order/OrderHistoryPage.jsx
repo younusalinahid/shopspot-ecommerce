@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { orderApi } from "../../api/orderApi";
+import {imageSrc} from '../../utils/imageSrc';
 
 const statusColors = {
     PENDING: "bg-yellow-100 text-yellow-800",
@@ -62,7 +63,7 @@ const OrderHistoryPage = () => {
                                             item.productImage && (
                                                 <img
                                                     key={item.id}
-                                                    src={`data:image/jpeg;base64,${item.productImage}`}
+                                                    src={imageSrc(item.productImage)}
                                                     alt={item.productName}
                                                     className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800"
                                                 />

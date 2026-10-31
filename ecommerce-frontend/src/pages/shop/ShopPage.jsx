@@ -342,7 +342,7 @@ export default function ShopPage() {
             </div>
 
             {filtersOpen && (
-                <div className="lg:hidden fixed inset-0 z-50 flex">
+                <div className="lg:hidden fixed inset-0 z-[60] flex">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersOpen(false)}/>
                     <div className="relative ml-auto w-full max-w-xs h-full bg-white dark:bg-gray-800 shadow-xl flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">

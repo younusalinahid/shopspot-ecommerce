@@ -10,7 +10,6 @@ import com.ecommerce.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,10 +54,8 @@ public class WishlistService {
         dto.setProductName(wishlist.getProduct().getName());
         dto.setProductPrice(wishlist.getProduct().getPrice());
         dto.setCreatedAt(wishlist.getCreatedAt());
-        if (wishlist.getProduct().getImageData() != null) {
-            dto.setProductImage(Base64.getEncoder()
-                    .encodeToString(wishlist.getProduct().getImageData()));
-        }
+        dto.setProductImage(com.ecommerce.util.ImageUrls.product(
+                wishlist.getProduct().getId(), wishlist.getProduct().getImageData()));
         return dto;
     }
 }

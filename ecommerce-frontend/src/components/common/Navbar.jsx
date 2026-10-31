@@ -16,7 +16,7 @@ const MAIN_LINKS = [
     {to: '/shop', label: 'Shop'},
 ];
 
-const mainLinkClass = ({isActive}) => `px-4 lg:px-5 py-1.5 lg:py-2 rounded-full text-sm sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
+const mainLinkClass = ({isActive}) => `px-4 lg:px-5 py-1.5 lg:py-2 rounded-full text-[15px] sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
     ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
     : 'text-white/90 hover:text-white hover:bg-white/15'}`;
 
@@ -271,8 +271,17 @@ export default function Navbar() {
                             </Link>
                         </div>
 
+                        {/* Main sections (desktop): next to the logo */}
+                        <nav aria-label="Main" className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0 lg:ml-2 xl:ml-4">
+                            {MAIN_LINKS.map(item => (
+                                <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
+                                    {item.label}
+                                </NavLink>
+                            ))}
+                        </nav>
+
                         {/* Search Bar (Desktop) */}
-                        <div className="hidden lg:flex flex-1 min-w-0 max-w-2xl">
+                        <div className="hidden lg:flex flex-1 min-w-0 max-w-2xl mx-auto">
                             <form onSubmit={handleSearchSubmit} className="relative w-full">
                                 <input
                                     type="text"
@@ -280,7 +289,7 @@ export default function Navbar() {
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                                     placeholder="Search products, brands, and categories..."
-                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 text-gray-800 placeholder-gray-500 text-base shadow-md transition-all duration-300"
+                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-base shadow-md transition-all duration-300"
                                 />
                                 {renderSearchResults()}
 
@@ -309,17 +318,8 @@ export default function Navbar() {
                             </form>
                         </div>
 
-                        {/* Main sections (desktop): right of the search bar */}
-                        <div className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0">
-                            {MAIN_LINKS.map(item => (
-                                <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </div>
-
                         {/* Actions (Cart, Profile, Theme) */}
-                        <div className="flex items-center flex-shrink-0 ml-auto gap-1 sm:gap-3 lg:gap-4">
+                        <div className="flex items-center flex-shrink-0 ml-auto lg:ml-0 gap-1 sm:gap-3 lg:gap-4">
                             <img
                                 src={playStoreButton}
                                 alt="Google Play"

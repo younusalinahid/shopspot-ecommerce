@@ -3,12 +3,13 @@ import {Link} from 'react-router-dom';
 import {useCart} from '../../context/CartContext';
 import {Trash2, Plus, Minus, ShoppingBag, Package, Truck, Shield, CreditCard} from 'lucide-react';
 import {toast} from 'react-toastify';
+import {imageSrc} from '../../utils/imageSrc';
 
 const CartPage = () => {
     const {cart, isGuest, updateCartItem, removeCartItem, clearCart} = useCart();
     const [updatingItems, setUpdatingItems] = useState({});
 
-    const getProductImage = (item) => item.product?.imageData || null;
+    const getProductImage = (item) => imageSrc(item.product?.imageData);
     const getProductName = (item) => item.product?.name || "Product Not Available";
     const getProductPrice = (item) => item.product?.price || 0;
 

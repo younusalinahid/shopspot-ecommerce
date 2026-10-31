@@ -8,6 +8,7 @@ import {toast} from 'react-toastify';
 import {wishlistApi} from '../../api/wishlistApi';
 import ReviewSection from "../../components/product/ReviewSection";
 import {getReviewSummary} from '../../api/reviewApi';
+import {imageSrc} from '../../utils/imageSrc';
 
 const ProductDetailsPage = () => {
     const {productId} = useParams();
@@ -200,8 +201,7 @@ const ProductDetailsPage = () => {
     const decreaseQuantity = () => { if (quantity > 1) setQuantity(q => parseInt(q) - 1); };
 
     const getImageSource = (imageData) => {
-        if (!imageData) return null;
-        return imageData.startsWith('data:') ? imageData : `data:image/jpeg;base64,${imageData}`;
+        return imageSrc(imageData);
     };
 
     const getStockStatus = () => {
@@ -389,8 +389,13 @@ const ProductDetailsPage = () => {
                                     <div className="flex items-center space-x-3 p-3 bg-gradient-to-r from-cyan-50 to-blue-100 dark:from-cyan-900/10 dark:to-blue-900/10 rounded-xl">
                                         <Truck className="w-8 h-8 text-cyan-600"/>
                                         <div>
-                                            <h4 className="text-xs font-semibold text-gray-900 dark:text-white">Free Delivery</h4>
-                                            <p className="text-xs text-gray-600 dark:text-gray-400">Within 2-3 days</p>
+                                            {/* Same rule as checkout: free over ৳2000, otherwise ৳120 */}
+                                            <h4 className="text-xs font-semibold text-gray-900 dark:text-white">
+                                                {product.price > 2000 ? 'Free Delivery' : 'Delivery ৳120'}
+                                            </h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                {product.price > 2000 ? '3–5 business days' : 'Free on orders over ৳2000'}
+                                            </p>
                                         </div>
                                     </div>
                                     {/* 7 Days Return Policy Section */}

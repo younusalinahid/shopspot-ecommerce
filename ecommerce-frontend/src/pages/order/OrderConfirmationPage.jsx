@@ -3,6 +3,7 @@ import {useParams, useNavigate, Link} from 'react-router-dom';
 import {orderApi, guestOrderStore} from '../../api/orderApi';
 import {isAuthenticated} from '../../api/authApi';
 import {CheckCircle2, Package, MapPin, Loader2, ShoppingBag} from 'lucide-react';
+import {imageSrc} from '../../utils/imageSrc';
 
 const STATUS_STYLE = {
     PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
@@ -105,7 +106,7 @@ export default function OrderConfirmationPage() {
                                     <div
                                         className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center">
                                         {item.productImage
-                                            ? <img src={`data:image/jpeg;base64,${item.productImage}`}
+                                            ? <img src={imageSrc(item.productImage)}
                                                    alt={item.productName} className="w-full h-full object-cover"/>
                                             : <Package className="w-6 h-6 text-gray-400"/>
                                         }

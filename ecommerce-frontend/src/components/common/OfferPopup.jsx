@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useAllProducts } from "../../hooks/useAllProducts";
 import { useNavigate, useLocation } from "react-router-dom";
+import {imageSrc} from '../../utils/imageSrc';
 
 const OfferPopup = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -62,10 +63,7 @@ const OfferPopup = () => {
     };
 
     const getImage = (product) => {
-        if (!product?.imageData) return null;
-        return product.imageData.startsWith('data:')
-            ? product.imageData
-            : `data:image/jpeg;base64,${product.imageData}`;
+        return imageSrc(product?.imageData);
     };
 
     const handleImageError = (e) => {
@@ -79,16 +77,16 @@ const OfferPopup = () => {
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4">
-            <div className="bg-white rounded-3xl max-w-[820px] w-full shadow-2xl flex flex-col md:flex-row overflow-hidden relative">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-[820px] w-full max-h-[90vh] overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
 
                 <button
                     onClick={closePopup}
-                    className="absolute top-4 right-4 z-30 text-gray-500 hover:text-gray-800 transition"
+                    className="absolute top-3 right-3 z-30 p-1.5 rounded-full bg-white/80 dark:bg-gray-900/70 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition"
                 >
                     <X size={24} />
                 </button>
 
-                <div className="md:w-1/2 h-[550px] relative">
+                <div className="md:w-1/2 h-64 sm:h-80 md:h-[550px] relative flex-shrink-0">
                     <img
                         src={getImage(product)}
                         alt={product.name}
@@ -100,14 +98,14 @@ const OfferPopup = () => {
                     </div>
                 </div>
 
-                <div className="md:w-1/2 p-8 flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-center">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
                         {product.name}
                     </h2>
 
                     <div className="mb-6">
                         <div className="flex items-center gap-3">
-                            <span className="text-4xl font-bold text-cyan-600">
+                            <span className="text-3xl md:text-4xl font-bold text-cyan-600 dark:text-cyan-400">
                                 ৳{discountedPrice.toFixed(0)}
                             </span>
                             <span className="text-xl text-gray-400 line-through">
@@ -119,7 +117,7 @@ const OfferPopup = () => {
                         </p>
                     </div>
 
-                    <p className="text-gray-500 mb-8">
+                    <p className="text-gray-500 dark:text-gray-300 mb-6 md:mb-8">
                         Limited Time Offer • Shop Now &amp; Save!
                     </p>
 
