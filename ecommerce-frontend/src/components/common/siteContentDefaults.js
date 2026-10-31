@@ -14,7 +14,14 @@ const SITE_CONTENT_DEFAULTS = {
         "telegramUrl": "https://t.me/+8801786277713",
         "youtubeUrl": "",
         "tiktokUrl": "",
-        "copyrightText": "© 2026 ShopSpot. All rights reserved."
+        "copyrightText": "© 2026 ShopSpot. All rights reserved.",
+        "brandColor": "#064e3b",
+        "logoBgColor": "#064e3b",
+        "topBarColor": "#064e3b",
+        "showTopBar": true,
+        "announcementText": "Free delivery on orders over ৳2000",
+        "announcementLinkText": "Shop Deals",
+        "announcementLinkUrl": "/shop?sale=1"
     },
     "pages": [
         {

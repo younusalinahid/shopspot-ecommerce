@@ -35,6 +35,18 @@ public class SiteSettings {
 
     private String copyrightText;
 
+    // ---- Header look and the announcement bar above it ----
+    /** Store name colour in the header (light mode), e.g. #064e3b. */
+    @Column(length = 7) private String brandColor;
+    /** Background of the box behind the logo, e.g. #064e3b. */
+    @Column(length = 7) private String logoBgColor;
+    /** Background of the announcement bar. */
+    @Column(length = 7) private String topBarColor;
+    private Boolean showTopBar;
+    @Column(length = 200) private String announcementText;
+    @Column(length = 40) private String announcementLinkText;
+    @Column(length = 500) private String announcementLinkUrl;
+
     /** Logo shown in the navbar; served by /api/public/site-content/logo. */
     @Lob
     @Column(columnDefinition = "LONGBLOB")

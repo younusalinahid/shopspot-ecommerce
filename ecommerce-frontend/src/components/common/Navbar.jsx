@@ -1,4 +1,4 @@
-import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera, Phone, Mail, ChevronDown, LayoutGrid} from "lucide-react";
+import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera, Phone, Mail, Sparkles} from "lucide-react";
 import {useEffect, useState, useRef} from 'react';
 import {useNavigate, useLocation, Link} from 'react-router-dom';
 import {productService} from '../../api/productApi';
@@ -9,7 +9,7 @@ import UserMenu from "../user/UserMenu";
 import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
 import {useSiteContent} from "../../hooks/useSiteContent";
-import {useCategories} from "../../hooks/useCategory";
+import SITE_CONTENT_DEFAULTS from "./siteContentDefaults";
 
 // Header links. "Deals" is the Shop page filtered to discounted products.
 const NAV_LINKS = [
@@ -24,9 +24,7 @@ const navLinkCls = (active) => `relative px-3 xl:px-4 py-2 text-[15px] xl:text-b
 
 export default function Navbar() {
     const {storeName, logoUrl: siteLogoUrl, settings: siteSettings} = useSiteContent();
-    const {categories} = useCategories();
-    const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-    const categoriesRef = useRef(null);
+
     const [showAuthPage, setShowAuthPage] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const {isDark, toggleTheme} = useTheme();
@@ -59,15 +57,6 @@ export default function Navbar() {
     }, [fetchCart]);
 
     useEffect(() => {
-        const close = (e) => {
-            if (categoriesRef.current && !categoriesRef.current.contains(e.target)) setIsCategoriesOpen(false);
-        };
-        document.addEventListener('mousedown', close);
-        return () => document.removeEventListener('mousedown', close);
-    }, []);
-
-    useEffect(() => {
-        setIsCategoriesOpen(false);
         setIsMobileMenuOpen(false);
     }, [location.pathname, location.search]);
 
@@ -274,6 +263,15 @@ export default function Navbar() {
 
     const phone = siteSettings?.contactPhone;
     const email = siteSettings?.contactEmail;
+    // Header look and announcement come from Admin -> Site Content (with built-in defaults)
+    const D = SITE_CONTENT_DEFAULTS.settings;
+    const pick = (key) => siteSettings?.[key] || D[key];
+    const showTopBar = siteSettings?.showTopBar !== false;
+    const brandColor = pick('brandColor');
+    const announcementText = pick('announcementText');
+    const announcementLinkText = pick('announcementLinkText');
+    const announcementLinkUrl = pick('announcementLinkUrl');
+    const isInternalLink = announcementLinkUrl?.startsWith('/');
 
     const searchForm = (mobile) => (
         <form onSubmit={handleSearchSubmit} className="relative w-full">
@@ -284,21 +282,24 @@ export default function Navbar() {
                 onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                 placeholder={mobile ? 'Search products...' : 'Search products, categories...'}
                 aria-label="Search products"
-                className="w-full h-11 pl-5 pr-20 rounded-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-emerald-700 focus:bg-white dark:focus:bg-gray-800 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
+                className="w-full h-11 pl-5 pr-28 rounded-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-emerald-700 focus:bg-white dark:focus:bg-gray-800 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
             />
             {renderSearchResults()}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                {/* AI image search: highlighted so people notice it */}
                 <button
                     type="button"
                     onClick={() => (mobile ? mobileImageInputRef : desktopImageInputRef).current?.click()}
                     disabled={imageSearchLoading}
-                    className="p-2 text-gray-500 hover:text-emerald-700 dark:text-gray-400 dark:hover:text-emerald-300 transition-colors"
-                    title="AI image search"
-                    aria-label="Search by image"
+                    className="group/ai relative flex items-center gap-1 h-8 pl-2 pr-2.5 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-xs font-bold shadow-md shadow-fuchsia-500/30 ring-2 ring-white dark:ring-gray-800 hover:scale-105 transition-transform disabled:opacity-70"
+                    title="AI image search: upload a photo to find similar products"
+                    aria-label="AI image search"
                 >
                     {imageSearchLoading
-                        ? <div className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"/>
-                        : <Camera size={19}/>}
+                        ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                        : <Camera size={15}/>}
+                    <span>AI</span>
+                    <Sparkles size={11} className="absolute -top-1 -right-1 text-yellow-300 fill-yellow-300"/>
                 </button>
                 <button type="submit" aria-label="Search"
                         className="p-2 text-gray-600 hover:text-emerald-700 dark:text-gray-300 dark:hover:text-emerald-300 transition-colors">
@@ -318,7 +319,8 @@ export default function Navbar() {
     return (
         <>
             {/* Announcement bar */}
-            <div className="w-full bg-emerald-900 text-emerald-50 text-xs sm:text-sm">
+            {showTopBar && (
+            <div className="w-full text-white/90 text-xs sm:text-sm" style={{backgroundColor: pick('topBarColor')}}>
                 <div className="w-full px-3 sm:px-6 lg:px-10 h-9 flex items-center justify-between gap-4">
                     <div className="hidden md:flex items-center gap-5 min-w-0">
                         {phone && (
@@ -333,9 +335,17 @@ export default function Navbar() {
                         )}
                     </div>
                     <p className="flex-1 md:flex-none text-center truncate">
-                        Free delivery on orders over ৳2000
-                        <span className="mx-2 sm:mx-3 opacity-50">|</span>
-                        <Link to="/shop?sale=1" className="font-semibold hover:underline underline-offset-2">Shop Deals</Link>
+                        {announcementText}
+                        {announcementLinkText && announcementLinkUrl && (
+                            <>
+                                <span className="mx-2 sm:mx-3 opacity-50">|</span>
+                                {isInternalLink ? (
+                                    <Link to={announcementLinkUrl} className="font-semibold text-white hover:underline underline-offset-2">{announcementLinkText}</Link>
+                                ) : (
+                                    <a href={announcementLinkUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:underline underline-offset-2">{announcementLinkText}</a>
+                                )}
+                            </>
+                        )}
                     </p>
                     <button onClick={toggleTheme}
                             className="hidden md:flex items-center gap-1.5 hover:text-white whitespace-nowrap"
@@ -345,6 +355,7 @@ export default function Navbar() {
                     </button>
                 </div>
             </div>
+            )}
 
             {/* Main header */}
             <nav className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-300">
@@ -352,47 +363,19 @@ export default function Navbar() {
                     <div className="flex items-center gap-3 lg:gap-6 xl:gap-8 h-16 sm:h-20">
                         {/* Logo */}
                         <Link to="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0">
-                            <span className="flex items-center justify-center bg-emerald-900 rounded-xl p-1 sm:p-1.5 flex-shrink-0">
+                            <span className="flex items-center justify-center rounded-xl p-1 sm:p-1.5 flex-shrink-0"
+                                  style={{backgroundColor: pick('logoBgColor')}}>
                                 <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
                                      className="h-8 sm:h-10 w-auto max-w-[110px] object-contain"/>
                             </span>
-                            <span className="text-emerald-900 dark:text-white font-extrabold tracking-tight text-xl sm:text-2xl lg:text-[1.7rem] leading-none truncate">
+                            <span className="dark:text-white font-extrabold tracking-tight text-xl sm:text-2xl lg:text-[1.7rem] leading-none truncate"
+                                  style={isDark ? undefined : {color: brandColor}}>
                                 {storeName}
                             </span>
                         </Link>
 
                         {/* Desktop links */}
                         <div className="hidden lg:flex items-center gap-1">
-                            <div className="relative" ref={categoriesRef}>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCategoriesOpen(o => !o)}
-                                    aria-expanded={isCategoriesOpen}
-                                    className={`${navLinkCls(isCategoriesOpen)} flex items-center gap-1`}
-                                >
-                                    Categories
-                                    <ChevronDown size={16} className={`transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`}/>
-                                </button>
-                                {isCategoriesOpen && (
-                                    <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50">
-                                        <Link to="/shop"
-                                              className="flex items-center gap-3 px-4 py-2.5 text-[15px] font-semibold text-emerald-900 dark:text-emerald-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <LayoutGrid size={18}/> All products
-                                        </Link>
-                                        {categories.map(cat => (
-                                            <Link key={cat.id} to={`/shop?category=${cat.id}`}
-                                                  className="flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-800 dark:hover:text-emerald-300">
-                                                <span className="w-7 h-7 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                                    {cat.imageUrl
-                                                        ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover object-top"/>
-                                                        : <span className="text-sm">{cat.icon}</span>}
-                                                </span>
-                                                {cat.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
                             {NAV_LINKS.map(item => (
                                 <Link key={item.label} to={item.to} className={navLinkCls(item.isActive(location))}>
                                     {item.label}
@@ -466,23 +449,6 @@ export default function Navbar() {
                                     {item.label}
                                 </Link>
                             ))}
-                        </div>
-
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Categories</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                {categories.map(cat => (
-                                    <Link key={cat.id} to={`/shop?category=${cat.id}`}
-                                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-800 dark:text-gray-100">
-                                        <span className="w-7 h-7 rounded-full overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                            {cat.imageUrl
-                                                ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover object-top"/>
-                                                : <span className="text-sm">{cat.icon}</span>}
-                                        </span>
-                                        <span className="truncate">{cat.name}</span>
-                                    </Link>
-                                ))}
-                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">

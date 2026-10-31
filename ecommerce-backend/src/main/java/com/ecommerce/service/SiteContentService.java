@@ -96,6 +96,13 @@ public class SiteContentService {
         s.setYoutubeUrl(url(in.getYoutubeUrl(), "YouTube"));
         s.setTiktokUrl(url(in.getTiktokUrl(), "TikTok"));
         s.setCopyrightText(optional(in.getCopyrightText(), "Copyright text", 200));
+        s.setBrandColor(color(in.getBrandColor(), "Store name colour"));
+        s.setLogoBgColor(color(in.getLogoBgColor(), "Logo background colour"));
+        s.setTopBarColor(color(in.getTopBarColor(), "Top bar colour"));
+        s.setShowTopBar(in.getShowTopBar() == null || in.getShowTopBar());
+        s.setAnnouncementText(optional(in.getAnnouncementText(), "Announcement text", 200));
+        s.setAnnouncementLinkText(optional(in.getAnnouncementLinkText(), "Announcement link text", 40));
+        s.setAnnouncementLinkUrl(link(in.getAnnouncementLinkUrl(), "Top bar"));
         return settingsRepository.save(s);
     }
 
@@ -147,6 +154,24 @@ public class SiteContentService {
         String t = v.trim();
         if (t.length() > max) throw new IllegalArgumentException(field + " must be at most " + max + " characters");
         return t;
+    }
+
+    /** "#rrggbb" or empty. */
+    private static String color(String v, String field) {
+        String t = optional(v, field, 7);
+        if (t == null) return null;
+        if (!t.matches("#[0-9a-fA-F]{6}")) {
+            throw new IllegalArgumentException(field + " must look like #1a2b3c");
+        }
+        return t.toLowerCase();
+    }
+
+    /** A page on this site ("/shop?sale=1") or a full http(s) link. */
+    private static String link(String v, String field) {
+        String t = optional(v, field, 500);
+        if (t == null) return null;
+        if (t.startsWith("/") && !t.startsWith("//") && !t.contains(" ")) return t;
+        return url(t, field);
     }
 
     /** Only plain http(s) links are stored, so a "javascript:" URL can never reach the footer. */

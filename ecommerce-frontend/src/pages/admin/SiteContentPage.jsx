@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {toast} from 'react-toastify';
-import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2} from 'lucide-react';
+import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2, Palette} from 'lucide-react';
 import {siteContentApi} from '../../api/siteContentApi';
 import {BASE_URL} from '../../api/config';
-import defaultLogo from '../../assets/logo/logo-6.png';
+import defaultLogo from '../../assets/logo/logo-mark.png';
+import SITE_CONTENT_DEFAULTS from '../../components/common/siteContentDefaults';
 
 const STORE_FIELDS = [
     {key: 'storeName', label: 'Store name', required: true},
@@ -26,6 +27,23 @@ const SOCIAL_FIELDS = [
 
 const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none';
 const isValidUrl = (v) => !v || /^https?:\/\/\S+$/i.test(v.trim());
+const isValidLink = (v) => !v || /^\/(?!\/)\S*$/.test(v.trim()) || isValidUrl(v);
+const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(v || '');
+
+// Header fields that older saved settings may not have yet
+const HEADER_KEYS = ['brandColor', 'logoBgColor', 'topBarColor', 'announcementText', 'announcementLinkText', 'announcementLinkUrl'];
+const withHeaderDefaults = (s) => {
+    const out = {...s};
+    HEADER_KEYS.forEach(k => { if (out[k] == null) out[k] = SITE_CONTENT_DEFAULTS.settings[k]; });
+    if (out.showTopBar == null) out.showTopBar = true;
+    return out;
+};
+
+const COLOR_FIELDS = [
+    {key: 'brandColor', label: 'Store name colour'},
+    {key: 'logoBgColor', label: 'Logo background'},
+    {key: 'topBarColor', label: 'Top bar colour'},
+];
 
 export default function SiteContentPage() {
     const [settings, setSettings] = useState(null);
@@ -39,7 +57,7 @@ export default function SiteContentPage() {
     useEffect(() => {
         siteContentApi.getAdminContent()
             .then(data => {
-                setSettings(data.settings || {});
+                setSettings(withHeaderDefaults(data.settings || {}));
                 setPages(data.pages || []);
             })
             .catch(err => toast.error(err.response?.data?.message || 'Failed to load site content'))
@@ -57,11 +75,20 @@ export default function SiteContentPage() {
             toast.error(`${bad.label} link must start with https://`);
             return;
         }
+        const badColor = COLOR_FIELDS.find(f => settings[f.key] && !isHex(settings[f.key]));
+        if (badColor) {
+            toast.error(`${badColor.label} must look like #1a2b3c`);
+            return;
+        }
+        if (!isValidLink(settings.announcementLinkUrl)) {
+            toast.error('Top bar link must be a page like /shop or a full https:// link');
+            return;
+        }
         setSavingSettings(true);
         try {
             const saved = await siteContentApi.updateSettings(settings);
-            setSettings(saved);
-            toast.success('Store info & social links saved');
+            setSettings(withHeaderDefaults(saved));
+            toast.success('Store info, header & social links saved');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to save');
         } finally {
@@ -144,11 +171,15 @@ export default function SiteContentPage() {
                         <Globe className="w-5 h-5 text-cyan-600"/> Store info
                     </h2>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
-                        {/* Preview on the navbar colours so the admin sees how it will look */}
-                        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 min-w-0">
-                            <img src={settings.logoUrl ? `${BASE_URL}${settings.logoUrl}` : defaultLogo}
-                                 alt="Logo preview" className="h-12 w-auto max-w-[120px] object-contain"/>
-                            <span className="text-white font-bold text-lg truncate">{settings.storeName || 'ShopSpot Online'}</span>
+                        {/* Same look as the website header */}
+                        <div className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-white border border-gray-200 min-w-0">
+                            <span className="rounded-xl p-1.5 flex-shrink-0" style={{backgroundColor: isHex(settings.logoBgColor) ? settings.logoBgColor : '#064e3b'}}>
+                                <img src={settings.logoUrl ? `${BASE_URL}${settings.logoUrl}` : defaultLogo}
+                                     alt="Logo preview" className="h-10 w-auto max-w-[110px] object-contain"/>
+                            </span>
+                            <span className="font-extrabold text-lg truncate" style={{color: isHex(settings.brandColor) ? settings.brandColor : '#064e3b'}}>
+                                {settings.storeName || 'ShopSpot Online'}
+                            </span>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm border border-cyan-600 text-cyan-700 hover:bg-cyan-50 cursor-pointer ${logoBusy ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -183,6 +214,84 @@ export default function SiteContentPage() {
                                 )}
                             </label>
                         ))}
+                    </div>
+                </div>
+
+                <div>
+                    <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-1">
+                        <Palette className="w-5 h-5 text-cyan-600"/> Header &amp; top bar
+                    </h2>
+                    <p className="text-xs text-gray-500 mb-4">
+                        Colours of the store name and logo box, and the message bar above the header
+                        (it also shows the contact phone and email from Store info).
+                    </p>
+
+                    {/* Live preview */}
+                    <div className="rounded-xl overflow-hidden border border-gray-200 mb-5">
+                        {settings.showTopBar !== false && (
+                            <div className="text-white/90 text-xs px-4 py-2 flex flex-wrap justify-between gap-2"
+                                 style={{backgroundColor: isHex(settings.topBarColor) ? settings.topBarColor : undefined}}>
+                                <span>{settings.contactPhone}</span>
+                                <span>
+                                    {settings.announcementText}
+                                    {settings.announcementLinkText && <> <span className="opacity-50 mx-1">|</span> <b className="text-white">{settings.announcementLinkText}</b></>}
+                                </span>
+                                <span>Dark mode</span>
+                            </div>
+                        )}
+                        <div className="bg-white px-4 py-3 flex items-center gap-2.5">
+                            <span className="rounded-xl p-1.5" style={{backgroundColor: isHex(settings.logoBgColor) ? settings.logoBgColor : undefined}}>
+                                <img src={settings.logoUrl ? `${BASE_URL}${settings.logoUrl}` : defaultLogo} alt="" className="h-9 w-auto"/>
+                            </span>
+                            <span className="font-extrabold text-xl" style={{color: isHex(settings.brandColor) ? settings.brandColor : undefined}}>
+                                {settings.storeName || 'ShopSpot Online'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3 mb-4">
+                        {COLOR_FIELDS.map(f => (
+                            <label key={f.key} className="block">
+                                <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
+                                <div className="flex items-center gap-2">
+                                    <input type="color" value={isHex(settings[f.key]) ? settings[f.key] : '#064e3b'}
+                                           onChange={e => setField(f.key, e.target.value)}
+                                           className="h-10 w-12 rounded border border-gray-300 cursor-pointer p-0.5"/>
+                                    <input className={`${inputCls} ${settings[f.key] && !isHex(settings[f.key]) ? 'border-red-400' : ''}`}
+                                           value={settings[f.key] || ''} maxLength={7} placeholder="#064e3b"
+                                           onChange={e => setField(f.key, e.target.value.trim())}/>
+                                </div>
+                            </label>
+                        ))}
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm text-gray-700 mb-4">
+                        <input type="checkbox" checked={settings.showTopBar !== false}
+                               onChange={e => setField('showTopBar', e.target.checked)}/>
+                        Show the top bar above the header
+                    </label>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <label className="block md:col-span-3">
+                            <span className="block text-sm font-medium text-gray-700 mb-1">Top bar message</span>
+                            <input className={inputCls} maxLength={200} value={settings.announcementText || ''}
+                                   placeholder="Free delivery on orders over ৳2000"
+                                   onChange={e => setField('announcementText', e.target.value)}/>
+                        </label>
+                        <label className="block">
+                            <span className="block text-sm font-medium text-gray-700 mb-1">Link text</span>
+                            <input className={inputCls} maxLength={40} value={settings.announcementLinkText || ''}
+                                   placeholder="Shop Deals"
+                                   onChange={e => setField('announcementLinkText', e.target.value)}/>
+                        </label>
+                        <label className="block md:col-span-2">
+                            <span className="block text-sm font-medium text-gray-700 mb-1">Link goes to</span>
+                            <input className={`${inputCls} ${!isValidLink(settings.announcementLinkUrl) ? 'border-red-400' : ''}`}
+                                   maxLength={500} value={settings.announcementLinkUrl || ''}
+                                   placeholder="/shop?sale=1  or  https://..."
+                                   onChange={e => setField('announcementLinkUrl', e.target.value)}/>
+                            <span className="text-xs text-gray-400">A page on this site (e.g. /shop?sale=1) or a full https:// link. Leave empty to hide the link.</span>
+                        </label>
                     </div>
                 </div>
 
