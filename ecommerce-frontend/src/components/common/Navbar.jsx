@@ -282,7 +282,7 @@ export default function Navbar() {
                 onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                 placeholder={mobile ? 'Search products...' : 'Search products, categories...'}
                 aria-label="Search products"
-                className="w-full h-11 pl-5 pr-28 rounded-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-emerald-700 focus:bg-white dark:focus:bg-gray-800 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
+                className="w-full h-11 pl-5 pr-28 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] dark:shadow-none focus:border-emerald-700 focus:shadow-[0_4px_16px_rgba(6,78,59,0.18)] focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
             />
             {renderSearchResults()}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
