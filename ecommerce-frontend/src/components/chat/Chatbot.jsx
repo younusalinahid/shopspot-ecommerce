@@ -1,339 +1,549 @@
-import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
-import { chatApi } from "../../api/chatApi";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
+import {
+    Bot, X, Send, Mic, Square, Volume2, VolumeX, RotateCcw, ShoppingCart, Sparkles, ExternalLink,
+} from "lucide-react";
+import {toast} from "react-toastify";
+import {chatApi} from "../../api/chatApi";
+import {useCart} from "../../context/CartContext";
+import {imageSrc} from "../../utils/imageSrc";
+
+const STORAGE_KEY = "shopspot-chat";
+const GREETING = {
+    role: "assistant",
+    content: "Hi! 👋 I'm the **ShopSpot assistant**.\nAsk me about products, prices, offers, delivery or returns. You can type or tap the 🎤 mic to talk — English, বাংলা or Banglish all work!",
+};
+
+const QUICK_REPLIES = [
+    {label: "🔥 Today's deals", text: "Show me discounted products"},
+    {label: "👗 Sarees under ৳10,000", text: "Show sarees under 10000 taka"},
+    {label: "🚚 Delivery charge?", text: "What is the delivery charge and how long does delivery take?"},
+    {label: "↩️ Return policy", text: "What is your return policy?"},
+    {label: "🧒 Kids wear", text: "Show kids wear"},
+    {label: "🇧🇩 বাংলায় বলুন", text: "আমাকে বাংলায় সাহায্য করুন। নতুন কী আছে?"},
+];
+
+// Browser voice APIs (Chrome / Edge / Safari). Not available in every browser.
+const SpeechRecognition = typeof window !== "undefined"
+    ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+    : null;
+const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+
+const loadHistory = () => {
+    try {
+        const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+        return Array.isArray(saved) && saved.length ? saved : [GREETING];
+    } catch {
+        return [GREETING];
+    }
+};
+
+const hasBangla = (text) => /[ঀ-৿]/.test(text || "");
+
+/** Plain text for the speech engine: no markdown, link targets or emoji. */
+const toSpeech = (text) => (text || "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/[•#>*_`]/g, " ")
+    .replace(/৳\s?([\d,]+)/g, "$1 taka")
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const Chatbot = () => {
+    const navigate = useNavigate();
+    const {addToCart} = useCart();
     const [isOpen, setIsOpen] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
-    const [messages, setMessages] = useState([
-        {
-            role: "assistant",
-            content: "Hi! 👋 I'm ShopSpot's AI assistant. How can I help you today?"
-        }
-    ]);
+    const [messages, setMessages] = useState(loadHistory);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [listening, setListening] = useState(false);
+    const [voiceLang, setVoiceLang] = useState(() => localStorage.getItem("chat-voice-lang") || "en");
+    const [autoSpeak, setAutoSpeak] = useState(() => localStorage.getItem("chat-auto-speak") === "1");
+    const [speakingIndex, setSpeakingIndex] = useState(null);
     const messagesEndRef = useRef(null);
+    const inputRef = useRef(null);
+    const recognitionRef = useRef(null);
+    const spokeLastRef = useRef(false);
+    const messagesRef = useRef(messages);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, loading]);
+        messagesRef.current = messages;
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-30)));
+        } catch { /* storage full or blocked */ }
+    }, [messages]);
 
     useEffect(() => {
-        if (isOpen) return;
+        messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
+    }, [messages, loading, isOpen]);
+
+    useEffect(() => {
+        if (isOpen) return undefined;
         const interval = setInterval(() => {
             setShowTooltip(true);
-            setTimeout(() => setShowTooltip(false), 3000);
-        }, 8000);
+            setTimeout(() => setShowTooltip(false), 3500);
+        }, 12000);
         return () => clearInterval(interval);
     }, [isOpen]);
 
+    // ------------------------------------------------------------------ speech output
+
+    const stopSpeaking = useCallback(() => {
+        if (canSpeak) window.speechSynthesis.cancel();
+        setSpeakingIndex(null);
+    }, []);
+
+    const speak = useCallback((text, index) => {
+        if (!canSpeak) {
+            toast.info("Voice replies are not supported in this browser");
+            return;
+        }
+        window.speechSynthesis.cancel();
+        const clean = toSpeech(text);
+        if (!clean) return;
+        const utter = new SpeechSynthesisUtterance(clean);
+        const bangla = hasBangla(clean);
+        utter.lang = bangla ? "bn-BD" : "en-US";
+        const voices = window.speechSynthesis.getVoices();
+        const voice = bangla
+            ? voices.find(v => v.lang?.toLowerCase().startsWith("bn"))
+            : voices.find(v => /en[-_](US|GB|IN)/i.test(v.lang) && /female|zira|samantha|google/i.test(v.name))
+            || voices.find(v => v.lang?.toLowerCase().startsWith("en"));
+        if (voice) utter.voice = voice;
+        utter.rate = 1;
+        utter.onend = () => setSpeakingIndex(null);
+        utter.onerror = () => setSpeakingIndex(null);
+        setSpeakingIndex(index);
+        window.speechSynthesis.speak(utter);
+    }, []);
+
     useEffect(() => {
-        let cartTimer = null;
-        let lastAddedProduct = "";
+        if (!isOpen) stopSpeaking();
+    }, [isOpen, stopSpeaking]);
 
-        const handleCartTrigger = (event) => {
-            const addedProductName = event.detail.productName;
-            lastAddedProduct = addedProductName;
-
-            if (cartTimer) {
-                clearTimeout(cartTimer);
-            }
-
-            cartTimer = setTimeout(async () => {
-                setIsOpen(true);
-                setLoading(true);
-
-                setMessages(prev => [...prev, {
-                    role: "user",
-                    content: `🛒 Added items to cart!`
-                }]);
-
-                const systemTriggerMessage = {
-                    role: "user",
-                    content: `SYSTEM_CART_TRIGGER:${lastAddedProduct}`
-                };
-
-                try {
-                    const response = await chatApi.sendMessage([systemTriggerMessage]);
-                    setMessages(prev => [...prev, {
-                        role: "assistant",
-                        content: response.message
-                    }]);
-                } catch {
-                    setMessages(prev => [...prev, {
-                        role: "assistant",
-                        content: "Could not fetch suggestions right now. 😔"
-                    }]);
-                } finally {
-                    setLoading(false);
-                }
-            }, 5000);
-        };
-
-        window.addEventListener("cartItemAdded", handleCartTrigger);
-
+    // Voices load asynchronously in Chrome
+    useEffect(() => {
+        if (canSpeak) window.speechSynthesis.getVoices();
         return () => {
-            window.removeEventListener("cartItemAdded", handleCartTrigger);
-            if (cartTimer) clearTimeout(cartTimer);
+            if (canSpeak) window.speechSynthesis.cancel();
+            recognitionRef.current?.abort?.();
         };
     }, []);
 
-    const renderMessageContent = (content) => {
-        if (!content) return "";
+    // ------------------------------------------------------------------ sending
 
-        // First, handle product links
-        const linkRegex = /\[([^\]]+)\]\((\d+)\)/g;
-        const searchRegex = /\[([^\]]+)\]\(search:([^)]+)\)/g;
-
-        // Split by line breaks first
-        const lines = content.split('\n');
-
-        return lines.map((line, lineIndex) => {
-            const parts = [];
-            let lastIndex = 0;
-            let match;
-
-            // Combined regex for both product and search links
-            const combinedRegex = /\[([^\]]+)\]\((?:search:)?([^)]+)\)/g;
-
-            while ((match = combinedRegex.exec(line)) !== null) {
-                if (match.index > lastIndex) {
-                    parts.push(line.substring(lastIndex, match.index));
-                }
-
-                const linkText = match[1];
-                const linkTarget = match[2];
-                const isSearch = line.substring(match.index, match.index + 8).includes('search:');
-
-                if (isSearch) {
-                    parts.push(
-                        <Link
-                            key={`${lineIndex}-${match.index}`}
-                            to={`/search?q=${encodeURIComponent(linkTarget.trim())}`}
-                            className="inline-flex items-center gap-1.5 mx-1 px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold shadow-sm transition-all text-xs"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            {linkText}
-                            <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-                    );
-                } else {
-                    parts.push(
-                        <Link
-                            key={`${lineIndex}-${match.index}`}
-                            to={`/product/${linkTarget}`}
-                            className="inline-flex items-center gap-1 mx-0.5 px-2 py-0.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-medium transition-all text-xs border border-cyan-200"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            {linkText}
-                        </Link>
-                    );
-                }
-
-                lastIndex = combinedRegex.lastIndex;
-            }
-
-            if (lastIndex < line.length) {
-                parts.push(line.substring(lastIndex));
-            }
-
-            const lineContent = parts.length > 0 ? parts : line;
-
-            // Check if line starts with bullet point
-            if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
-                return (
-                    <div key={lineIndex} className="flex gap-2 my-1">
-                        <span className="text-cyan-500 flex-shrink-0">•</span>
-                        <span className="flex-1">{lineContent}</span>
-                    </div>
-                );
-            }
-
-            return (
-                <div key={lineIndex} className={line.trim() ? "my-0.5" : "h-2"}>
-                    {lineContent}
-                </div>
-            );
-        });
-    };
-
-    const handleSend = async () => {
-        if (!input.trim() || loading) return;
-
-        const userMessage = { role: "user", content: input.trim() };
-        const updatedMessages = [...messages, userMessage];
-
-        setMessages(updatedMessages);
+    const send = useCallback(async (text, {fromVoice = false} = {}) => {
+        const content = (text || "").trim();
+        if (!content || loading) return;
+        stopSpeaking();
+        spokeLastRef.current = fromVoice;
+        const userMessage = {role: "user", content};
+        const updated = [...messagesRef.current, userMessage];
+        setMessages(updated);
         setInput("");
         setLoading(true);
-
         try {
-            const response = await chatApi.sendMessage(updatedMessages);
-            setMessages(prev => [...prev, {
-                role: "assistant",
-                content: response.message
-            }]);
+            const history = updated
+                .filter(m => m !== GREETING && !m.hidden)
+                .map(({role, content: c}) => ({role, content: c}));
+            const response = await chatApi.sendMessage(history);
+            const reply = {role: "assistant", content: response.message, products: response.products || []};
+            setMessages(prev => {
+                const next = [...prev, reply];
+                if (autoSpeak || spokeLastRef.current) speak(reply.content, next.length - 1);
+                return next;
+            });
         } catch {
             setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "Sorry, something went wrong. Please try again! 😔"
+                content: "Sorry, I couldn't connect right now. Please try again! 😔",
             }]);
         } finally {
             setLoading(false);
+            spokeLastRef.current = false;
         }
+    }, [loading, autoSpeak, speak, stopSpeaking]);
+
+    // After "Add to cart" on a product page, suggest matching items
+    useEffect(() => {
+        let timer = null;
+        const onCartAdd = (event) => {
+            const name = event.detail?.productName;
+            if (!name) return;
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                setIsOpen(true);
+                setLoading(true);
+                setMessages(prev => [...prev, {role: "user", content: `🛒 Added "${name}" to cart`, hidden: true}]);
+                try {
+                    const response = await chatApi.sendMessage([{role: "user", content: `SYSTEM_CART_TRIGGER:${name}`}]);
+                    setMessages(prev => [...prev, {role: "assistant", content: response.message, products: response.products || []}]);
+                } catch {
+                    setMessages(prev => [...prev, {role: "assistant", content: "Could not fetch suggestions right now. 😔"}]);
+                } finally {
+                    setLoading(false);
+                }
+            }, 4000);
+        };
+        window.addEventListener("cartItemAdded", onCartAdd);
+        return () => {
+            window.removeEventListener("cartItemAdded", onCartAdd);
+            clearTimeout(timer);
+        };
+    }, []);
+
+    // ------------------------------------------------------------------ voice input
+
+    const toggleListening = () => {
+        if (!SpeechRecognition) {
+            toast.info("Voice input works in Chrome or Edge");
+            return;
+        }
+        if (listening) {
+            recognitionRef.current?.stop();
+            return;
+        }
+        stopSpeaking();
+        const recognition = new SpeechRecognition();
+        recognition.lang = voiceLang === "bn" ? "bn-BD" : "en-US";
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        let finalText = "";
+        recognition.onresult = (event) => {
+            let interim = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const t = event.results[i][0].transcript;
+                if (event.results[i].isFinal) finalText += t;
+                else interim += t;
+            }
+            setInput((finalText + interim).trim());
+        };
+        recognition.onerror = (event) => {
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                toast.error("Please allow microphone access to talk to the assistant");
+            } else if (event.error !== "no-speech" && event.error !== "aborted") {
+                toast.error("Couldn't hear that. Please try again.");
+            }
+        };
+        recognition.onend = () => {
+            setListening(false);
+            recognitionRef.current = null;
+            if (finalText.trim()) send(finalText, {fromVoice: true});
+        };
+        recognitionRef.current = recognition;
+        setListening(true);
+        recognition.start();
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
+    const changeVoiceLang = () => {
+        const next = voiceLang === "en" ? "bn" : "en";
+        setVoiceLang(next);
+        localStorage.setItem("chat-voice-lang", next);
+        toast.info(next === "bn" ? "ভয়েস ইনপুট: বাংলা" : "Voice input: English", {autoClose: 1200});
     };
 
-    const handleToggle = () => {
-        setIsOpen(!isOpen);
-        setShowTooltip(false);
+    const toggleAutoSpeak = () => {
+        const next = !autoSpeak;
+        setAutoSpeak(next);
+        localStorage.setItem("chat-auto-speak", next ? "1" : "0");
+        if (!next) stopSpeaking();
+        toast.info(next ? "Replies will be read aloud" : "Voice replies off", {autoClose: 1200});
     };
+
+    const resetChat = () => {
+        stopSpeaking();
+        setMessages([GREETING]);
+    };
+
+    // ------------------------------------------------------------------ rendering
+
+    const closeAndGo = (to) => {
+        setIsOpen(false);
+        navigate(to);
+    };
+
+    const renderInline = (text, keyPrefix) => {
+        const parts = [];
+        const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+        let last = 0;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > last) parts.push(text.slice(last, match.index));
+            const key = `${keyPrefix}-${match.index}`;
+            if (match[3]) {
+                parts.push(<strong key={key} className="font-semibold">{match[3]}</strong>);
+            } else {
+                const label = match[1];
+                const target = match[2].trim();
+                let to = null;
+                if (/^\d+$/.test(target)) to = `/product/${target}`;
+                else if (target.startsWith("category:")) to = `/shop?category=${encodeURIComponent(target.slice(9))}`;
+                else if (target.startsWith("search:")) to = `/shop?q=${encodeURIComponent(target.slice(7).trim())}`;
+                if (to) {
+                    const isSearch = !target.match(/^\d+$/);
+                    parts.push(
+                        <Link key={key} to={to} onClick={() => setIsOpen(false)}
+                              className={isSearch
+                                  ? "inline-flex items-center gap-1 mx-0.5 px-2.5 py-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                                  : "font-semibold text-emerald-700 dark:text-emerald-300 underline decoration-emerald-300 underline-offset-2 hover:decoration-2"}>
+                            {label}{isSearch && <ExternalLink className="w-3 h-3"/>}
+                        </Link>
+                    );
+                } else {
+                    parts.push(label);
+                }
+            }
+            last = regex.lastIndex;
+        }
+        if (last < text.length) parts.push(text.slice(last));
+        return parts;
+    };
+
+    const renderContent = (content) => (content || "").split("\n").map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-1.5"/>;
+        const bullet = /^([•\-*]|\d+\.)\s+/.exec(trimmed);
+        if (bullet) {
+            return (
+                <div key={i} className="flex gap-2 my-0.5">
+                    <span className="text-emerald-500 flex-shrink-0 font-bold">{/\d/.test(bullet[1]) ? bullet[1] : "•"}</span>
+                    <span className="flex-1">{renderInline(trimmed.slice(bullet[0].length), i)}</span>
+                </div>
+            );
+        }
+        return <p key={i} className="my-0.5">{renderInline(trimmed, i)}</p>;
+    });
+
+    const productCards = (products) => (
+        <div className="mt-2 -mx-1 px-1 flex gap-2.5 overflow-x-auto pb-1 snap-x">
+            {products.map(p => {
+                const hasDiscount = p.originalPrice > p.price;
+                const outOfStock = p.stock !== undefined && p.stock <= 0;
+                return (
+                    <div key={p.id}
+                         className="snap-start flex-shrink-0 w-36 bg-white dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600 overflow-hidden shadow-sm">
+                        <button type="button" onClick={() => closeAndGo(`/product/${p.id}`)} className="block w-full text-left">
+                            <div className="relative h-32 bg-gray-100 dark:bg-gray-800">
+                                {p.imageData && <img src={imageSrc(p.imageData)} alt={p.name} loading="lazy"
+                                                     className="w-full h-full object-cover object-top"/>}
+                                {hasDiscount && (
+                                    <span className="absolute top-1.5 left-1.5 bg-red-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded">
+                                        -{p.discountPercent}%
+                                    </span>
+                                )}
+                                {outOfStock && (
+                                    <span className="absolute bottom-1.5 left-1.5 bg-gray-900/80 text-white text-[11px] px-1.5 py-0.5 rounded">Out of stock</span>
+                                )}
+                            </div>
+                            <div className="px-2 pt-1.5">
+                                <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 leading-snug">{p.name}</p>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">
+                                    ৳{Number(p.price).toLocaleString("en-IN")}
+                                    {hasDiscount && <span className="ml-1 text-[11px] font-normal text-gray-400 line-through">৳{Number(p.originalPrice).toLocaleString("en-IN")}</span>}
+                                </p>
+                            </div>
+                        </button>
+                        <div className="p-2 pt-1.5">
+                            <button type="button" disabled={outOfStock}
+                                    onClick={async () => {
+                                        const r = await addToCart(p.id, 1);
+                                        if (r?.success) toast.success("Added to cart!");
+                                        else if (!r?.deactivated) toast.error(r?.error || "Could not add to cart");
+                                    }}
+                                    className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-xs font-semibold">
+                                <ShoppingCart className="w-3.5 h-3.5"/> {outOfStock ? "Sold out" : "Add"}
+                            </button>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
+    const visible = messages.filter(m => !m.hidden);
+    const showQuickReplies = !loading && visible.length <= 1;
 
     return (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-
-            {/* ── Chat Window ── */}
             {isOpen && (
-                <div className="mb-4 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden"
-                     style={{ height: "min(500px, calc(100vh - 7rem))" }}>
-
+                <div
+                    className="mb-3 w-[calc(100vw-2rem)] sm:w-[400px] h-[min(640px,calc(100vh-7rem))] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden animate-fadeIn"
+                    role="dialog" aria-label="ShopSpot assistant">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-white" />
+                    <div className="relative bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-500 px-4 py-3.5 flex items-center gap-3 text-white">
+                        <div className="relative">
+                            <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
+                                <Bot className="w-6 h-6"/>
                             </div>
-                            <div>
-                                <p className="text-white font-semibold text-sm">ShopSpot Assistant</p>
-                                <div className="flex items-center gap-1">
-                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                                    <p className="text-white/80 text-xs">Online</p>
-                                </div>
-                            </div>
+                            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-300 border-2 border-emerald-600 rounded-full"/>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="text-white/80 hover:text-white transition"
-                        >
-                            <X className="w-5 h-5" />
+                        <div className="flex-1 min-w-0">
+                            <p className="font-bold leading-tight flex items-center gap-1.5">
+                                ShopSpot Assistant <Sparkles className="w-3.5 h-3.5 text-yellow-200"/>
+                            </p>
+                            <p className="text-xs text-emerald-50/90">
+                                {listening ? "Listening… speak now" : loading ? "Typing…" : "Online · AI powered"}
+                            </p>
+                        </div>
+                        {canSpeak && (
+                            <button onClick={toggleAutoSpeak} title={autoSpeak ? "Voice replies on" : "Voice replies off"}
+                                    aria-label="Toggle voice replies" aria-pressed={autoSpeak}
+                                    className={`p-2 rounded-full transition-colors ${autoSpeak ? "bg-white text-emerald-700" : "hover:bg-white/20"}`}>
+                                {autoSpeak ? <Volume2 className="w-4 h-4"/> : <VolumeX className="w-4 h-4"/>}
+                            </button>
+                        )}
+                        <button onClick={resetChat} title="New chat" aria-label="Start a new chat"
+                                className="p-2 rounded-full hover:bg-white/20 transition-colors">
+                            <RotateCcw className="w-4 h-4"/>
+                        </button>
+                        <button onClick={() => setIsOpen(false)} aria-label="Close chat"
+                                className="p-2 rounded-full hover:bg-white/20 transition-colors">
+                            <X className="w-4 h-4"/>
                         </button>
                     </div>
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
-                        {messages.map((msg, i) => (
-                            <div key={i}
-                                 className={`flex items-end gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-
-                                {/* Avatar */}
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0
-                                    ${msg.role === "user"
-                                    ? "bg-cyan-500"
-                                    : "bg-gradient-to-br from-blue-500 to-cyan-500"}`}>
-                                    {msg.role === "user"
-                                        ? <User className="w-4 h-4 text-white" />
-                                        : <Bot className="w-4 h-4 text-white" />
-                                    }
-                                </div>
-
-                                {/* Bubble */}
-                                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-                                    ${msg.role === "user"
-                                    ? "bg-cyan-500 text-white rounded-br-sm"
-                                    : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-sm rounded-bl-sm"}`}>
-                                    {msg.role === "assistant" ? renderMessageContent(msg.content) : msg.content}
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Loading */}
-                        {loading && (
-                            <div className="flex items-end gap-2">
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                                    <Bot className="w-4 h-4 text-white" />
-                                </div>
-                                <div className="bg-white dark:bg-gray-700 px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm">
-                                    <div className="flex gap-1">
-                                        <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                        <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                        <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+                        {visible.map((msg, index) => {
+                            const realIndex = messages.indexOf(msg);
+                            const isUser = msg.role === "user";
+                            return (
+                                <div key={index} className={`flex gap-2 ${isUser ? "justify-end" : "justify-start"}`}>
+                                    {!isUser && (
+                                        <div className="w-7 h-7 mt-0.5 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center flex-shrink-0">
+                                            <Bot className="w-4 h-4 text-white"/>
+                                        </div>
+                                    )}
+                                    <div className={`min-w-0 ${isUser ? "max-w-[80%]" : "max-w-[85%]"}`}>
+                                        <div className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${isUser
+                                            ? "bg-emerald-600 text-white rounded-br-md"
+                                            : "bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm rounded-bl-md"}`}>
+                                            {isUser ? msg.content : renderContent(msg.content)}
+                                        </div>
+                                        {!isUser && msg.products?.length > 0 && productCards(msg.products)}
+                                        {!isUser && canSpeak && index > 0 && (
+                                            <button
+                                                onClick={() => (speakingIndex === realIndex ? stopSpeaking() : speak(msg.content, realIndex))}
+                                                className="mt-1 ml-1 inline-flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400">
+                                                {speakingIndex === realIndex
+                                                    ? <><Square className="w-3 h-3"/> Stop</>
+                                                    : <><Volume2 className="w-3 h-3"/> Listen</>}
+                                            </button>
+                                        )}
                                     </div>
+                                </div>
+                            );
+                        })}
+
+                        {loading && (
+                            <div className="flex gap-2 items-end">
+                                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center">
+                                    <Bot className="w-4 h-4 text-white"/>
+                                </div>
+                                <div className="bg-white dark:bg-gray-700 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm flex gap-1">
+                                    {[0, 150, 300].map(d => (
+                                        <span key={d} className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{animationDelay: `${d}ms`}}/>
+                                    ))}
                                 </div>
                             </div>
                         )}
-                        <div ref={messagesEndRef} />
+
+                        {showQuickReplies && (
+                            <div className="flex flex-wrap gap-2 pl-9">
+                                {QUICK_REPLIES.map(q => (
+                                    <button key={q.label} onClick={() => send(q.text)}
+                                            className="px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-gray-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium hover:bg-emerald-50 dark:hover:bg-gray-700 transition-colors">
+                                        {q.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div ref={messagesEndRef}/>
                     </div>
 
                     {/* Input */}
                     <div className="p-3 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2 border border-gray-200 dark:border-gray-600 focus-within:border-cyan-400 transition">
-                            <textarea
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Type a message..."
-                                rows={1}
-                                className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-100 placeholder-gray-400 focus:outline-none resize-none"
-                            />
-                            <button
-                                onClick={handleSend}
-                                disabled={!input.trim() || loading}
-                                className="w-8 h-8 bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-300 rounded-lg flex items-center justify-center transition flex-shrink-0"
-                            >
-                                {loading
-                                    ? <Loader2 className="w-4 h-4 text-white animate-spin" />
-                                    : <Send className="w-4 h-4 text-white" />
-                                }
+                        {listening && (
+                            <div className="flex items-center gap-2 mb-2 px-1 text-xs text-red-500 font-medium">
+                                <span className="relative flex w-2.5 h-2.5">
+                                    <span className="absolute inset-0 rounded-full bg-red-400 animate-ping"/>
+                                    <span className="relative w-2.5 h-2.5 rounded-full bg-red-500"/>
+                                </span>
+                                Listening ({voiceLang === "bn" ? "বাংলা" : "English"})… tap ■ when you finish
+                            </div>
+                        )}
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1 flex items-end gap-1 bg-gray-100 dark:bg-gray-700 rounded-2xl pl-3.5 pr-1.5 py-1.5 border border-transparent focus-within:border-emerald-500 transition-colors">
+                                <textarea
+                                    ref={inputRef}
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === "Enter" && !e.shiftKey) {
+                                            e.preventDefault();
+                                            send(input);
+                                        }
+                                    }}
+                                    placeholder={listening ? "Listening…" : "Ask anything…"}
+                                    rows={1}
+                                    maxLength={1000}
+                                    disabled={loading}
+                                    aria-label="Message"
+                                    className="flex-1 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none resize-none max-h-28 py-1.5"
+                                    style={{height: "auto"}}
+                                    onInput={e => {
+                                        e.target.style.height = "auto";
+                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 112)}px`;
+                                    }}
+                                />
+                                {SpeechRecognition && (
+                                    <>
+                                        <button type="button" onClick={changeVoiceLang} title="Voice input language"
+                                                className="mb-0.5 px-1.5 py-1 rounded-lg text-[11px] font-bold text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+                                            {voiceLang === "bn" ? "বাং" : "EN"}
+                                        </button>
+                                        <button type="button" onClick={toggleListening}
+                                                aria-label={listening ? "Stop listening" : "Speak your question"}
+                                                title={listening ? "Stop" : "Speak"}
+                                                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${listening
+                                                    ? "bg-red-500 text-white animate-pulse"
+                                                    : "text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-gray-600"}`}>
+                                            {listening ? <Square className="w-4 h-4"/> : <Mic className="w-5 h-5"/>}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            <button onClick={() => send(input)} disabled={!input.trim() || loading} aria-label="Send"
+                                    className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-white shadow-md transition-all">
+                                <Send className="w-4 h-4"/>
                             </button>
                         </div>
+                        <p className="text-[10px] text-center text-gray-400 mt-2">AI can make mistakes. Check prices on the product page.</p>
                     </div>
                 </div>
             )}
 
-            {/* ── Tooltip ── */}
-            {!isOpen && showTooltip && (
-                <div className="hidden sm:block absolute bottom-3 right-full mr-3 animate-fadeIn">
-                    <div className="bg-gray-900 text-white text-xs font-medium px-3.5 py-2 rounded-xl
-                        shadow-lg whitespace-nowrap relative">
-                        Need help? Chat with us! 💬
-                        <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-gray-900 rotate-45" />
+            {/* Launcher */}
+            <div className="relative flex justify-end">
+                {showTooltip && !isOpen && (
+                    <div className="hidden sm:block absolute bottom-3 right-full mr-3 animate-fadeIn">
+                        <div className="bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-xl whitespace-nowrap shadow-lg">
+                            Need help? Ask me or talk to me 🎤
+                        </div>
                     </div>
-                </div>
-            )}
-
-            {/* ── Toggle Button ── */}
-            <div className="relative">
-                {!isOpen && (
-                    <>
-                        <span className="absolute inset-0 rounded-full bg-cyan-400 opacity-75"
-                              style={{ animation: "chatPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite" }} />
-                        <span className="absolute inset-0 rounded-full bg-cyan-400 opacity-50"
-                              style={{ animation: "chatPing 2.5s cubic-bezier(0, 0, 0.2, 1) infinite", animationDelay: "1.25s" }} />
-                    </>
                 )}
-
                 <button
-                    onClick={handleToggle}
-                    onMouseEnter={() => !isOpen && setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
-                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg flex items-center justify-center
-                        transition-all duration-300 hover:scale-110
-                        ${isOpen
-                        ? "bg-gray-600 hover:bg-gray-700"
-                        : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"}`}
+                    onClick={() => {
+                        setIsOpen(o => !o);
+                        setShowTooltip(false);
+                    }}
+                    aria-label={isOpen ? "Close chat" : "Open chat assistant"}
+                    className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/30 flex items-center justify-center hover:scale-105 transition-transform"
                 >
-                    {isOpen
-                        ? <X className="w-6 h-6 text-white" />
-                        : <MessageCircle className="w-6 h-6 text-white" />
-                    }
+                    {!isOpen && <span className="absolute inset-0 rounded-2xl bg-emerald-400 opacity-30 animate-ping"/>}
+                    {isOpen ? <X className="w-6 h-6 relative"/> : <Bot className="w-7 h-7 relative"/>}
                 </button>
             </div>
         </div>
