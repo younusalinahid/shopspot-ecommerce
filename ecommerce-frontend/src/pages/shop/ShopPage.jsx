@@ -139,9 +139,9 @@ export default function ShopPage() {
         update({min, max});
     };
 
-    const rowCls = (active) => `w-full flex justify-between gap-2 px-3 py-2.5 rounded-lg text-left text-base transition-colors ${active
-        ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 font-semibold'
-        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+    const rowCls = (active) => `w-full flex justify-between items-start gap-2 px-3 py-2.5 rounded-lg text-left text-base transition-colors ${active
+        ? 'bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 font-bold'
+        : 'font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`;
     const inputCls = 'w-full min-w-0 px-3 py-2 text-base rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white';
 
     const sidebar = (
@@ -152,7 +152,7 @@ export default function ShopPage() {
                     <li>
                         <button onClick={() => update({category: '', sub: ''})} className={rowCls(!categoryId)}>
                             <span>All products</span>
-                            {data && <span className="text-gray-400 font-normal">{allCount}</span>}
+                            {data && <span className="text-gray-400 font-medium">{allCount}</span>}
                         </button>
                     </li>
                     {categories.map(cat => {
@@ -163,8 +163,8 @@ export default function ShopPage() {
                                 <div className="flex items-center">
                                     <button onClick={() => update({category: cat.id, sub: ''})}
                                             className={rowCls(active && !subCategoryId)}>
-                                        <span className="truncate">{cat.name}</span>
-                                        <span className="text-gray-400 font-normal">{counts[cat.id] || 0}</span>
+                                        <span className="leading-snug">{cat.name}</span>
+                                        <span className="text-gray-400 font-medium">{counts[cat.id] || 0}</span>
                                     </button>
                                     {cat.subCategories.length > 0 && (
                                         <button onClick={() => setExpanded(prev => ({...prev, [cat.id]: !open}))}
@@ -180,8 +180,8 @@ export default function ShopPage() {
                                             <li key={sub.id}>
                                                 <button onClick={() => update({category: cat.id, sub: sub.id})}
                                                         className={`w-full text-left pl-4 pr-2 py-2 text-[15px] transition-colors ${String(sub.id) === subCategoryId
-                                                            ? 'text-cyan-700 dark:text-cyan-300 font-semibold'
-                                                            : 'text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400'}`}>
+                                                            ? 'text-cyan-700 dark:text-cyan-300 font-bold'
+                                                            : 'font-medium text-gray-600 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400'}`}>
                                                     {sub.name}
                                                 </button>
                                             </li>
