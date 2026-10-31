@@ -45,7 +45,7 @@ const bn = {
     'cart.emptyNote': 'কেনাকাটা শুরু করে কার্টে পণ্য যোগ করুন', 'cart.continue': 'কেনাকাটা চালিয়ে যান',
     'cart.title': 'শপিং কার্ট', 'cart.items': '{count}টি আইটেম', 'cart.item': '{count}টি আইটেম', 'cart.subtotal': 'সাবটোটাল',
     'cart.shipping': 'ডেলিভারি', 'cart.free': 'ফ্রি', 'cart.addMore': 'ফ্রি ডেলিভারির জন্য আরও ৳{amount} এর পণ্য যোগ করুন',
-    'cart.tax': 'ট্যাক্স (৭%)', 'cart.total': 'মোট', 'cart.clear': 'কার্ট খালি করুন', 'cart.summary': 'অর্ডার সারাংশ',
+    'cart.total': 'মোট', 'cart.clear': 'কার্ট খালি করুন', 'cart.summary': 'অর্ডার সারাংশ',
     'cart.checkout': 'চেকআউট করুন', 'cart.freeAlways': 'সব অর্ডারে ফ্রি ডেলিভারি',
     'cart.freeOver': '৳{min} এর বেশি অর্ডারে ফ্রি ডেলিভারি', 'cart.zoneFees': 'ঢাকা ৳{dhaka} · ঢাকার বাইরে ৳{outside}', 'cart.plusDelivery': '+ ডেলিভারি চার্জ, চেকআউটে হিসাব হবে',
     'cart.returns': 'রিটার্ন সুবিধা', 'cart.secure': 'নিরাপদ পেমেন্ট', 'cart.size': 'সাইজ', 'cart.remove': 'মুছে ফেলুন',
@@ -67,7 +67,7 @@ const bn = {
     'co.postal': 'পোস্ট কোড', 'co.saveAddress': 'পরের কেনাকাটার জন্য ঠিকানাটি সেভ করুন',
     'co.choosePayment': 'পেমেন্ট পদ্ধতি বাছাই করুন', 'co.card': 'ক্রেডিট / ডেবিট কার্ড', 'co.cardNote': 'Stripe এর মাধ্যমে নিরাপদ পেমেন্ট',
     'co.cod': 'ক্যাশ অন ডেলিভারি', 'co.codNote': 'পণ্য হাতে পেয়ে টাকা দিন', 'co.subtotal': 'সাবটোটাল',
-    'co.shipping': 'ডেলিভারি চার্জ', 'co.insideDhaka': 'ঢাকার ভেতরে', 'co.outsideDhaka': 'ঢাকার বাইরে', 'co.tax': 'আনুমানিক ট্যাক্স (৭%)', 'co.totalPayable': 'মোট পরিশোধযোগ্য',
+    'co.shipping': 'ডেলিভারি চার্জ', 'co.insideDhaka': 'ঢাকার ভেতরে', 'co.outsideDhaka': 'ঢাকার বাইরে', 'co.totalPayable': 'মোট পরিশোধযোগ্য',
     'co.next': 'পরবর্তী: পেমেন্ট পদ্ধতি বাছাই', 'co.secured': 'SSL সুরক্ষিত', 'co.fastDelivery': 'দ্রুত ডেলিভারি',
 
     'chat.title': 'ShopSpot AI', 'chat.online': 'অনলাইন · AI চালিত', 'chat.listening': 'শুনছি… বলুন',

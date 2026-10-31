@@ -103,8 +103,7 @@ const CartPage = () => {
     // The delivery area is only known at checkout, so the cart shows both charges
     const freeDelivery = delivery.isFree(subtotal);
     const shipping = freeDelivery ? 0 : null;
-    const tax = Math.round(subtotal * 0.07);
-    const total = subtotal + (shipping || 0) + tax;
+    const total = subtotal + (shipping || 0);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -265,11 +264,6 @@ const CartPage = () => {
                                             {t('cart.addMore', {amount: (delivery.freeMin - subtotal + 1).toFixed(2)})}
                                         </p>
                                     )}
-
-                                    <div className="flex justify-between text-gray-700 dark:text-gray-300">
-                                        <span>{t('cart.tax')}</span>
-                                        <span className="font-semibold">৳{tax.toFixed(2)}</span>
-                                    </div>
 
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
                                         <div

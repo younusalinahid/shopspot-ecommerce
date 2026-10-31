@@ -259,8 +259,7 @@ function CheckoutContent() {
         : newAddrForm;
     const insideDhaka = isDhaka(chosenAddress?.city, chosenAddress?.district);
     const shipping = delivery.chargeFor(subtotal, insideDhaka);
-    const tax = Math.round(subtotal * 0.07);
-    const total = subtotal + shipping + tax;
+    const total = subtotal + shipping;
 
     const canSubmitAddress = selectedAddr || showNewForm;
 
@@ -595,10 +594,6 @@ function CheckoutContent() {
                                         <span className={`font-semibold ${shipping === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
                                             {shipping === 0 ? t('cart.free') : `৳${shipping.toFixed(2)}`}
                                         </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>{t('co.tax')}</span>
-                                        <span className="font-semibold text-gray-900 dark:text-white">৳{tax.toFixed(2)}</span>
                                     </div>
                                 </div>
 

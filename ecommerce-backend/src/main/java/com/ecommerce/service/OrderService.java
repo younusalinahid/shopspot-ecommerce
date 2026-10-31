@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     /** Free shipping above this subtotal (must match the frontend cart/checkout pages). */
-    private static final double TAX_RATE = 0.07;
     private static final int MAX_ITEM_QUANTITY = 100;
 
     private final OrderRepository orderRepository;
@@ -262,7 +261,7 @@ public class OrderService {
         boolean insideDhaka = shippingAddress != null
                 && SiteSettings.isDhaka(shippingAddress.getCity(), shippingAddress.getDistrict());
         int shippingFee = siteContentService.getSettings().deliveryChargeFor(subtotal, insideDhaka);
-        int totalAmount = subtotal + shippingFee + (int) Math.round(subtotal * TAX_RATE);
+        int totalAmount = subtotal + shippingFee;
 
         Order order = Order.builder()
                 .user(user)

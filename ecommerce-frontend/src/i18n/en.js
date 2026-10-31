@@ -45,7 +45,7 @@ const en = {
     'cart.emptyNote': 'Start shopping to add items to your cart', 'cart.continue': 'Continue Shopping',
     'cart.title': 'Shopping Cart', 'cart.items': '{count} items', 'cart.item': '{count} item', 'cart.subtotal': 'Subtotal',
     'cart.shipping': 'Shipping', 'cart.free': 'FREE', 'cart.addMore': 'Add ৳{amount} more for free shipping',
-    'cart.tax': 'Tax (7%)', 'cart.total': 'Total', 'cart.clear': 'Clear Cart', 'cart.summary': 'Order Summary',
+    'cart.total': 'Total', 'cart.clear': 'Clear Cart', 'cart.summary': 'Order Summary',
     'cart.checkout': 'Proceed to Checkout', 'cart.freeAlways': 'Free shipping on every order',
     'cart.freeOver': 'Free shipping over ৳{min}', 'cart.zoneFees': 'Dhaka ৳{dhaka} · Outside ৳{outside}', 'cart.plusDelivery': '+ delivery, calculated at checkout',
     'cart.returns': '30-day return policy', 'cart.secure': 'Secure payment', 'cart.size': 'Size', 'cart.remove': 'Remove item',
@@ -67,7 +67,7 @@ const en = {
     'co.postal': 'Postal Code', 'co.saveAddress': 'Save this address for future purchases',
     'co.choosePayment': 'Choose Payment Method', 'co.card': 'Credit / Debit Card', 'co.cardNote': 'Secure payment via Stripe',
     'co.cod': 'Cash on Delivery', 'co.codNote': 'Pay when you receive the product', 'co.subtotal': 'Subtotal',
-    'co.shipping': 'Shipping Delivery', 'co.insideDhaka': 'Inside Dhaka', 'co.outsideDhaka': 'Outside Dhaka', 'co.tax': 'Tax Estimated (7%)', 'co.totalPayable': 'Total Payable',
+    'co.shipping': 'Shipping Delivery', 'co.insideDhaka': 'Inside Dhaka', 'co.outsideDhaka': 'Outside Dhaka', 'co.totalPayable': 'Total Payable',
     'co.next': 'Next: Choose Payment Method', 'co.secured': 'SSL Secured', 'co.fastDelivery': 'Fast Delivery',
 
     'chat.title': 'ShopSpot AI', 'chat.online': 'Online · AI powered', 'chat.listening': 'Listening… speak now',
