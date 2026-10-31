@@ -18,6 +18,8 @@ import {
 import SiteContentPage from './SiteContentPage';
 import DeliveryPage from './DeliveryPage';
 import InventoryAlerts from "./InventoryAlerts";
+import ActionCards from '../../components/admin/ActionCards';
+import {taka, ORDER_STATUS} from '../../components/admin/adminFormat';
 
 export default function AdminDashboard() {
     const location = useLocation();
@@ -41,12 +43,20 @@ export default function AdminDashboard() {
 
     const [loadError, setLoadError] = useState(false);
 
+    // Reload every time the dashboard is opened, so numbers reflect order changes made on other tabs
     useEffect(() => {
+        if (activeTab !== 'dashboard') return;
+        setLoadError(false);
         dashboardApi.getDashboard()
             .then(setDashboardData)
             .catch(() => setLoadError(true))
             .finally(() => setLoading(false));
-    }, []);
+    }, [activeTab]);
+
+    const openOrders = (params = '') => {
+        setActiveTab('orders');
+        navigate(`/admin/orders${params ? `?${params}` : ''}`);
+    };
 
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
@@ -81,21 +91,26 @@ export default function AdminDashboard() {
         {id: 'site-content', icon: Globe, label: 'Site Content'}
     ];
 
+    const summary = dashboardData?.summary;
+
     const stats = dashboardData ? [
         {
             title: 'Total Revenue',
-            value: `৳${(dashboardData.totalRevenue ?? 0).toLocaleString()}`,
-            change: `৳${(dashboardData.revenueThisMonth ?? 0).toLocaleString()} this month`,
-            icon: DollarSign, color: 'bg-blue-500'
+            value: taka(dashboardData.totalRevenue),
+            change: `${taka(summary?.revenueThisMonth)} this month · ${taka(summary?.revenueLastMonth)} last month`,
+            icon: DollarSign, color: 'bg-blue-500',
+            showButton: true,
+            buttonText: 'View Analytics',
+            onClick: () => handleTabChange('analytics')
         },
         {
             title: 'Total Orders',
             value: dashboardData.totalOrders ?? 0,
-            change: `${dashboardData.ordersThisMonth ?? 0} this month`,
+            change: `${dashboardData.ordersThisMonth ?? 0} this month · avg ${taka(summary?.averageOrderValue)}`,
             icon: ShoppingBag, color: 'bg-green-500',
             showButton: true,
             buttonText: "View Orders",
-            onClick: () => handleTabChange('orders')
+            onClick: () => openOrders()
         },
         {
             title: 'Total Products',
@@ -110,29 +125,12 @@ export default function AdminDashboard() {
             title: 'Total Customers',
             value: dashboardData.totalCustomers ?? 0,
             change: `+${dashboardData.newCustomersThisMonth ?? 0} this month`,
-            icon: Users, color: 'bg-orange-500'
+            icon: Users, color: 'bg-orange-500',
+            showButton: true,
+            buttonText: 'View Customers',
+            onClick: () => handleTabChange('customers')
         },
     ] : [];
-
-    const STATUS_COLORS = {
-        PENDING: "bg-yellow-50 text-yellow-700",
-        CONFIRMED: "bg-teal-50 text-teal-700",
-        PAID: "bg-sky-50 text-sky-700",
-        PROCESSING: "bg-blue-50 text-blue-700",
-        SHIPPED: "bg-purple-50 text-purple-700",
-        DELIVERED: "bg-green-50 text-green-700",
-        CANCELLED: "bg-red-50 text-red-700",
-    };
-
-    const STATUS_BADGE_COLORS = {
-        PENDING: "bg-yellow-100 text-yellow-700",
-        CONFIRMED: "bg-teal-100 text-teal-700",
-        PAID: "bg-sky-100 text-sky-700",
-        PROCESSING: "bg-blue-100 text-blue-700",
-        SHIPPED: "bg-purple-100 text-purple-700",
-        DELIVERED: "bg-green-100 text-green-700",
-        CANCELLED: "bg-red-100 text-red-700",
-    };
 
     const renderDashboard = () => {
         if (loading) return (
@@ -147,7 +145,8 @@ export default function AdminDashboard() {
             </div>
         );
 
-        const hasLowStock = dashboardData?.lowStockProducts?.length > 0;
+        const statusEntries = Object.entries(dashboardData?.orderStatusBreakdown || {});
+        const allOrders = statusEntries.reduce((sum, [, count]) => sum + count, 0);
 
         return (
             <div className="space-y-6">
@@ -155,23 +154,39 @@ export default function AdminDashboard() {
                 {/* Stats Cards */}
                 <StatsCards stats={stats}/>
 
+                {/* What needs action now */}
+                <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Needs attention</h3>
+                    <ActionCards summary={summary}
+                                 onSelect={(key) => openOrders(key === 'PENDING' ? 'status=PENDING' : `filter=${key}`)}/>
+                </div>
+
                 {/* Sales Chart + Order Status */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <SalesChart data={dashboardData?.dailySales || []}/>
 
                     <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Status</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {dashboardData?.orderStatusBreakdown &&
-                                Object.entries(dashboardData.orderStatusBreakdown).map(([status, count]) => (
-                                    <div key={status}
-                                         className={`rounded-xl p-4 text-center ${STATUS_COLORS[status] || "bg-gray-50 text-gray-700"}`}>
-                                        <p className="text-2xl font-bold">{count}</p>
-                                        <p className="text-xs mt-1 font-medium">{status}</p>
-                                    </div>
-                                ))
-                            }
+                        <div className="flex items-baseline justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">Order Status</h3>
+                            <span className="text-xs text-gray-400">{allOrders} orders · click to open</span>
                         </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {statusEntries.map(([status, count]) => {
+                                const meta = ORDER_STATUS[status];
+                                return (
+                                    <button key={status} type="button" title={meta?.hint}
+                                            onClick={() => openOrders(`status=${status}`)}
+                                            className={`rounded-xl p-4 text-center transition-colors ${meta?.tile || "bg-gray-50 text-gray-700"}`}>
+                                        <p className="text-2xl font-bold">{count}</p>
+                                        <p className="text-xs mt-1 font-medium">{meta?.label || status}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="mt-3 text-xs text-gray-400">
+                            Revenue counts Confirmed, Paid, Processing, Shipped and Delivered orders.
+                            Pending and Cancelled orders are not counted.
+                        </p>
                     </div>
                 </div>
 
@@ -180,32 +195,38 @@ export default function AdminDashboard() {
 
                     {/* Recent Orders */}
                     <div className="bg-white rounded-lg shadow-sm p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
+                            <button onClick={() => openOrders()} className="text-sm font-medium text-cyan-600 hover:underline">
+                                View all
+                            </button>
+                        </div>
                         {!dashboardData?.recentOrders?.length ? (
                             <p className="text-gray-400 text-sm text-center py-8">No orders yet.</p>
                         ) : (
                             <div className="space-y-3">
                                 {dashboardData.recentOrders.map(order => (
-                                    <div key={order.id}
-                                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                        <div>
-                                            <p className="font-medium text-sm text-gray-800">
-                                                {order.customerName}
+                                    <button key={order.id} type="button"
+                                            onClick={() => openOrders(`order=${order.id}`)}
+                                            className="w-full text-left flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-sm text-gray-800 truncate">
+                                                <span className="text-gray-400">#{order.id}</span> {order.customerName}
                                             </p>
                                             <p className="text-xs text-gray-400 mt-0.5">
                                                 {order.createdAt}
                                             </p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right shrink-0">
                                             <p className="font-semibold text-sm text-gray-800">
-                                                ৳{order.totalAmount?.toLocaleString()}
+                                                {taka(order.totalAmount)}
                                             </p>
                                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block
-                                                ${STATUS_BADGE_COLORS[order.status] || "bg-gray-100 text-gray-600"}`}>
-                                                {order.status}
+                                                ${ORDER_STATUS[order.status]?.badge || "bg-gray-100 text-gray-600"}`}>
+                                                {ORDER_STATUS[order.status]?.label || order.status}
                                             </span>
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         )}
@@ -220,9 +241,14 @@ export default function AdminDashboard() {
                                 : ''
                         }`}
                     >
-                        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                            ⚠️ Low Stock Alert
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-800">
+                                ⚠️ Low Stock Alert
+                            </h3>
+                            <button onClick={() => handleTabChange('products')} className="text-sm font-medium text-cyan-600 hover:underline">
+                                Manage products
+                            </button>
+                        </div>
                         {!dashboardData?.lowStockProducts?.length ? (
                             <p className="text-gray-400 text-sm text-center py-8">
                                 ✅ All products have sufficient stock.
@@ -230,18 +256,18 @@ export default function AdminDashboard() {
                         ) : (
                             <div className="space-y-3">
                                 {dashboardData.lowStockProducts.map(product => (
-                                    <div key={product.id}
-                                         className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                                        <p className="text-sm font-medium text-gray-800">
+                                    <button key={product.id} type="button" onClick={() => handleTabChange('products')}
+                                            className="w-full text-left flex items-center justify-between gap-3 p-3 bg-red-50 hover:bg-red-100 rounded-lg transition">
+                                        <p className="text-sm font-medium text-gray-800 truncate">
                                             {product.name}
                                         </p>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full
+                                        <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full
                                             ${product.stock <= 3
                                             ? "bg-red-200 text-red-700"
                                             : "bg-orange-100 text-orange-700"}`}>
                                             {product.stock <= 0 ? 'Out of stock' : `${product.stock} left`}
                                         </span>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         )}
@@ -291,6 +317,7 @@ export default function AdminDashboard() {
                 <Header
                     isSidebarOpen={isSidebarOpen}
                     setIsSidebarOpen={setIsSidebarOpen}
+                    title={menuItems.find(m => m.id === activeTab)?.label || 'Dashboard'}
                 />
                 <main className="p-3 sm:p-6">
                     {renderContent()}

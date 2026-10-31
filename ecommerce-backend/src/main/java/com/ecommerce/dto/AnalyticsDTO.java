@@ -15,6 +15,7 @@ public class AnalyticsDTO {
     private long newCustomersThisMonth;
     private long revenueThisMonth;
     private long ordersThisMonth;
+    private SalesSummaryDTO summary;
 
     private List<Map<String, Object>> dailySales;      // last 7 days
     private List<Map<String, Object>> monthlySales;    // last 6 months

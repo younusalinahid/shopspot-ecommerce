@@ -17,6 +17,7 @@ public class DashboardDTO {
     private long revenueThisMonth;
     private long ordersThisMonth;
     private long newCustomersThisMonth;
+    private SalesSummaryDTO summary;
 
     private List<Map<String, Object>> dailySales;
     private Map<String, Long> orderStatusBreakdown;

@@ -2,7 +2,7 @@ import React from 'react';
 import {Home, Menu, X} from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 
-export default function Header({isSidebarOpen, setIsSidebarOpen}) {
+export default function Header({isSidebarOpen, setIsSidebarOpen, title = 'Dashboard'}) {
     const navigate = useNavigate();
 
     return (
@@ -16,7 +16,7 @@ export default function Header({isSidebarOpen, setIsSidebarOpen}) {
                     >
                         {isSidebarOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
                     </button>
-                    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Dashboard</h2>
+                    <h2 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">{title}</h2>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                     <div

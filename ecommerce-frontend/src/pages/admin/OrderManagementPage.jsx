@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import ActionCards from '../../components/admin/ActionCards';
+import { taka, ORDER_STATUS, QUICK_FILTERS, orderBreakdown, summarizeOrders } from '../../components/admin/adminFormat';
 import {confirmDialog} from '../../utils/confirmDialog';
 import {
     Search, ChevronDown, ChevronUp, RefreshCw,
     Package, MapPin, Loader2, Clock, CreditCard,
     CheckCircle2, Truck, XCircle, ShoppingBag,
-    Banknote, Wallet, BadgeCheck
+    Banknote, Wallet, BadgeCheck, X
 } from 'lucide-react';
 import { orderApi } from '../../api/orderApi';
 import { toast } from 'react-toastify';
@@ -38,12 +41,33 @@ const PAYMENT_CONFIG = {
 };
 
 export default function OrderManagementPage() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [orders,        setOrders]        = useState([]);
     const [loading,       setLoading]       = useState(true);
     const [filter,        setFilter]        = useState('ALL');
+    const [quickFilter,   setQuickFilter]   = useState(null);   // TO_PROCESS / IN_TRANSIT / COD_DUE
+    const [focusId,       setFocusId]       = useState(null);   // one order opened from the dashboard
     const [paymentFilter, setPaymentFilter] = useState('ALL');
     const [search,        setSearch]        = useState('');
     const [expandedId,    setExpandedId]    = useState(null);
+
+    // Links from the dashboard: ?status=PAID, ?filter=COD_DUE, ?order=12
+    useEffect(() => {
+        const status = searchParams.get('status');
+        const quick = searchParams.get('filter');
+        const order = Number(searchParams.get('order'));
+        setFilter(status && STATUS_CONFIG[status] ? status : 'ALL');
+        setQuickFilter(quick && QUICK_FILTERS[quick] ? quick : null);
+        setFocusId(order || null);
+        if (order) setExpandedId(order);
+    }, [searchParams]);
+
+    const clearLinkFilters = () => {
+        setFilter('ALL');
+        setQuickFilter(null);
+        setFocusId(null);
+        setSearchParams({}, { replace: true });
+    };
     const [updating,      setUpdating]      = useState(null);
     const [markingId,     setMarkingId]     = useState(null);
 
@@ -64,6 +88,9 @@ export default function OrderManagementPage() {
     };
 
     const handleStatusUpdate = async (orderId, newStatus) => {
+        if (newStatus === 'CANCELLED' && !(await confirmDialog(
+            'The order will be cancelled and its items returned to stock. This cannot be undone.',
+            { title: `Cancel order #${orderId}?`, confirmText: 'Cancel order', cancelText: 'Keep order' }))) return;
         setUpdating(orderId);
         try {
             const updated = await orderApi.updateOrderStatus(orderId, newStatus);
@@ -94,7 +121,9 @@ export default function OrderManagementPage() {
 
     // Filter + Search
     const filtered = orders
+        .filter(o => !focusId || o.id === focusId)
         .filter(o => filter === 'ALL' || o.status === filter)
+        .filter(o => !quickFilter || QUICK_FILTERS[quickFilter].match(o))
         // ✨ Filter by payment method
         .filter(o => paymentFilter === 'ALL' || o.paymentMethod === paymentFilter)
         .filter(o => {
@@ -103,7 +132,8 @@ export default function OrderManagementPage() {
             return (
                 String(o.id).includes(q) ||
                 o.shippingAddress?.fullName?.toLowerCase().includes(q) ||
-                o.shippingAddress?.phone?.includes(q)
+                o.shippingAddress?.phone?.includes(q) ||
+                o.customerEmail?.toLowerCase().includes(q)
             );
         });
 
@@ -131,7 +161,7 @@ export default function OrderManagementPage() {
                         {orders.length} total orders
                         {codPendingCount > 0 && (
                             <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
-                                💵 {codPendingCount} COD pending collection
+                                💵 {codPendingCount} delivered COD order{codPendingCount !== 1 && 's'} to mark as collected
                             </span>
                         )}
                     </p>
@@ -144,13 +174,40 @@ export default function OrderManagementPage() {
                 </button>
             </div>
 
+            <ActionCards
+                summary={summarizeOrders(orders)}
+                active={filter === 'PENDING' ? 'PENDING' : quickFilter}
+                onSelect={(key) => {
+                    setFocusId(null);
+                    if (key === 'PENDING') {
+                        setQuickFilter(null);
+                        setFilter(filter === 'PENDING' ? 'ALL' : 'PENDING');
+                    } else {
+                        setFilter('ALL');
+                        setQuickFilter(quickFilter === key ? null : key);
+                    }
+                }}
+            />
+
+            {(quickFilter || focusId) && (
+                <div className="flex items-center gap-2 flex-wrap text-sm">
+                    <span className="text-gray-500">Showing:</span>
+                    <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 font-medium px-3 py-1 rounded-full">
+                        {focusId ? `Order #${focusId}` : QUICK_FILTERS[quickFilter].label}
+                        <button onClick={clearLinkFilters} aria-label="Clear filter" className="hover:text-blue-900">
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </span>
+                </div>
+            )}
+
             {/* Search */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Search by order ID, customer name or phone..."
+                    placeholder="Search by order ID, customer name, phone or email..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg
                         bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 />
@@ -201,7 +258,8 @@ export default function OrderManagementPage() {
                     return (
                         <button
                             key={f}
-                            onClick={() => setFilter(f)}
+                            title={ORDER_STATUS[f]?.hint}
+                            onClick={() => { setFilter(f); setQuickFilter(null); setFocusId(null); }}
                             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all
                                 ${filter === f
                                 ? 'bg-blue-600 text-white'
@@ -259,6 +317,7 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
     const paymentKey = order.paymentMethod || 'CARD';
     const pay = PAYMENT_CONFIG[paymentKey] || PAYMENT_CONFIG.CARD;
     const PayIcon = pay.icon;
+    const breakdown = orderBreakdown(order);
 
     // ✨ Should we show "Mark COD Collected" button?
     const showCollectButton =
@@ -287,7 +346,7 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                                 })}
                             </span>
                             <span className="sm:hidden ml-auto font-bold text-gray-900">
-                                ৳{order.totalAmount?.toFixed(2)}
+                                {taka(order.totalAmount)}
                             </span>
                         </div>
 
@@ -319,12 +378,13 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                             {order.items?.length} item{order.items?.length !== 1 && 's'}
                         </p>
                         <p className="font-bold text-gray-900">
-                            ৳{order.totalAmount?.toFixed(2)}
+                            {taka(order.totalAmount)}
                         </p>
                     </div>
 
                     {/* Status badge */}
-                    <span className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5
+                    <span title={ORDER_STATUS[order.status]?.hint}
+                        className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5
                         rounded-full flex-shrink-0 ${s.color}`}>
                         <Icon className="w-3 h-3" /> {s.label}
                     </span>
@@ -415,17 +475,34 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                                         </p>
                                     </div>
                                     <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
-                                        ৳{(item.priceAtPurchase * item.quantity).toFixed(2)}
+                                        {taka(item.priceAtPurchase * item.quantity)}
                                     </p>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Total */}
-                        <div className="flex justify-between font-bold text-gray-900 pt-3 mt-3
-                            border-t border-gray-100">
-                            <span>Total</span>
-                            <span>৳{order.totalAmount?.toFixed(2)}</span>
+                        {/* Subtotal / delivery / total */}
+                        <div className="pt-3 mt-3 border-t border-gray-100 space-y-1.5 text-sm">
+                            <div className="flex justify-between text-gray-600">
+                                <span>Subtotal</span>
+                                <span>{taka(breakdown.items)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600">
+                                <span>Delivery charge</span>
+                                <span className={breakdown.delivery === 0 ? 'text-green-600 font-medium' : ''}>
+                                    {breakdown.delivery === 0 ? 'Free' : taka(breakdown.delivery)}
+                                </span>
+                            </div>
+                            {breakdown.tax > 0 && (
+                                <div className="flex justify-between text-gray-600">
+                                    <span>Tax (old order)</span>
+                                    <span>{taka(breakdown.tax)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between font-bold text-gray-900 pt-1.5">
+                                <span>Total</span>
+                                <span>{taka(breakdown.total)}</span>
+                            </div>
                         </div>
                     </div>
 

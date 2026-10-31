@@ -81,6 +81,7 @@ public class AnalyticsService {
         // ── Best Selling Products (top 5, by quantity sold) and sales per category ──
         Map<Long, Long> quantityByProduct = new HashMap<>();
         Map<Long, String> productNames = new HashMap<>();
+        Map<Long, Long> revenueByProduct = new HashMap<>();
         Map<String, Long> salesByCategory = new LinkedHashMap<>();
         for (Order order : revenueOrders) {
             for (OrderItem item : order.getItems()) {
@@ -93,6 +94,7 @@ public class AnalyticsService {
                         ? product.getSubCategory().getCategory().getName() : "Other";
                 long lineTotal = (long) (item.getPriceAtPurchase() != null ? item.getPriceAtPurchase() : 0) * item.getQuantity();
                 salesByCategory.merge(category, lineTotal, Long::sum);
+                revenueByProduct.merge(product.getId(), lineTotal, Long::sum);
             }
         }
 
@@ -104,6 +106,7 @@ public class AnalyticsService {
                     m.put("id", e.getKey());
                     m.put("name", productNames.get(e.getKey()));
                     m.put("quantity", e.getValue());
+                    m.put("revenue", revenueByProduct.getOrDefault(e.getKey(), 0L));
                     return m;
                 })
                 .toList();
@@ -135,6 +138,7 @@ public class AnalyticsService {
                 .revenueThisMonth(revenueThisMonth)
                 .ordersThisMonth(ordersThisMonth)
                 .newCustomersThisMonth(newCustomersThisMonth)
+                .summary(summarize(orders, now))
                 .dailySales(dailySales)
                 .monthlySales(monthlySales)
                 .orderStatusBreakdown(orderStatusBreakdown)

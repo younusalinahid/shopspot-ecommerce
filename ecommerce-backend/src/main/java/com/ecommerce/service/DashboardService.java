@@ -34,7 +34,7 @@ public class DashboardService {
         ZonedDateTime nextMonth = monthStart.plusMonths(1);
 
         // Load each table once instead of once per number
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAllWithItems();
         List<Product> products = productRepository.findAll();
         List<User> customers = userRepository.findAll().stream()
                 .filter(u -> u.getRole() == Role.USER)
@@ -117,6 +117,7 @@ public class DashboardService {
                 .revenueThisMonth(revenueThisMonth)
                 .ordersThisMonth(ordersThisMonth)
                 .newCustomersThisMonth(newCustomersThisMonth)
+                .summary(summarize(orders, now))
                 .dailySales(dailySales)
                 .orderStatusBreakdown(orderStatusBreakdown)
                 .recentOrders(recentOrders)
