@@ -1,10 +1,21 @@
 import React, {useEffect, useState} from 'react';
+import {confirmDialog} from '../../utils/confirmDialog';
 import {toast} from 'react-toastify';
-import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2, Palette} from 'lucide-react';
+import {Save, Globe, FileText, ChevronDown, ChevronRight, Eye, EyeOff, ImagePlus, Trash2, Palette, Share2} from 'lucide-react';
 import {siteContentApi} from '../../api/siteContentApi';
 import {BASE_URL} from '../../api/config';
 import defaultLogo from '../../assets/logo/logo-mark.png';
 import SITE_CONTENT_DEFAULTS from '../../components/common/siteContentDefaults';
+
+const SECTIONS = [
+    {id: 'store-info', label: 'Store info', icon: Globe},
+    {id: 'header-top-bar', label: 'Header & top bar', icon: Palette},
+    {id: 'social-links', label: 'Social media links', icon: Share2},
+    {id: 'footer-pages', label: 'Footer pages', icon: FileText},
+];
+
+const scrollToSection = (id) =>
+    document.getElementById(id)?.scrollIntoView({behavior: 'smooth', block: 'start'});
 
 const STORE_FIELDS = [
     {key: 'storeName', label: 'Store name', required: true},
@@ -119,7 +130,7 @@ export default function SiteContentPage() {
     };
 
     const removeLogo = async () => {
-        if (!window.confirm('Remove the uploaded logo and use the default one?')) return;
+        if (!(await confirmDialog('Remove the uploaded logo and use the default one?'))) return;
         setLogoBusy(true);
         try {
             await siteContentApi.removeLogo();
@@ -165,8 +176,19 @@ export default function SiteContentPage() {
                 </p>
             </div>
 
+            <nav className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-gray-50/90 backdrop-blur">
+                <div className="flex gap-2 overflow-x-auto">
+                    {SECTIONS.map(({id, label, icon: Icon}) => (
+                        <button key={id} type="button" onClick={() => scrollToSection(id)}
+                                className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-700 shadow-sm hover:border-cyan-500 hover:text-cyan-700 hover:bg-cyan-50 transition-colors">
+                            <Icon className="w-4 h-4"/> {label}
+                        </button>
+                    ))}
+                </div>
+            </nav>
+
             <form onSubmit={saveSettings} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 space-y-6">
-                <div>
+                <div id="store-info" className="scroll-mt-20">
                     <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-4">
                         <Globe className="w-5 h-5 text-cyan-600"/> Store info
                     </h2>
@@ -217,7 +239,7 @@ export default function SiteContentPage() {
                     </div>
                 </div>
 
-                <div>
+                <div id="header-top-bar" className="scroll-mt-20">
                     <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-1">
                         <Palette className="w-5 h-5 text-cyan-600"/> Header &amp; top bar
                     </h2>
@@ -295,8 +317,10 @@ export default function SiteContentPage() {
                     </div>
                 </div>
 
-                <div>
-                    <h2 className="font-semibold text-gray-800 mb-1">Social media links</h2>
+                <div id="social-links" className="scroll-mt-20">
+                    <h2 className="flex items-center gap-2 font-semibold text-gray-800 mb-1">
+                        <Share2 className="w-5 h-5 text-cyan-600"/> Social media links
+                    </h2>
                     <p className="text-xs text-gray-500 mb-4">Leave a link empty to hide that icon from the footer.</p>
                     <div className="grid gap-4 md:grid-cols-2">
                         {SOCIAL_FIELDS.map(f => {
@@ -323,7 +347,7 @@ export default function SiteContentPage() {
                 </div>
             </form>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div id="footer-pages" className="scroll-mt-20 bg-white rounded-lg shadow-sm border border-gray-200">
                 <h2 className="flex items-center gap-2 font-semibold text-gray-800 p-4 sm:p-6 pb-2 sm:pb-2">
                     <FileText className="w-5 h-5 text-cyan-600"/> Footer pages
                 </h2>

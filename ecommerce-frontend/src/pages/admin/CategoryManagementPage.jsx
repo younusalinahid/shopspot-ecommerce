@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {confirmDialog} from '../../utils/confirmDialog';
 import {toast} from "react-toastify";
 import {Plus, Edit2, Trash2, X, FolderOpen, ChevronDown, ChevronRight, ImagePlus} from 'lucide-react';
 import { categoryApi } from '../../api/categoryApi'
@@ -89,7 +90,7 @@ export default function CategoryManagementPage() {
     };
 
     const handleDeleteCategory = async (id) => {
-        if (window.confirm('Are you sure you want to delete this category?')) {
+        if (await confirmDialog('Are you sure you want to delete this category?')) {
             try {
                 await categoryApi.deleteCategory(id);
                 await loadCategories();
@@ -126,7 +127,7 @@ export default function CategoryManagementPage() {
     };
 
     const handleRemoveCategoryImage = async (category) => {
-        if (!window.confirm(`Remove the image of "${category.name}"? The emoji icon will be shown instead.`)) return;
+        if (!(await confirmDialog(`Remove the image of "${category.name}"? The emoji icon will be shown instead.`))) return;
         try {
             await categoryApi.removeCategoryImage(category.id);
             await loadCategories();
@@ -137,7 +138,7 @@ export default function CategoryManagementPage() {
     };
 
     const handleDeleteSubCategory = async (sub) => {
-        if (!window.confirm(`Delete subcategory "${sub.name}"?`)) return;
+        if (!(await confirmDialog(`Delete subcategory "${sub.name}"?`))) return;
         try {
             await categoryApi.deleteSubCategory(sub.id);
             await loadCategories();

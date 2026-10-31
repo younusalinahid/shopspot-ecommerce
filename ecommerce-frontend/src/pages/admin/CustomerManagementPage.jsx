@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import {confirmDialog} from '../../utils/confirmDialog';
 import { toast } from "react-toastify";
 import { userApi } from "../../api/userApi";
 import { Search, Trash2, ToggleLeft, ToggleRight, Users } from "lucide-react";
@@ -30,7 +31,7 @@ const CustomerManagementPage = () => {
     };
 
     const fixAllUsersStatus = async () => {
-        if (!window.confirm("This will set ALL customers to ACTIVE status. Continue?")) return;
+        if (!(await confirmDialog("This will set ALL customers to ACTIVE status.", {confirmText: "Continue", danger: false}))) return;
 
         setLoading(true);
         try {
@@ -71,7 +72,7 @@ const CustomerManagementPage = () => {
     };
 
     const handleDelete = async (user) => {
-        if (!window.confirm(`Delete ${user.fullName}? This cannot be undone.`)) return;
+        if (!(await confirmDialog(`Delete ${user.fullName}? This cannot be undone.`))) return;
         try {
             await userApi.deleteUser(user.id);
             toast.success("Customer deleted");

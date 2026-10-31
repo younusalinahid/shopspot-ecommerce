@@ -60,7 +60,7 @@ const en = {
 
     'co.shippingDetails': 'Shipping Details', 'co.paymentMethod': 'Payment Method', 'co.guest': 'Checking out as a guest.',
     'co.guestNote': 'No account needed. Log in to save addresses and see your order history.',
-    'co.loginInstead': 'Log in instead', 'co.savedAddresses': 'Saved Addresses', 'co.shippingAddress': 'Shipping Address',
+    'co.loginInstead': 'Log in instead', 'co.savedAddresses': 'Saved Addresses', 'co.manageAddresses': 'Manage', 'co.shippingAddress': 'Shipping Address',
     'co.enterDetails': 'Please enter your checkout details accurately.', 'co.fullName': 'Full Name *', 'co.email': 'Email *',
     'co.emailNote': 'We will send your order confirmation here.', 'co.phone': 'Phone Number *',
     'co.street': 'Street Address *', 'co.area': 'Area / Thana', 'co.city': 'City *', 'co.district': 'District',

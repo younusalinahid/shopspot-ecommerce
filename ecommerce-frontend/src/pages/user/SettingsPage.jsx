@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import {toast} from 'react-toastify';
 import { Lock, Bell, Globe, Moon, Sun, Shield, CreditCard, MapPin, Trash2, Eye, EyeOff, Save } from 'lucide-react';
+import AddressBook from '../../components/user/AddressBook';
 
 const SettingsPage = () => {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -38,7 +40,7 @@ const SettingsPage = () => {
 
     const handlePasswordChange = () => {
         // Implement password change logic
-        alert('Password change functionality will be implemented');
+        toast.info('Password change functionality will be implemented');
     };
 
     const toggleNotification = (key) => {
@@ -396,48 +398,7 @@ const SettingsPage = () => {
                             )}
 
                             {/* Saved Addresses */}
-                            {activeSection === 'addresses' && (
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Saved Addresses</h2>
-                                            <p className="text-gray-600 dark:text-gray-400">Manage your delivery addresses</p>
-                                        </div>
-                                        <button className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition-colors duration-300">
-                                            Add Address
-                                        </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="p-4 border-2 border-cyan-500 dark:border-cyan-400 rounded-lg bg-cyan-50 dark:bg-cyan-900/20">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <span className="bg-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">Home</span>
-                                                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">Default</span>
-                                            </div>
-                                            <p className="font-semibold text-gray-900 dark:text-white mb-1">John Doe</p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">123 Main Street, Dhaka 1212</p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">+880 1712-345678</p>
-                                            <div className="flex space-x-2">
-                                                <button className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm">Edit</button>
-                                                <button className="text-red-600 dark:text-red-400 hover:underline text-sm">Delete</button>
-                                            </div>
-                                        </div>
-
-                                        <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-cyan-500 dark:hover:border-cyan-400 transition-colors duration-300">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium">Office</span>
-                                            </div>
-                                            <p className="font-semibold text-gray-900 dark:text-white mb-1">John Doe</p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">456 Business Ave, Dhaka 1213</p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">+880 1712-345678</p>
-                                            <div className="flex space-x-2">
-                                                <button className="text-cyan-600 dark:text-cyan-400 hover:underline text-sm">Edit</button>
-                                                <button className="text-red-600 dark:text-red-400 hover:underline text-sm">Delete</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            {activeSection === 'addresses' && <AddressBook/>}
                         </div>
                     </div>
                 </div>

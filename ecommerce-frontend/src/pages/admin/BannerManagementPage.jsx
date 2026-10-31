@@ -1,4 +1,6 @@
 import React, {useState, useEffect} from 'react';
+import {confirmDialog} from '../../utils/confirmDialog';
+import {toast} from 'react-toastify';
 import {Plus, Edit2, Trash2, X, Image} from 'lucide-react';
 import {
     getAllBanners,
@@ -38,7 +40,7 @@ export default function BannerManagementPage() {
             setBanners(sortedData);
         } catch (error) {
             console.error('Error loading banners:', error);
-            alert('Failed to load banners: ' + (error.message || 'Unknown error'));
+            toast.error('Failed to load banners: ' + (error.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
@@ -46,11 +48,11 @@ export default function BannerManagementPage() {
 
     const handleCreateBanner = async () => {
         if (!formData.title.trim()) {
-            alert('Title is required');
+            toast.error('Title is required');
             return;
         }
         if (!formData.imageFile) {
-            alert('Please select an image');
+            toast.error('Please select an image');
             return;
         }
 
@@ -71,17 +73,17 @@ export default function BannerManagementPage() {
             await loadBanners();
             setShowModal(false);
             resetForm();
-            alert('Banner created successfully!');
+            toast.success('Banner created successfully!');
         } catch (error) {
             console.error('Error creating banner:', error);
             console.error('Error response:', error.response);
-            alert('Failed to create banner: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to create banner: ' + (error.response?.data?.message || error.message));
         }
     };
 
     const handleUpdateBanner = async () => {
         if (!formData.title.trim()) {
-            alert('Title is required');
+            toast.error('Title is required');
             return;
         }
 
@@ -108,21 +110,21 @@ export default function BannerManagementPage() {
             setShowModal(false);
             setEditMode(false);
             resetForm();
-            alert('Banner updated successfully');
+            toast.success('Banner updated successfully');
         } catch (error) {
             console.error('Error updating banner:', error);
-            alert('Failed to update banner: ' + (error.response?.data?.message || error.message));
+            toast.error('Failed to update banner: ' + (error.response?.data?.message || error.message));
         }
     };
     const handleDeleteBanner = async (id) => {
-        if (window.confirm('Are you sure you want to delete this banner?')) {
+        if (await confirmDialog('Are you sure you want to delete this banner?')) {
             try {
                 await deleteBanner(id);
                 await loadBanners();
-                alert('Banner deleted successfully');
+                toast.success('Banner deleted successfully');
             } catch (error) {
                 console.error('Error deleting banner:', error);
-                alert('Failed to delete banner');
+                toast.error('Failed to delete banner');
             }
         }
     };

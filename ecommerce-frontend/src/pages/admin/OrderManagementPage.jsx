@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import {confirmDialog} from '../../utils/confirmDialog';
 import {
     Search, ChevronDown, ChevronUp, RefreshCw,
     Package, MapPin, Loader2, Clock, CreditCard,
@@ -77,7 +78,7 @@ export default function OrderManagementPage() {
 
     // ✨ Mark COD money as collected
     const handleMarkCODCollected = async (orderId) => {
-        if (!window.confirm('Confirm that you have collected the cash from this delivery?'))
+        if (!(await confirmDialog('Confirm that you have collected the cash from this delivery?', {title: 'Cash collected?', confirmText: 'Yes, collected', danger: false})))
             return;
         setMarkingId(orderId);
         try {

@@ -1,4 +1,5 @@
 import {useState, useEffect} from 'react';
+import {confirmDialog} from '../../utils/confirmDialog';
 import {useNavigate, Link} from 'react-router-dom';
 import {orderApi} from '../../api/orderApi';
 import {toast} from 'react-toastify';
@@ -111,7 +112,7 @@ export default function OrdersPage() {
 
     const handleCancel = async (e, orderId) => {
         e.stopPropagation();
-        if (!window.confirm('⚠️ Cancel this order?\n\nThis action cannot be undone.')) return;
+        if (!(await confirmDialog('This action cannot be undone.', {title: 'Cancel this order?', confirmText: 'Cancel order', cancelText: 'Keep order'}))) return;
         setCancelling(orderId);
         try {
             const updated = await orderApi.cancelOrder(orderId);

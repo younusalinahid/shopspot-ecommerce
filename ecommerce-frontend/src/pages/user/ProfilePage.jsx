@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import {imageSrc} from '../../utils/imageSrc';
+import AddressBook from '../../components/user/AddressBook';
 
 const TABS = [
     { id: "profile", label: "Profile Info", icon: User },
+    { id: "addresses", label: "Addresses", icon: MapPin },
     { id: "orders", label: "My Orders", icon: Package },
     { id: "wishlist", label: "Wishlist", icon: Heart },
     { id: "security", label: "Security", icon: Shield },
@@ -30,7 +32,10 @@ const statusColors = {
 
 const ProfilePage = () => {
     const [searchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState("profile");
+    const [activeTab, setActiveTab] = useState(() => {
+        const tab = searchParams.get("tab");
+        return TABS.some(t => t.id === tab) ? tab : "profile";
+    });
     const [profile, setProfile] = useState(null);
     const [orders, setOrders] = useState([]);
     const [wishlist, setWishlist] = useState([]);
@@ -404,6 +409,8 @@ const ProfilePage = () => {
                         )}
 
                         {/* Orders Tab Content */}
+                        {activeTab === "addresses" && <AddressBook/>}
+
                         {activeTab === "orders" && (
                             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/50 p-6">
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">My Orders</h3>

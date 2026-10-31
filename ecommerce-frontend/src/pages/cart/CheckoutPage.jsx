@@ -23,7 +23,7 @@ const stripePromise = loadStripe(
 const EMPTY_ADDR = {
     fullName: '', email: '', phone: '', addressLine: '',
     area: '', city: '', district: '', postalCode: '',
-    saveAddress: false,
+    saveAddress: true,
 };
 
 function StepBadge({ n, label, active, done }) {
@@ -302,10 +302,16 @@ function CheckoutContent() {
                                     {/* Saved Addresses */}
                                     {addresses.length > 0 && (
                                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                                <MapPin className="w-5 h-5 text-blue-600" />
-                                                {t('co.savedAddresses')}
-                                            </h2>
+                                            <div className="flex items-center justify-between gap-3 mb-4">
+                                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                                    <MapPin className="w-5 h-5 text-blue-600" />
+                                                    {t('co.savedAddresses')}
+                                                </h2>
+                                                <button type="button" onClick={() => navigate('/profile?tab=addresses')}
+                                                        className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                                    {t('co.manageAddresses')}
+                                                </button>
+                                            </div>
                                             <div className="space-y-3">
                                                 {addresses.map(addr => (
                                                     <div

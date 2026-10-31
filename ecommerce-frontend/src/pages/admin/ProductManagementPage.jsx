@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import {confirmDialog} from '../../utils/confirmDialog';
 import { toast } from "react-toastify";
 import { productService } from "../../api/productApi";
 import { categoryApi } from "../../api/categoryApi";
@@ -218,7 +219,7 @@ const ProductManagementPage = () => {
 
 
     const handleDelete = async (productId) => {
-        if (!window.confirm("Are you sure you want to delete this product?")) return;
+        if (!(await confirmDialog("Are you sure you want to delete this product?"))) return;
         try {
             setLoading(true);
             const result = await productService.deleteProduct(productId);

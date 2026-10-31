@@ -60,7 +60,7 @@ const bn = {
 
     'co.shippingDetails': 'ডেলিভারির তথ্য', 'co.paymentMethod': 'পেমেন্ট পদ্ধতি', 'co.guest': 'আপনি গেস্ট হিসেবে অর্ডার করছেন।',
     'co.guestNote': 'অ্যাকাউন্ট লাগবে না। লগ ইন করলে ঠিকানা সেভ ও অর্ডারের ইতিহাস দেখতে পারবেন।',
-    'co.loginInstead': 'লগ ইন করুন', 'co.savedAddresses': 'সেভ করা ঠিকানা', 'co.shippingAddress': 'ডেলিভারির ঠিকানা',
+    'co.loginInstead': 'লগ ইন করুন', 'co.savedAddresses': 'সেভ করা ঠিকানা', 'co.manageAddresses': 'ম্যানেজ করুন', 'co.shippingAddress': 'ডেলিভারির ঠিকানা',
     'co.enterDetails': 'অনুগ্রহ করে সঠিক তথ্য দিন।', 'co.fullName': 'পুরো নাম *', 'co.email': 'ইমেইল *',
     'co.emailNote': 'অর্ডারের নিশ্চিতকরণ এই ইমেইলে পাঠানো হবে।', 'co.phone': 'ফোন নম্বর *',
     'co.street': 'ঠিকানা *', 'co.area': 'এলাকা / থানা', 'co.city': 'শহর *', 'co.district': 'জেলা',
