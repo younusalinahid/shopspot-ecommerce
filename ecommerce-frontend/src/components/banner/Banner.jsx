@@ -71,7 +71,7 @@ const Banner = () => {
     // Loading state (same 3:1 shape as the real banner, so the page does not jump)
     if (isLoading) {
         return (
-            <div className="mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl w-auto aspect-[3/1] bg-gray-200 dark:bg-gray-800 animate-pulse"/>
+            <div className="rounded-2xl w-full aspect-[3/1] bg-gray-100 dark:bg-gray-800 animate-pulse"/>
         );
     }
 
@@ -79,7 +79,7 @@ const Banner = () => {
     if (banners.length > 0) {
         return (
             <div
-                className="relative mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden group bg-gray-200 dark:bg-gray-800"
+                className="relative rounded-2xl overflow-hidden group bg-gray-100 dark:bg-gray-800"
                 onMouseEnter={() => setIsPaused(true)}
                 onMouseLeave={() => setIsPaused(false)}
                 onTouchStart={handleTouchStart}
@@ -156,7 +156,7 @@ const Banner = () => {
 
     // Fallback default banner if no banners available
     return (
-        <div className="bg-gradient-to-r from-cyan-100 to-cyan-200 mx-3 sm:mx-4 my-4 sm:my-6 rounded-2xl overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-gray-800 dark:to-gray-800 rounded-2xl overflow-hidden">
             <div className="flex justify-between items-center gap-4 p-5 sm:p-8">
                 <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
                     <h2 className="font-bold text-cyan-800 text-xl sm:text-3xl">Embrace Your Heritage</h2>

@@ -1,27 +1,32 @@
-import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera} from "lucide-react";
+import {Search, ShoppingCart, User, Moon, Sun, Menu, X, Camera, Phone, Mail, ChevronDown, LayoutGrid} from "lucide-react";
 import {useEffect, useState, useRef} from 'react';
-import {useNavigate, useLocation, Link, NavLink} from 'react-router-dom';
+import {useNavigate, useLocation, Link} from 'react-router-dom';
 import {productService} from '../../api/productApi';
 import logo from "../../assets/logo/logo-mark.png";
-import playStoreButton from "../../assets/images/get-play-store-icon.png";
 import AuthPage from "../../pages/auth/AuthPage";
 import {useTheme} from "../../context/ThemeContext";
 import UserMenu from "../user/UserMenu";
 import {toast} from "react-toastify";
 import {useCart} from "../../context/CartContext";
 import {useSiteContent} from "../../hooks/useSiteContent";
+import {useCategories} from "../../hooks/useCategory";
 
-const MAIN_LINKS = [
-    {to: '/', label: 'Home', end: true},
-    {to: '/shop', label: 'Shop'},
+// Header links. "Deals" is the Shop page filtered to discounted products.
+const NAV_LINKS = [
+    {to: '/', label: 'Home', isActive: (loc) => loc.pathname === '/'},
+    {to: '/shop', label: 'Shop', isActive: (loc) => loc.pathname === '/shop' && !new URLSearchParams(loc.search).get('sale')},
+    {to: '/shop?sale=1', label: 'Deals', isActive: (loc) => loc.pathname === '/shop' && new URLSearchParams(loc.search).get('sale') === '1'},
 ];
 
-const mainLinkClass = ({isActive}) => `px-6 sm:px-8 py-1.5 rounded-full text-[15px] sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
-    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow'
-    : 'text-gray-700 dark:text-gray-200 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-gray-800'}`;
+const navLinkCls = (active) => `relative px-3 xl:px-4 py-2 text-[15px] xl:text-base font-semibold whitespace-nowrap rounded-full transition-colors ${active
+    ? 'text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30'
+    : 'text-gray-700 dark:text-gray-200 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`;
 
 export default function Navbar() {
-    const {storeName, logoUrl: siteLogoUrl} = useSiteContent();
+    const {storeName, logoUrl: siteLogoUrl, settings: siteSettings} = useSiteContent();
+    const {categories} = useCategories();
+    const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+    const categoriesRef = useRef(null);
     const [showAuthPage, setShowAuthPage] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const {isDark, toggleTheme} = useTheme();
@@ -52,6 +57,19 @@ export default function Navbar() {
 
         return () => window.removeEventListener("storage", handleStorageChange);
     }, [fetchCart]);
+
+    useEffect(() => {
+        const close = (e) => {
+            if (categoriesRef.current && !categoriesRef.current.contains(e.target)) setIsCategoriesOpen(false);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    useEffect(() => {
+        setIsCategoriesOpen(false);
+        setIsMobileMenuOpen(false);
+    }, [location.pathname, location.search]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -254,217 +272,242 @@ export default function Navbar() {
         return null;
     };
 
+    const phone = siteSettings?.contactPhone;
+    const email = siteSettings?.contactEmail;
+
+    const searchForm = (mobile) => (
+        <form onSubmit={handleSearchSubmit} className="relative w-full">
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
+                placeholder={mobile ? 'Search products...' : 'Search products, categories...'}
+                aria-label="Search products"
+                className="w-full h-11 pl-5 pr-20 rounded-full bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-emerald-700 focus:bg-white dark:focus:bg-gray-800 focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
+            />
+            {renderSearchResults()}
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                <button
+                    type="button"
+                    onClick={() => (mobile ? mobileImageInputRef : desktopImageInputRef).current?.click()}
+                    disabled={imageSearchLoading}
+                    className="p-2 text-gray-500 hover:text-emerald-700 dark:text-gray-400 dark:hover:text-emerald-300 transition-colors"
+                    title="AI image search"
+                    aria-label="Search by image"
+                >
+                    {imageSearchLoading
+                        ? <div className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"/>
+                        : <Camera size={19}/>}
+                </button>
+                <button type="submit" aria-label="Search"
+                        className="p-2 text-gray-600 hover:text-emerald-700 dark:text-gray-300 dark:hover:text-emerald-300 transition-colors">
+                    <Search size={19}/>
+                </button>
+            </div>
+            <input
+                ref={mobile ? mobileImageInputRef : desktopImageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSearch}
+            />
+        </form>
+    );
+
     return (
         <>
-            {/* Main sections: thin strip above the blue navbar */}
-            <div className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-                <nav aria-label="Main" className="flex items-center justify-center gap-2 sm:gap-4 h-11 sm:h-12">
-                    {MAIN_LINKS.map(item => (
-                        <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
-                            {item.label}
-                        </NavLink>
-                    ))}
-                </nav>
+            {/* Announcement bar */}
+            <div className="w-full bg-emerald-900 text-emerald-50 text-xs sm:text-sm">
+                <div className="w-full px-3 sm:px-6 lg:px-10 h-9 flex items-center justify-between gap-4">
+                    <div className="hidden md:flex items-center gap-5 min-w-0">
+                        {phone && (
+                            <a href={`tel:${phone.replace(/[^+0-9]/g, '')}`} className="flex items-center gap-1.5 hover:text-white whitespace-nowrap">
+                                <Phone size={14}/> {phone}
+                            </a>
+                        )}
+                        {email && (
+                            <a href={`mailto:${email}`} className="hidden xl:flex items-center gap-1.5 hover:text-white truncate">
+                                <Mail size={14}/> {email}
+                            </a>
+                        )}
+                    </div>
+                    <p className="flex-1 md:flex-none text-center truncate">
+                        Free delivery on orders over ৳2000
+                        <span className="mx-2 sm:mx-3 opacity-50">|</span>
+                        <Link to="/shop?sale=1" className="font-semibold hover:underline underline-offset-2">Shop Deals</Link>
+                    </p>
+                    <button onClick={toggleTheme}
+                            className="hidden md:flex items-center gap-1.5 hover:text-white whitespace-nowrap"
+                            aria-label="Toggle theme">
+                        {isDark ? <Sun size={14}/> : <Moon size={14}/>}
+                        {isDark ? 'Light mode' : 'Dark mode'}
+                    </button>
+                </div>
             </div>
 
-            <nav
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
-                <div className="w-full px-3 sm:px-4 lg:px-8">
-                    {/* Desktop: 3 equal-sided columns so the search bar sits exactly in the middle */}
-                    <div className="flex items-center gap-3 lg:gap-6 h-16 sm:h-[72px] lg:h-20 lg:grid lg:grid-cols-[1fr_minmax(0,42rem)_1fr]">
+            {/* Main header */}
+            <nav className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-300">
+                <div className="w-full px-3 sm:px-6 lg:px-10">
+                    <div className="flex items-center gap-3 lg:gap-6 xl:gap-8 h-16 sm:h-20">
                         {/* Logo */}
-                        <div className="flex items-center min-w-0 flex-shrink lg:justify-self-start">
-                            <Link to="/" className="flex items-center min-w-0 gap-2 lg:gap-3">
+                        <Link to="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0">
+                            <span className="flex items-center justify-center bg-emerald-900 rounded-xl p-1 sm:p-1.5 flex-shrink-0">
                                 <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
-                                     className="h-10 sm:h-12 lg:h-14 w-auto max-w-[140px] object-contain flex-shrink-0"/>
-                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl lg:text-[1.75rem] leading-none truncate">
-                                    {storeName}
-                                </span>
-                            </Link>
-                        </div>
+                                     className="h-8 sm:h-10 w-auto max-w-[110px] object-contain"/>
+                            </span>
+                            <span className="text-emerald-900 dark:text-white font-extrabold tracking-tight text-xl sm:text-2xl lg:text-[1.7rem] leading-none truncate">
+                                {storeName}
+                            </span>
+                        </Link>
 
-                        {/* Search Bar (Desktop) */}
-                        <div className="hidden lg:flex w-full min-w-0">
-                            <form onSubmit={handleSearchSubmit} className="relative w-full">
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                                    placeholder="Search products, brands, and categories..."
-                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-base shadow-md transition-all duration-300"
-                                />
-                                {renderSearchResults()}
-
-                                {/* Desktop Camera button */}
+                        {/* Desktop links */}
+                        <div className="hidden lg:flex items-center gap-1">
+                            <div className="relative" ref={categoriesRef}>
                                 <button
                                     type="button"
-                                    onClick={() => desktopImageInputRef.current?.click()}
-                                    disabled={imageSearchLoading}
-                                    className="absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-cyan-500 transition-colors p-1"
-                                    title="AI Image Searching"
+                                    onClick={() => setIsCategoriesOpen(o => !o)}
+                                    aria-expanded={isCategoriesOpen}
+                                    className={`${navLinkCls(isCategoriesOpen)} flex items-center gap-1`}
                                 >
-                                    {imageSearchLoading ? (
-                                        <div
-                                            className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"/>
-                                    ) : (
-                                        <Camera size={22}/>
-                                    )}
+                                    Categories
+                                    <ChevronDown size={16} className={`transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`}/>
                                 </button>
-                                <input
-                                    ref={desktopImageInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageSearch}
-                                />
-                            </form>
-                        </div>
-
-                        {/* Actions (Cart, Profile, Theme) */}
-                        <div className="flex items-center flex-shrink-0 ml-auto lg:ml-0 lg:justify-self-end gap-1 sm:gap-3 lg:gap-4">
-                            <img
-                                src={playStoreButton}
-                                alt="Google Play"
-                                className="hidden 2xl:block w-auto h-11 cursor-pointer hover:scale-105 transition-transform duration-200"
-                            />
-
-                            <div
-                                className="relative cursor-pointer group p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors duration-200"
-                                onClick={handleCartClick}
-                                role="button"
-                                aria-label="Open cart"
-                            >
-                                <ShoppingCart
-                                    className="text-white w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform duration-200"/>
-                                {cartCount > 0 && (
-                                    <span
-                                        className="absolute -top-0.5 -right-0.5 flex justify-center items-center bg-red-500 rounded-full min-w-[1.25rem] h-5 px-1 font-bold text-xs text-white shadow">
-                                        {cartCount}
-                                    </span>
+                                {isCategoriesOpen && (
+                                    <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-50">
+                                        <Link to="/shop"
+                                              className="flex items-center gap-3 px-4 py-2.5 text-[15px] font-semibold text-emerald-900 dark:text-emerald-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <LayoutGrid size={18}/> All products
+                                        </Link>
+                                        {categories.map(cat => (
+                                            <Link key={cat.id} to={`/shop?category=${cat.id}`}
+                                                  className="flex items-center gap-3 px-4 py-2.5 text-[15px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-emerald-800 dark:hover:text-emerald-300">
+                                                <span className="w-7 h-7 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                                    {cat.imageUrl
+                                                        ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover object-top"/>
+                                                        : <span className="text-sm">{cat.icon}</span>}
+                                                </span>
+                                                {cat.name}
+                                            </Link>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
+                            {NAV_LINKS.map(item => (
+                                <Link key={item.label} to={item.to} className={navLinkCls(item.isActive(location))}>
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </div>
 
+                        {/* Search (desktop) */}
+                        <div className="hidden lg:block flex-1 min-w-0 max-w-xl ml-auto">
+                            {searchForm(false)}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 sm:gap-2 ml-auto lg:ml-0 flex-shrink-0">
                             {isLoggedIn ? (
                                 <UserMenu/>
                             ) : (
                                 <button
                                     onClick={() => setShowAuthPage(true)}
-                                    className="hidden lg:flex items-center gap-2 bg-white/20 hover:bg-white/30 h-11 px-5 rounded-full text-white font-semibold whitespace-nowrap transition-colors duration-300"
+                                    className="hidden sm:flex items-center gap-2 h-11 px-3 rounded-full text-gray-800 dark:text-gray-100 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                 >
-                                    <User size={20}/>
-                                    <span>Sign In</span>
+                                    <User size={21}/>
+                                    <span>Account</span>
                                 </button>
                             )}
 
                             <button
-                                onClick={toggleTheme}
-                                className="hidden sm:flex items-center justify-center w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-300"
-                                aria-label="Toggle theme"
+                                type="button"
+                                onClick={handleCartClick}
+                                aria-label="Open cart"
+                                className="relative flex items-center gap-2 h-11 px-2.5 sm:px-3 rounded-full text-gray-800 dark:text-gray-100 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                             >
-                                {isDark ? <Sun className="text-yellow-400 w-5 h-5"/> :
-                                    <Moon className="text-white w-5 h-5"/>}
+                                <span className="relative">
+                                    <ShoppingCart size={22}/>
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-2 -right-2.5 flex justify-center items-center bg-red-500 rounded-full min-w-[1.15rem] h-[1.15rem] px-1 font-bold text-[11px] text-white">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="hidden sm:inline">Cart</span>
                             </button>
 
                             <button
-                                className="lg:hidden p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                                className="lg:hidden p-2.5 rounded-full text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-label="Open menu"
                             >
-                                {isMobileMenuOpen ? <X className="text-white w-6 h-6 sm:w-7 sm:h-7"/> :
-                                    <Menu className="text-white w-6 h-6 sm:w-7 sm:h-7"/>}
+                                {isMobileMenuOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
                             </button>
                         </div>
                     </div>
 
-                    {/* Mobile Search Bar */}
-                    <div className="lg:hidden pb-3 sm:pb-4">
-                        <form onSubmit={handleSearchSubmit} className="relative">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                                placeholder="Search products..."
-                                className="w-full pl-4 pr-24 py-3 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-white text-gray-800 shadow-lg"
-                            />
-                            {renderSearchResults()}
-
-                            <div
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-                                {/* Mobile Camera Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => mobileImageInputRef.current?.click()}
-                                    disabled={imageSearchLoading}
-                                    className="text-gray-400 hover:text-green-500 transition-colors p-2"
-                                >
-                                    {imageSearchLoading ? (
-                                        <div
-                                            className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"/>
-                                    ) : (
-                                        <Camera size={20}/>
-                                    )}
-                                </button>
-                                <input
-                                    ref={mobileImageInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleImageSearch}
-                                />
-                                <button type="submit" className="bg-green-500 hover:bg-green-600 p-2 rounded-full">
-                                    <Search className="text-white" size={18}/>
-                                </button>
-                            </div>
-                        </form>
+                    {/* Search (phones/tablets) */}
+                    <div className="lg:hidden pb-3">
+                        {searchForm(true)}
                     </div>
                 </div>
             </nav>
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <div
-                    className="lg:hidden bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700">
-                    <div className="px-4 py-6 space-y-4">
-                        {!isLoggedIn && (
-                            <button
-                                onClick={() => {
-                                    setShowAuthPage(true);
-                                    setIsMobileMenuOpen(false);
-                                }}
-                                className="w-full flex items-center justify-center space-x-2 bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-4 rounded-xl font-semibold transition-colors"
-                            >
-                                <User size={20}/>
-                                <span>Sign In / Register</span>
-                            </button>
-                        )}
-
-                        <button
-                            onClick={toggleTheme}
-                            className="sm:hidden w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200"
-                        >
-                            {isDark ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5"/>}
-                            <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
-                        </button>
-
-                        <div className="flex justify-center">
-                            <img src={playStoreButton} alt="Google Play"
-                                 className="w-40 h-auto cursor-pointer hover:scale-105 transition-transform duration-200"/>
+                <div className="lg:hidden bg-white dark:bg-gray-900 shadow-xl border-b border-gray-200 dark:border-gray-800">
+                    <div className="px-4 py-5 space-y-4">
+                        <div className="grid grid-cols-3 gap-2">
+                            {NAV_LINKS.map(item => (
+                                <Link key={item.label} to={item.to}
+                                      className={`text-center py-3 rounded-xl font-semibold ${item.isActive(location)
+                                          ? 'bg-emerald-900 text-white'
+                                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100'}`}>
+                                    {item.label}
+                                </Link>
+                            ))}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Categories</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {categories.map(cat => (
+                                    <Link key={cat.id} to={`/shop?category=${cat.id}`}
+                                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-800 dark:text-gray-100">
+                                        <span className="w-7 h-7 rounded-full overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                            {cat.imageUrl
+                                                ? <img src={cat.imageUrl} alt="" className="w-full h-full object-cover object-top"/>
+                                                : <span className="text-sm">{cat.icon}</span>}
+                                        </span>
+                                        <span className="truncate">{cat.name}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+                            {!isLoggedIn && (
+                                <button
+                                    onClick={() => setShowAuthPage(true)}
+                                    className="col-span-2 flex items-center justify-center gap-2 bg-emerald-900 hover:bg-emerald-800 text-white py-3 rounded-xl font-semibold transition-colors"
+                                >
+                                    <User size={20}/> Sign In / Register
+                                </button>
+                            )}
                             {[
-                                {to: "/", label: "Home"},
-                                {to: "/shop", label: "Shop"},
-                                {to: "/cart", label: `Cart${cartCount ? ` (${cartCount})` : ""}`},
                                 {to: "/compare", label: "Compare"},
                                 ...(isLoggedIn ? [{to: "/orders", label: "My Orders"}] : []),
                             ].map(item => (
                                 <Link key={item.to} to={item.to}
-                                      className="text-center text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium py-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                      onClick={() => setIsMobileMenuOpen(false)}>{item.label}</Link>
+                                      className="text-center py-3 rounded-xl font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                                    {item.label}
+                                </Link>
                             ))}
+                            <button onClick={toggleTheme}
+                                    className="flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                                {isDark ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5"/>}
+                                {isDark ? 'Light mode' : 'Dark mode'}
+                            </button>
                         </div>
                     </div>
                 </div>

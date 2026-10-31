@@ -61,12 +61,12 @@ export default function UserMenu() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 h-11 pl-1 pr-1 sm:pr-4 rounded-full transition-colors"
+                className="flex items-center gap-2 h-11 pl-1 pr-1 sm:pr-3 rounded-full text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-                <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center">
+                <div className="w-9 h-9 bg-emerald-900 rounded-full flex items-center justify-center">
                     <User className="text-white" size={20} />
                 </div>
-                <span className="text-white font-semibold text-[15px] hidden sm:block max-w-[8rem] truncate">{firstName}</span>
+                <span className="font-semibold text-[15px] hidden sm:block max-w-[8rem] truncate">{firstName}</span>
             </button>
 
             {isOpen && (

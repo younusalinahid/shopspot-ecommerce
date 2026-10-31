@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
 import { toast } from 'react-toastify';
+import {Heart, GitCompareArrows} from 'lucide-react';
 import {imageSrc} from '../../utils/imageSrc';
+import {useWishlist} from '../../hooks/useWishlist';
 
 export default function ProductCard({ product, showDiscount = false }) {
 
     const [imageError, setImageError] = useState(false);
     const { addToCart } = useCart();
     const navigate = useNavigate();
+    const {isWishlisted, toggle} = useWishlist();
 
     if (!product) return null;
 
@@ -51,61 +54,96 @@ export default function ProductCard({ product, showDiscount = false }) {
         }
     };
 
+    const handleWishlist = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            const added = await toggle(product.id);
+            toast.success(added ? 'Added to wishlist' : 'Removed from wishlist');
+        } catch (err) {
+            if (err.loginRequired) {
+                toast.info('Please login to save products');
+                window.dispatchEvent(new Event('openLogin'));
+            } else {
+                toast.error('Could not update wishlist');
+            }
+        }
+    };
+
     const hasDiscount = Boolean(product.originalPrice && Number(product.originalPrice) > Number(product.price));
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
     const imageSource = imageSrc(product.imageData);
+    const wished = isWishlisted(product.id);
+    const subtitle = product.subCategoryName || product.categoryName || '';
+    const [whole, cents] = Number(product.price || 0).toFixed(2).split('.');
+    const openProduct = () => navigate(`/product/${product.id}`);
 
     return (
-        <div className="group w-full relative">
+        <div className="group w-full flex flex-col">
+            {/* Image */}
             <div
-                className="relative bg-gray-50 dark:bg-gray-800 h-52 sm:h-72 lg:h-96 w-full flex items-center justify-center overflow-hidden rounded-xl cursor-pointer"
-                onClick={() => navigate(`/product/${product.id}`)}
+                className="relative w-full aspect-[4/5] bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden cursor-pointer"
+                onClick={openProduct}
             >
                 {imageSource && !imageError ? (
-                    <img src={imageSource} alt={product.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110" onError={() => setImageError(true)} />
+                    <img src={imageSource} alt={product.name} loading="lazy"
+                         className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                         onError={() => setImageError(true)}/>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
                 )}
 
-                {isOutOfStock && (
-                    <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-gray-900/80 text-white text-xs sm:text-xs font-semibold px-2 py-1 rounded-md z-10">
-                        Out of stock
-                    </span>
-                )}
+                {/* Badges */}
+                <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex flex-col items-start gap-1.5">
+                    {isOutOfStock && (
+                        <span className="bg-gray-900/85 text-white text-xs font-semibold px-2.5 py-1 rounded-full">Out of stock</span>
+                    )}
+                    {hasDiscount && (
+                        <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">-{discountPercentage}%</span>
+                    )}
+                </div>
 
-                <div className="absolute bottom-2 sm:bottom-6 flex items-center justify-center gap-2 sm:gap-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
-                    {/* Add to Cart with Tooltip */}
-                    <div className="relative group/tooltip">
-                        <div onClick={handleAddToCart} aria-label="Add to cart" aria-disabled={isOutOfStock} role="button" className={`p-2.5 sm:p-3 bg-white text-gray-900 rounded-full shadow-xl transition-all ${isOutOfStock ? "opacity-40 cursor-not-allowed" : "hover:bg-cyan-500 hover:text-white cursor-pointer"}`}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                        </div>
-                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Add to Cart</span>
-                    </div>
-
-                    {/* Compare with Tooltip */}
-                    <div className="relative group/tooltip">
-                        <div onClick={handleCompare} aria-label="Add to compare" role="button" className="p-2.5 sm:p-3 bg-white hover:bg-cyan-500 hover:text-white text-gray-900 rounded-full shadow-xl transition-all cursor-pointer">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 2l4 4-4 4"></path><path d="M3 11v-1a4 4 0 0 1 4-4h14"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 13v1a4 4 0 0 1-4 4H3"></path></svg>
-                        </div>
-                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Compare</span>
-                    </div>
+                {/* Wishlist + compare */}
+                <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 flex flex-col gap-2">
+                    <button type="button" onClick={handleWishlist}
+                            aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'} aria-pressed={wished}
+                            title={wished ? 'Remove from wishlist' : 'Add to wishlist'}
+                            className="w-9 h-9 rounded-full bg-white/95 dark:bg-gray-900/90 shadow flex items-center justify-center hover:scale-110 transition-transform">
+                        <Heart size={18} className={wished ? 'fill-red-500 text-red-500' : 'text-gray-700 dark:text-gray-200'}/>
+                    </button>
+                    <button type="button" onClick={handleCompare} aria-label="Add to compare" title="Compare"
+                            className="w-9 h-9 rounded-full bg-white/95 dark:bg-gray-900/90 shadow flex items-center justify-center text-gray-700 dark:text-gray-200 hover:scale-110 transition-all lg:opacity-0 lg:group-hover:opacity-100">
+                        <GitCompareArrows size={17}/>
+                    </button>
                 </div>
             </div>
 
-            <div className="mt-2 sm:mt-4 px-1 cursor-pointer flex flex-col items-center justify-center text-center" onClick={() => navigate(`/product/${product.id}`)}>
-                <h3 className="text-gray-800 dark:text-gray-100 font-semibold text-sm sm:text-base truncate w-full" title={product.name}>{product.name}</h3>
-
-                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 mt-1">
-                    {hasDiscount && (
-                        <span className="text-gray-400 line-through text-xs sm:text-sm">৳{Number(product.originalPrice).toFixed(2)}</span>
-                    )}
-                    <div className="flex items-center gap-1">
-                        <p className="text-gray-900 dark:text-white font-bold text-base sm:text-lg">৳{Number(product.price).toFixed(2)}</p>
-                        {hasDiscount && (
-                            <span className="bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">{discountPercentage}% OFF</span>
-                        )}
-                    </div>
+            {/* Details */}
+            <div className="mt-3 px-0.5 flex-1 flex flex-col">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-0.5 sm:gap-2 cursor-pointer" onClick={openProduct}>
+                    <h3 className="text-gray-900 dark:text-white font-semibold text-[15px] sm:text-base leading-snug line-clamp-2" title={product.name}>
+                        {product.name}
+                    </h3>
+                    <p className="text-gray-900 dark:text-white font-bold text-base sm:text-lg leading-snug whitespace-nowrap">
+                        ৳{Number(whole).toLocaleString('en-IN')}<sup className="text-[0.6em] font-semibold ml-0.5">.{cents}</sup>
+                    </p>
                 </div>
+
+                <div className="flex items-center justify-between gap-2 mt-1 text-sm min-h-[1.25rem]">
+                    <span className="text-gray-500 dark:text-gray-400 truncate">{subtitle}</span>
+                    {hasDiscount && (
+                        <span className="text-gray-400 line-through whitespace-nowrap">৳{Number(product.originalPrice).toLocaleString('en-IN')}</span>
+                    )}
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock}
+                    className="mt-3 self-start px-5 py-2 rounded-full border-2 border-emerald-900 dark:border-emerald-400 text-emerald-900 dark:text-emerald-300 text-sm font-semibold transition-colors hover:bg-emerald-900 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-gray-900 disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-transparent dark:disabled:border-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
+                >
+                    {isOutOfStock ? 'Out of stock' : 'Add to Cart'}
+                </button>
             </div>
         </div>
     );
