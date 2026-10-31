@@ -160,37 +160,39 @@ const HomePage = () => {
                                     ) : (
                                         <div
                                             id="category-scroll"
-                                            className="flex space-x-4 sm:space-x-6 px-6 sm:px-8 py-2 overflow-x-auto scroll-smooth snap-mandatory snap-x scrollbar-hide"
+                                            className="flex space-x-6 px-3 overflow-x-auto scroll-smooth snap-mandatory snap-x scrollbar-hide"
                                             style={{
                                                 maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
                                                 WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
                                             }}
                                         >
                                             {categories.map((category) => (
-                                                <button
-                                                    type="button"
+                                                <div
                                                     key={category.id}
-                                                    className="group flex-shrink-0 w-24 sm:w-28 lg:w-32 snap-start flex flex-col items-center text-center cursor-pointer focus:outline-none"
+                                                    role="link"
+                                                    tabIndex={0}
+                                                    className={`${getCategoryCardStyles(category.color)} group rounded-2xl p-6 text-center hover:shadow-lg dark:hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[calc((100%-6rem)/6)] min-w-[150px] snap-start flex flex-col items-center cursor-pointer`}
                                                     onClick={() => handleCategoryClick(category.id, category.name)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleCategoryClick(category.id, category.name)}
                                                 >
                                                     <div
-                                                        className={`w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 rounded-2xl overflow-hidden flex items-center justify-center shadow-md ring-2 ring-white dark:ring-gray-700 group-hover:ring-cyan-400 group-hover:shadow-lg transition-all duration-300 ${category.imageUrl ? 'bg-gray-100 dark:bg-gray-800' : getCategoryCardStyles(category.color)}`}
+                                                        className={`w-16 h-16 ${category.imageUrl ? 'bg-white dark:bg-gray-700' : category.color} rounded-full overflow-hidden flex items-center justify-center text-white text-2xl shadow-lg mb-4 ring-2 ring-white dark:ring-gray-600 group-hover:ring-cyan-400 transition-all duration-300`}
                                                     >
                                                         {category.imageUrl ? (
                                                             <img
                                                                 src={category.imageUrl}
                                                                 alt={category.name}
                                                                 loading="lazy"
-                                                                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                                                                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-110"
                                                             />
                                                         ) : (
-                                                            <span className="text-3xl">{category.icon}</span>
+                                                            category.icon
                                                         )}
                                                     </div>
-                                                    <h3 className="mt-2 font-semibold text-gray-800 dark:text-gray-200 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 text-xs sm:text-sm leading-tight line-clamp-2 transition-colors duration-300">
+                                                    <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-sm transition-colors duration-300">
                                                         {category.name}
                                                     </h3>
-                                                </button>
+                                                </div>
                                             ))}
                                         </div>
                                     )}
