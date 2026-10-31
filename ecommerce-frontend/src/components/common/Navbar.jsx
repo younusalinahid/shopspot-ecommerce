@@ -16,7 +16,7 @@ const MAIN_LINKS = [
     {to: '/shop', label: 'Shop'},
 ];
 
-const mainLinkClass = ({isActive}) => `px-4 lg:px-5 py-1.5 lg:py-2 rounded-full text-[15px] sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
+const mainLinkClass = ({isActive}) => `px-6 sm:px-8 py-2 rounded-full text-base sm:text-lg font-semibold whitespace-nowrap transition-colors ${isActive
     ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
     : 'text-white/90 hover:text-white hover:bg-white/15'}`;
 
@@ -259,29 +259,21 @@ export default function Navbar() {
             <nav
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
                 <div className="w-full px-3 sm:px-4 lg:px-8">
-                    <div className="flex items-center gap-3 lg:gap-5 h-16 sm:h-[72px] lg:h-20">
+                    {/* Desktop: 3 equal-sided columns so the search bar sits exactly in the middle */}
+                    <div className="flex items-center gap-3 lg:gap-6 h-16 sm:h-[76px] lg:h-24 lg:grid lg:grid-cols-[1fr_minmax(0,46rem)_1fr]">
                         {/* Logo */}
-                        <div className="flex items-center min-w-0 flex-shrink lg:flex-shrink-0">
+                        <div className="flex items-center min-w-0 flex-shrink lg:justify-self-start">
                             <Link to="/" className="flex items-center min-w-0 gap-2 lg:gap-3">
                                 <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
-                                     className="h-10 sm:h-12 lg:h-14 w-auto max-w-[120px] object-contain flex-shrink-0"/>
-                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl xl:text-[1.75rem] leading-none truncate">
+                                     className="h-10 sm:h-12 lg:h-16 w-auto max-w-[140px] object-contain flex-shrink-0"/>
+                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl lg:text-3xl leading-none truncate">
                                     {storeName}
                                 </span>
                             </Link>
                         </div>
 
-                        {/* Main sections (desktop): next to the logo */}
-                        <nav aria-label="Main" className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0 lg:ml-2 xl:ml-4">
-                            {MAIN_LINKS.map(item => (
-                                <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
-                                    {item.label}
-                                </NavLink>
-                            ))}
-                        </nav>
-
                         {/* Search Bar (Desktop) */}
-                        <div className="hidden lg:flex flex-1 min-w-0 max-w-2xl mx-auto">
+                        <div className="hidden lg:flex w-full min-w-0">
                             <form onSubmit={handleSearchSubmit} className="relative w-full">
                                 <input
                                     type="text"
@@ -289,7 +281,7 @@ export default function Navbar() {
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                                     placeholder="Search products, brands, and categories..."
-                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-base shadow-md transition-all duration-300"
+                                    className="w-full h-14 pl-6 pr-16 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-lg shadow-md transition-all duration-300"
                                 />
                                 {renderSearchResults()}
 
@@ -319,7 +311,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Actions (Cart, Profile, Theme) */}
-                        <div className="flex items-center flex-shrink-0 ml-auto lg:ml-0 gap-1 sm:gap-3 lg:gap-4">
+                        <div className="flex items-center flex-shrink-0 ml-auto lg:ml-0 lg:justify-self-end gap-1 sm:gap-3 lg:gap-4">
                             <img
                                 src={playStoreButton}
                                 alt="Google Play"
@@ -417,8 +409,8 @@ export default function Navbar() {
                         </form>
                     </div>
 
-                    {/* Main sections (phones/tablets): under the search bar */}
-                    <div className="lg:hidden flex items-center gap-1 sm:gap-2 -mt-1 pb-2">
+                    {/* Main sections: centred under the search bar on every screen size */}
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 pb-3 lg:pb-3 lg:pt-1">
                         {MAIN_LINKS.map(item => (
                             <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
                                 {item.label}
