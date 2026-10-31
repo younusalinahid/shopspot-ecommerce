@@ -23,7 +23,7 @@ const bn = {
     'pd.noImage': 'ছবি নেই', 'pd.description': 'বিবরণ', 'pd.noDescription': 'কোনো বিবরণ নেই।',
     'pd.size': 'সাইজ', 'pd.chooseOne': 'একটি বাছাই করুন', 'pd.quantity': 'পরিমাণ:', 'pd.addToCart': 'কার্টে যোগ করুন',
     'pd.buyNow': 'এখনই কিনুন', 'pd.share': 'শেয়ার', 'pd.compare': 'তুলনা', 'pd.inStock': 'স্টকে {count}টি আছে',
-    'pd.inStockUnlimited': 'স্টকে আছে', 'pd.freeDelivery': 'ফ্রি ডেলিভারি', 'pd.delivery': 'ডেলিভারি ৳{fee}',
+    'pd.inStockUnlimited': 'স্টকে আছে', 'pd.freeDelivery': 'ফ্রি ডেলিভারি', 'pd.delivery': 'ডেলিভারি ঢাকায় ৳{dhaka} · বাইরে ৳{outside}',
     'pd.deliveryDays': '৩–৫ কর্মদিবস', 'pd.freeOver': '৳{min} এর বেশি অর্ডারে ফ্রি', 'pd.returns': '৭ দিনের রিটার্ন',
     'pd.returnsNote': 'সহজ রিটার্ন ও রিফান্ড', 'pd.related': 'সম্পর্কিত পণ্য', 'pd.recommended': 'প্রস্তাবিত',
     'pd.noRelated': 'কোনো সম্পর্কিত পণ্য পাওয়া যায়নি।', 'pd.recentlyViewed': 'সম্প্রতি দেখা',
@@ -47,7 +47,7 @@ const bn = {
     'cart.shipping': 'ডেলিভারি', 'cart.free': 'ফ্রি', 'cart.addMore': 'ফ্রি ডেলিভারির জন্য আরও ৳{amount} এর পণ্য যোগ করুন',
     'cart.tax': 'ট্যাক্স (৭%)', 'cart.total': 'মোট', 'cart.clear': 'কার্ট খালি করুন', 'cart.summary': 'অর্ডার সারাংশ',
     'cart.checkout': 'চেকআউট করুন', 'cart.freeAlways': 'সব অর্ডারে ফ্রি ডেলিভারি',
-    'cart.freeOver': '৳{min} এর বেশি অর্ডারে ফ্রি ডেলিভারি', 'cart.flatFee': 'প্রতি অর্ডারে ডেলিভারি ৳{fee}',
+    'cart.freeOver': '৳{min} এর বেশি অর্ডারে ফ্রি ডেলিভারি', 'cart.zoneFees': 'ঢাকা ৳{dhaka} · ঢাকার বাইরে ৳{outside}', 'cart.plusDelivery': '+ ডেলিভারি চার্জ, চেকআউটে হিসাব হবে',
     'cart.returns': 'রিটার্ন সুবিধা', 'cart.secure': 'নিরাপদ পেমেন্ট', 'cart.size': 'সাইজ', 'cart.remove': 'মুছে ফেলুন',
 
     'co.shippingDetails': 'ডেলিভারির তথ্য', 'co.paymentMethod': 'পেমেন্ট পদ্ধতি', 'co.guest': 'আপনি গেস্ট হিসেবে অর্ডার করছেন।',
@@ -59,7 +59,7 @@ const bn = {
     'co.postal': 'পোস্ট কোড', 'co.saveAddress': 'পরের কেনাকাটার জন্য ঠিকানাটি সেভ করুন',
     'co.choosePayment': 'পেমেন্ট পদ্ধতি বাছাই করুন', 'co.card': 'ক্রেডিট / ডেবিট কার্ড', 'co.cardNote': 'Stripe এর মাধ্যমে নিরাপদ পেমেন্ট',
     'co.cod': 'ক্যাশ অন ডেলিভারি', 'co.codNote': 'পণ্য হাতে পেয়ে টাকা দিন', 'co.subtotal': 'সাবটোটাল',
-    'co.shipping': 'ডেলিভারি চার্জ', 'co.tax': 'আনুমানিক ট্যাক্স (৭%)', 'co.totalPayable': 'মোট পরিশোধযোগ্য',
+    'co.shipping': 'ডেলিভারি চার্জ', 'co.insideDhaka': 'ঢাকার ভেতরে', 'co.outsideDhaka': 'ঢাকার বাইরে', 'co.tax': 'আনুমানিক ট্যাক্স (৭%)', 'co.totalPayable': 'মোট পরিশোধযোগ্য',
     'co.next': 'পরবর্তী: পেমেন্ট পদ্ধতি বাছাই', 'co.secured': 'SSL সুরক্ষিত', 'co.fastDelivery': 'দ্রুত ডেলিভারি',
 
     'chat.title': 'ShopSpot AI', 'chat.online': 'অনলাইন · AI চালিত', 'chat.listening': 'শুনছি… বলুন',

@@ -13,9 +13,10 @@ import {dashboardApi} from "../../api/dashboardApi";
 import {useNavigate, useLocation} from 'react-router-dom';
 import {ToastContainer} from 'react-toastify';
 import {
-    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe
+    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe, Truck
 } from 'lucide-react';
 import SiteContentPage from './SiteContentPage';
+import DeliveryPage from './DeliveryPage';
 import InventoryAlerts from "./InventoryAlerts";
 
 export default function AdminDashboard() {
@@ -76,6 +77,7 @@ export default function AdminDashboard() {
         {id: 'customers', icon: Users, label: 'Customers'},
         {id: 'analytics', icon: BarChart3, label: 'Analytics'},
         {id: 'inventory-alerts', icon: Sparkles, label: 'AI Stock Alerts'},
+        {id: 'delivery', icon: Truck, label: 'Delivery'},
         {id: 'site-content', icon: Globe, label: 'Site Content'}
     ];
 
@@ -267,6 +269,8 @@ export default function AdminDashboard() {
                 return <AnalyticsPage/>;
             case 'inventory-alerts':
                 return <InventoryAlerts/>;
+            case 'delivery':
+                return <DeliveryPage/>;
             case 'site-content':
                 return <SiteContentPage/>;
             default:

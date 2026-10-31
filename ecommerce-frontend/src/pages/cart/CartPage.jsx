@@ -101,9 +101,11 @@ const CartPage = () => {
 
     // Calculate totals
     const subtotal = cart.totalPrice || 0;
-    const shipping = delivery.chargeFor(subtotal);
+    // The delivery area is only known at checkout, so the cart shows both charges
+    const freeDelivery = delivery.isFree(subtotal);
+    const shipping = freeDelivery ? 0 : null;
     const tax = Math.round(subtotal * 0.07);
-    const total = subtotal + shipping + tax;
+    const total = subtotal + (shipping || 0) + tax;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -254,12 +256,12 @@ const CartPage = () => {
                     <span className="flex items-center gap-1">
                       <Truck size={16}/> {t('cart.shipping')}
                     </span>
-                                        <span className={`font-semibold ${shipping === 0 ? 'text-green-600' : ''}`}>
-                      {shipping === 0 ? t('cart.free') : `৳${shipping.toFixed(2)}`}
+                                        <span className={`font-semibold text-right ${shipping === 0 ? 'text-green-600' : ''}`}>
+                      {shipping === 0 ? t('cart.free') : t('cart.zoneFees', {dhaka: delivery.dhaka, outside: delivery.outside})}
                     </span>
                                     </div>
 
-                                    {shipping > 0 && delivery.freeMin > 0 && (
+                                    {!freeDelivery && delivery.freeMin > 0 && (delivery.dhaka > 0 || delivery.outside > 0) && (
                                         <p className="text-sm text-blue-600 dark:text-blue-400">
                                             {t('cart.addMore', {amount: (delivery.freeMin - subtotal + 1).toFixed(2)})}
                                         </p>
@@ -276,6 +278,9 @@ const CartPage = () => {
                                             <span>{t('cart.total')}</span>
                                             <span>৳{total.toFixed(2)}</span>
                                         </div>
+                                        {shipping === null && (
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">{t('cart.plusDelivery')}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -283,9 +288,9 @@ const CartPage = () => {
                                 <div className="space-y-2 mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Truck className="w-4 h-4 text-green-600"/>
-                                        <span>{delivery.fee === 0
+                                        <span>{delivery.dhaka === 0 && delivery.outside === 0
                                             ? t('cart.freeAlways')
-                                            : delivery.freeMin > 0 ? t('cart.freeOver', {min: delivery.freeMin}) : t('cart.flatFee', {fee: delivery.fee})}</span>
+                                            : delivery.freeMin > 0 ? t('cart.freeOver', {min: delivery.freeMin}) : t('cart.zoneFees', {dhaka: delivery.dhaka, outside: delivery.outside})}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                         <Shield className="w-4 h-4 text-blue-600"/>

@@ -23,7 +23,7 @@ const en = {
     'pd.noImage': 'No Image Available', 'pd.description': 'Description', 'pd.noDescription': 'No description available.',
     'pd.size': 'Size', 'pd.chooseOne': 'choose one', 'pd.quantity': 'Quantity:', 'pd.addToCart': 'Add to Cart',
     'pd.buyNow': 'Buy Now', 'pd.share': 'Share', 'pd.compare': 'Compare', 'pd.inStock': '{count} items in stock',
-    'pd.inStockUnlimited': 'In Stock (Unlimited)', 'pd.freeDelivery': 'Free Delivery', 'pd.delivery': 'Delivery ৳{fee}',
+    'pd.inStockUnlimited': 'In Stock (Unlimited)', 'pd.freeDelivery': 'Free Delivery', 'pd.delivery': 'Delivery ৳{dhaka} Dhaka · ৳{outside} outside',
     'pd.deliveryDays': '3–5 business days', 'pd.freeOver': 'Free on orders over ৳{min}', 'pd.returns': '7 Days Return',
     'pd.returnsNote': 'Easy return & refund policy', 'pd.related': 'Related Products', 'pd.recommended': 'Recommended',
     'pd.noRelated': 'No related products found.', 'pd.recentlyViewed': 'Recently Viewed',
@@ -47,7 +47,7 @@ const en = {
     'cart.shipping': 'Shipping', 'cart.free': 'FREE', 'cart.addMore': 'Add ৳{amount} more for free shipping',
     'cart.tax': 'Tax (7%)', 'cart.total': 'Total', 'cart.clear': 'Clear Cart', 'cart.summary': 'Order Summary',
     'cart.checkout': 'Proceed to Checkout', 'cart.freeAlways': 'Free shipping on every order',
-    'cart.freeOver': 'Free shipping over ৳{min}', 'cart.flatFee': 'Delivery ৳{fee} per order',
+    'cart.freeOver': 'Free shipping over ৳{min}', 'cart.zoneFees': 'Dhaka ৳{dhaka} · Outside ৳{outside}', 'cart.plusDelivery': '+ delivery, calculated at checkout',
     'cart.returns': '30-day return policy', 'cart.secure': 'Secure payment', 'cart.size': 'Size', 'cart.remove': 'Remove item',
 
     'co.shippingDetails': 'Shipping Details', 'co.paymentMethod': 'Payment Method', 'co.guest': 'Checking out as a guest.',
@@ -59,7 +59,7 @@ const en = {
     'co.postal': 'Postal Code', 'co.saveAddress': 'Save this address for future purchases',
     'co.choosePayment': 'Choose Payment Method', 'co.card': 'Credit / Debit Card', 'co.cardNote': 'Secure payment via Stripe',
     'co.cod': 'Cash on Delivery', 'co.codNote': 'Pay when you receive the product', 'co.subtotal': 'Subtotal',
-    'co.shipping': 'Shipping Delivery', 'co.tax': 'Tax Estimated (7%)', 'co.totalPayable': 'Total Payable',
+    'co.shipping': 'Shipping Delivery', 'co.insideDhaka': 'Inside Dhaka', 'co.outsideDhaka': 'Outside Dhaka', 'co.tax': 'Tax Estimated (7%)', 'co.totalPayable': 'Total Payable',
     'co.next': 'Next: Choose Payment Method', 'co.secured': 'SSL Secured', 'co.fastDelivery': 'Fast Delivery',
 
     'chat.title': 'ShopSpot AI', 'chat.online': 'Online · AI powered', 'chat.listening': 'Listening… speak now',

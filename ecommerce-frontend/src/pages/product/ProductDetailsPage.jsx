@@ -445,10 +445,10 @@ const ProductDetailsPage = () => {
                                         <div>
                                             {/* Same rule as checkout (set in Admin -> Site Content) */}
                                             <h4 className="text-xs font-semibold text-gray-900 dark:text-white">
-                                                {delivery.chargeFor(product.price) === 0 ? t('pd.freeDelivery') : t('pd.delivery', {fee: delivery.fee})}
+                                                {delivery.isFree(product.price) ? t('pd.freeDelivery') : t('pd.delivery', {dhaka: delivery.dhaka, outside: delivery.outside})}
                                             </h4>
                                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                                                {delivery.chargeFor(product.price) === 0 || delivery.freeMin <= 0
+                                                {delivery.isFree(product.price) || delivery.freeMin <= 0
                                                     ? t('pd.deliveryDays')
                                                     : t('pd.freeOver', {min: delivery.freeMin})}
                                             </p>

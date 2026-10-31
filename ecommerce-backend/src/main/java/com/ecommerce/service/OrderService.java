@@ -258,8 +258,10 @@ public class OrderService {
             throw new RuntimeException("Invalid order amount");
         }
 
-        // Delivery charge comes from Admin -> Site Content
-        int shippingFee = siteContentService.getSettings().deliveryChargeFor(subtotal);
+        // Delivery charge comes from Admin -> Delivery (inside / outside Dhaka)
+        boolean insideDhaka = shippingAddress != null
+                && SiteSettings.isDhaka(shippingAddress.getCity(), shippingAddress.getDistrict());
+        int shippingFee = siteContentService.getSettings().deliveryChargeFor(subtotal, insideDhaka);
         int totalAmount = subtotal + shippingFee + (int) Math.round(subtotal * TAX_RATE);
 
         Order order = Order.builder()

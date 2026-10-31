@@ -28,13 +28,17 @@ export const useSiteContent = () => {
     }, []);
 
     const settings = content.settings || {};
-    // Delivery rule from Admin -> Site Content (same rule the backend uses for the order total)
-    const fee = settings.deliveryFee ?? SITE_CONTENT_DEFAULTS.settings.deliveryFee;
-    const freeMin = settings.freeDeliveryMin ?? SITE_CONTENT_DEFAULTS.settings.freeDeliveryMin;
+    // Delivery rule from Admin -> Delivery (same rule the backend uses for the order total)
+    const D = SITE_CONTENT_DEFAULTS.settings;
+    const outside = settings.deliveryFee ?? D.deliveryFee;
+    const dhaka = settings.deliveryFeeDhaka ?? D.deliveryFeeDhaka;
+    const freeMin = settings.freeDeliveryMin ?? D.freeDeliveryMin;
     const delivery = {
-        fee,
+        dhaka,
+        outside,
         freeMin,
-        chargeFor: (subtotal) => (freeMin > 0 && subtotal > freeMin ? 0 : fee),
+        isFree: (subtotal) => freeMin > 0 && subtotal > freeMin,
+        chargeFor: (subtotal, insideDhaka) => (freeMin > 0 && subtotal > freeMin ? 0 : insideDhaka ? dhaka : outside),
     };
     return {
         delivery,

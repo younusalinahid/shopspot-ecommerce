@@ -96,8 +96,6 @@ public class SiteContentService {
         s.setYoutubeUrl(url(in.getYoutubeUrl(), "YouTube"));
         s.setTiktokUrl(url(in.getTiktokUrl(), "TikTok"));
         s.setCopyrightText(optional(in.getCopyrightText(), "Copyright text", 200));
-        s.setDeliveryFee(amount(in.getDeliveryFee(), "Delivery charge", s.effectiveDeliveryFee()));
-        s.setFreeDeliveryMin(amount(in.getFreeDeliveryMin(), "Free delivery amount", s.effectiveFreeDeliveryMin()));
         s.setBrandColor(color(in.getBrandColor(), "Store name colour"));
         s.setLogoBgColor(color(in.getLogoBgColor(), "Logo background colour"));
         s.setTopBarColor(color(in.getTopBarColor(), "Top bar colour"));
@@ -105,6 +103,18 @@ public class SiteContentService {
         s.setAnnouncementText(optional(in.getAnnouncementText(), "Announcement text", 200));
         s.setAnnouncementLinkText(optional(in.getAnnouncementLinkText(), "Announcement link text", 40));
         s.setAnnouncementLinkUrl(link(in.getAnnouncementLinkUrl(), "Top bar"));
+        return settingsRepository.save(s);
+    }
+
+    /** Admin -> Delivery page. */
+    @Transactional
+    public SiteSettings updateDelivery(Integer insideDhaka, Integer outsideDhaka, Integer freeOver) {
+        SiteSettings s = getSettings();
+        s.setId(1L);
+        if (s.getStoreName() == null) s.setStoreName("ShopSpot Online");
+        s.setDeliveryFeeDhaka(amount(insideDhaka, "Inside Dhaka charge", s.effectiveDeliveryFeeDhaka()));
+        s.setDeliveryFee(amount(outsideDhaka, "Outside Dhaka charge", s.effectiveDeliveryFee()));
+        s.setFreeDeliveryMin(amount(freeOver, "Free delivery amount", s.effectiveFreeDeliveryMin()));
         return settingsRepository.save(s);
     }
 

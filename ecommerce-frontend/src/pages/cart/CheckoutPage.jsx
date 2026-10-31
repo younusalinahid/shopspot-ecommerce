@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import {useSiteContent} from '../../hooks/useSiteContent';
 import {useLanguage} from '../../context/LanguageContext';
+import {isDhaka} from '../../utils/isDhaka';
 
 const stripePromise = loadStripe(
     process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
@@ -252,7 +253,12 @@ function CheckoutContent() {
     );
 
     const subtotal = cart?.totalPrice || 0;
-    const shipping = delivery.chargeFor(subtotal);
+    // Delivery depends on the address: inside or outside Dhaka (same rule as the backend)
+    const chosenAddress = selectedAddr && !showNewForm
+        ? addresses.find(a => a.id === selectedAddr)
+        : newAddrForm;
+    const insideDhaka = isDhaka(chosenAddress?.city, chosenAddress?.district);
+    const shipping = delivery.chargeFor(subtotal, insideDhaka);
     const tax = Math.round(subtotal * 0.07);
     const total = subtotal + shipping + tax;
 
@@ -572,7 +578,14 @@ function CheckoutContent() {
                                         <span className="font-semibold text-gray-900 dark:text-white">৳{subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span>{t('co.shipping')}</span>
+                                        <span>
+                                            {t('co.shipping')}
+                                            {shipping > 0 && (
+                                                <span className="block text-xs font-normal text-gray-500 dark:text-gray-400">
+                                                    {insideDhaka ? t('co.insideDhaka') : t('co.outsideDhaka')}
+                                                </span>
+                                            )}
+                                        </span>
                                         <span className={`font-semibold ${shipping === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
                                             {shipping === 0 ? t('cart.free') : `৳${shipping.toFixed(2)}`}
                                         </span>

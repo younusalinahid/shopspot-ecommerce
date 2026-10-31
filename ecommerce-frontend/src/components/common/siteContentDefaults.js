@@ -23,7 +23,8 @@ const SITE_CONTENT_DEFAULTS = {
         "announcementLinkText": "Shop Deals",
         "announcementLinkUrl": "/shop?sale=1",
         "deliveryFee": 120,
-        "freeDeliveryMin": 2000
+        "freeDeliveryMin": 2000,
+        "deliveryFeeDhaka": 60
     },
     "pages": [
         {

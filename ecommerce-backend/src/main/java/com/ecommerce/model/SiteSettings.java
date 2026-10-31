@@ -35,9 +35,11 @@ public class SiteSettings {
 
     private String copyrightText;
 
-    // ---- Delivery charge (used by checkout, cart and the order total) ----
-    /** Delivery charge per order in Taka. null = default (120). */
+    // ---- Delivery charge (Admin -> Delivery; used by checkout, cart and the order total) ----
+    /** Delivery charge outside Dhaka in Taka. null = default (120). */
     private Integer deliveryFee;
+    /** Delivery charge inside Dhaka in Taka. null = default (60). */
+    private Integer deliveryFeeDhaka;
     /** Delivery is free when the subtotal is above this. null = default (2000); 0 = never free. */
     private Integer freeDeliveryMin;
 
@@ -45,14 +47,29 @@ public class SiteSettings {
         return deliveryFee != null ? deliveryFee : 120;
     }
 
+    public int effectiveDeliveryFeeDhaka() {
+        return deliveryFeeDhaka != null ? deliveryFeeDhaka : 60;
+    }
+
     public int effectiveFreeDeliveryMin() {
         return freeDeliveryMin != null ? freeDeliveryMin : 2000;
     }
 
-    /** Delivery charge for an order with this subtotal. */
-    public int deliveryChargeFor(int subtotal) {
+    /** Delivery charge for an order with this subtotal, inside or outside Dhaka. */
+    public int deliveryChargeFor(int subtotal, boolean insideDhaka) {
         int min = effectiveFreeDeliveryMin();
-        return (min > 0 && subtotal > min) ? 0 : effectiveDeliveryFee();
+        if (min > 0 && subtotal > min) return 0;
+        return insideDhaka ? effectiveDeliveryFeeDhaka() : effectiveDeliveryFee();
+    }
+
+    /** True when the city or district of the address is Dhaka (English or Bangla). */
+    public static boolean isDhaka(String city, String district) {
+        for (String v : new String[]{city, district}) {
+            if (v == null) continue;
+            String t = v.trim().toLowerCase(java.util.Locale.ROOT);
+            if (t.contains("dhaka") || t.contains("\u09A2\u09BE\u0995\u09BE")) return true;
+        }
+        return false;
     }
 
     // ---- Header look and the announcement bar above it ----

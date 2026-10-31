@@ -330,11 +330,12 @@ public class ChatService {
     }
 
     private static String deliveryRule(SiteSettings s) {
-        int fee = s.effectiveDeliveryFee();
+        int dhaka = s.effectiveDeliveryFeeDhaka();
+        int outside = s.effectiveDeliveryFee();
         int min = s.effectiveFreeDeliveryMin();
-        if (fee == 0) return "FREE delivery on every order.";
-        return "৳" + String.format("%,d", fee) + " per order"
-                + (min > 0 ? ", FREE when the order subtotal is above ৳" + String.format("%,d", min) + "." : ".");
+        String fees = dhaka == 0 && outside == 0 ? "FREE delivery everywhere"
+                : "inside Dhaka ৳" + String.format("%,d", dhaka) + ", outside Dhaka ৳" + String.format("%,d", outside) + " per order";
+        return fees + (min > 0 ? "; FREE when the order subtotal is above ৳" + String.format("%,d", min) + "." : ".");
     }
 
     private String cartSuggestionPrompt(String productName, List<Product> active) {
