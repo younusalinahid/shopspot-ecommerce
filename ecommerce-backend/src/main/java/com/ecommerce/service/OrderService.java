@@ -100,7 +100,7 @@ public class OrderService {
                     .postalCode(request.getPostalCode())
                     .build();
 
-            if (Boolean.TRUE.equals(request.getSaveAddress())) {
+            if (Boolean.TRUE.equals(request.getSaveAddress()) && !alreadySaved(userId, request)) {
                 AddressRequestDTO addrReq = new AddressRequestDTO();
                 addrReq.setFullName(request.getFullName());
                 addrReq.setPhone(request.getPhone());
@@ -384,6 +384,18 @@ public class OrderService {
     }
 
     /** Subtracts the ordered quantities from product stock once per order. */
+    /** Skips saving the same address twice when the box stays ticked on every checkout. */
+    private boolean alreadySaved(Long userId, CheckoutRequestDTO request) {
+        return addressRepository.findByUserIdOrderByIsDefaultDescCreatedAtDesc(userId).stream().anyMatch(a ->
+                same(a.getPhone(), request.getPhone())
+                        && same(a.getAddressLine(), request.getAddressLine())
+                        && same(a.getCity(), request.getCity()));
+    }
+
+    private static boolean same(String a, String b) {
+        return a != null && b != null && a.trim().equalsIgnoreCase(b.trim());
+    }
+
     private void deductStock(Order order) {
         if (Boolean.TRUE.equals(order.getStockDeducted())) return;
         for (OrderItem item : order.getItems()) {
@@ -535,9 +547,14 @@ public class OrderService {
         if (order.getUser() == null || !order.getUser().getId().equals(userId))
             throw new RuntimeException("Unauthorized");
 
-        if (order.getStatus() != OrderStatus.PENDING)
-            throw new RuntimeException("Only PENDING orders can be cancelled");
+        // Customers may cancel until the shop starts packing: an unfinished checkout,
+        // or a confirmed cash-on-delivery order. Paid card orders need a refund, so the shop handles those.
+        boolean cancellable = order.getStatus() == OrderStatus.PENDING
+                || (order.getStatus() == OrderStatus.CONFIRMED && order.getPaymentMethod() == PaymentMethod.COD);
+        if (!cancellable)
+            throw new RuntimeException("This order can no longer be cancelled. Please contact us for help.");
 
+        restoreStock(order);
         order.setStatus(OrderStatus.CANCELLED);
         return toDTO(orderRepository.save(order));
     }

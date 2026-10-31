@@ -9,9 +9,10 @@ import {
     Truck, XCircle, CreditCard, RefreshCw,
     Calendar, Receipt, Eye,
     TrendingUp, Sparkles, User,
-    Phone, Home, Navigation
+    Phone, Home, Navigation, Check
 } from 'lucide-react';
 import {imageSrc} from '../../utils/imageSrc';
+import {orderBreakdown, PURCHASED_STATUSES, canCustomerCancel, deliveryEstimate, formatAddress} from '../../utils/orderTotals';
 
 const STATUS = {
     PENDING: {
@@ -66,7 +67,7 @@ const paymentStatusLabel = (order) => {
     if (order.paymentMethod === 'COD') {
         return order.codCollected || order.status === 'PAID' ? 'Paid (Cash)' : 'Pay on Delivery';
     }
-    return order.status === 'PENDING' ? 'Pending' : 'Paid';
+    return order.status === 'PENDING' ? 'Not paid' : 'Paid';
 };
 
 const isPaymentDone = (order) =>
@@ -99,10 +100,10 @@ export default function OrdersPage() {
         try {
             setLoading(true);
             const data = await orderApi.getUserOrders();
-            setOrders(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            if (data.length > 0 && !selectedOrder) {
-                setSelectedOrder(data[0]);
-            }
+            const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setOrders(sorted);
+            // Show the fresh copy of the open order (status may have changed), or the newest one
+            setSelectedOrder(prev => sorted.find(o => o.id === prev?.id) || sorted[0] || null);
         } catch {
             toast.error('Failed to load orders');
         } finally {
@@ -130,16 +131,18 @@ export default function OrdersPage() {
         const matchesFilter = filter === 'ALL' || order.status === filter;
         const matchesSearch = !searchTerm ||
             order.id.toString().includes(searchTerm) ||
-            order.items?.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
+            order.items?.some(item => (item.productName || '').toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesFilter && matchesSearch;
     });
 
+    // Spent = real purchases only (unfinished checkouts and cancelled orders are not money spent)
     const stats = {
         total: orders.length,
         delivered: orders.filter(o => o.status === 'DELIVERED').length,
-        pending: orders.filter(o => o.status === 'PENDING').length,
-        processing: orders.filter(o => o.status === 'PROCESSING').length,
-        totalSpent: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+        inProgress: orders.filter(o => ['CONFIRMED', 'PAID', 'PROCESSING', 'SHIPPED'].includes(o.status)).length,
+        totalSpent: orders
+            .filter(o => PURCHASED_STATUSES.includes(o.status))
+            .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
     };
 
     if (loading) return <SkeletonLoader/>;
@@ -174,7 +177,7 @@ export default function OrdersPage() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                                 <StatCard label="Total Orders" value={stats.total} icon={ShoppingBag}/>
                                 <StatCard label="Delivered" value={stats.delivered} icon={CheckCircle2}/>
-                                <StatCard label="In Progress" value={stats.processing + stats.pending} icon={Clock}/>
+                                <StatCard label="In Progress" value={stats.inProgress} icon={Clock}/>
                                 <StatCard label="Total Spent" value={`৳${stats.totalSpent.toLocaleString()}`}
                                           icon={TrendingUp}/>
                             </div>
@@ -292,12 +295,9 @@ export default function OrdersPage() {
 
 // Order Details Sidebar Component
 function OrderDetailsSidebar({order, onClose}) {
-    // Break the stored total into its parts (older orders have no stored delivery charge)
-    const itemsSubtotal = (order.items || []).reduce((sum, i) => sum + (i.priceAtPurchase || 0) * (i.quantity || 0), 0);
-    // Tax was removed; older orders that still include 7% tax show it so the total adds up
-    const oldTax = Math.round(itemsSubtotal * 0.07);
-    const shippingAmount = order.shippingFee ?? Math.max(0, (order.totalAmount || 0) - itemsSubtotal - oldTax);
-    const taxAmount = Math.max(0, (order.totalAmount || 0) - itemsSubtotal - shippingAmount);
+    // Break the stored total into its parts (older orders include the old 7% tax)
+    const {items: itemsSubtotal, delivery: shippingAmount, tax: taxAmount} = orderBreakdown(order);
+    const estimate = deliveryEstimate(order);
     const addr = order.shippingAddress;
     const s = STATUS[order.status] || STATUS.PENDING;
     const Icon = s.icon;
@@ -305,16 +305,6 @@ function OrderDetailsSidebar({order, onClose}) {
     const formattedDate = new Date(order.createdAt).toLocaleDateString('en-BD', {
         day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
-
-    const getTrackingNumber = () => {
-        // Random tracking number for demo
-        return `TRK${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-    };
-
-    const getDeliveryPartner = () => {
-        const partners = ['Pathao', 'RedX', 'Paperfly', 'Sundarban Courier', 'SA Paribahan'];
-        return partners[order.id % partners.length];
-    };
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg sticky top-24 overflow-hidden">
@@ -373,12 +363,9 @@ function OrderDetailsSidebar({order, onClose}) {
                             <div className="flex items-start gap-2">
                                 <Home className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0"/>
                                 <div>
-                                    <p className="text-gray-900 dark:text-white">{addr.addressLine}</p>
-                                    {addr.area &&
-                                        <p className="text-gray-600 dark:text-gray-400 text-sm">{addr.area}</p>}
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                        {addr.city}, {addr.district}
-                                        {addr.postalCode && ` - ${addr.postalCode}`}
+                                    <p className="text-gray-900 dark:text-white">{formatAddress(addr)}</p>
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs">
+                                        {estimate.inside ? 'Inside Dhaka' : 'Outside Dhaka'}
                                     </p>
                                 </div>
                             </div>
@@ -386,41 +373,28 @@ function OrderDetailsSidebar({order, onClose}) {
                     </div>
                 )}
 
-                {/* Delivery Info */}
-                {order.status !== 'CANCELLED' && (
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-purple-600"/>
-                            Delivery Information
-                        </h4>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Delivery Partner</span>
-                                <span
-                                    className="text-sm font-medium text-gray-900 dark:text-white">{getDeliveryPartner()}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Tracking Number</span>
-                                <span
-                                    className="text-sm font-mono font-medium text-purple-600 dark:text-purple-400">{getTrackingNumber()}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Estimated Delivery</span>
-                                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                                    {new Date(new Date(order.createdAt).setDate(new Date(order.createdAt).getDate() + 5)).toLocaleDateString()}
-                                </span>
-                            </div>
-                            {order.status === 'SHIPPED' && (
-                                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
-                                    <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
-                                        <Navigation className="w-3 h-3"/>
-                                        <span>Your package is on the way!</span>
-                                    </div>
-                                </div>
-                            )}
+                {/* Delivery progress */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-purple-600"/>
+                        Delivery Progress
+                    </h4>
+                    <OrderTracker order={order}/>
+                    {!['DELIVERED', 'CANCELLED', 'PENDING'].includes(order.status) && (
+                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 flex justify-between items-center text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">Estimated delivery</span>
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                {estimate.label} <span className="text-xs text-gray-400">({estimate.days})</span>
+                            </span>
                         </div>
-                    </div>
-                )}
+                    )}
+                    {order.status === 'SHIPPED' && (
+                        <div className="mt-2 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
+                            <Navigation className="w-3 h-3"/>
+                            <span>Your package is on the way!</span>
+                        </div>
+                    )}
+                </div>
 
                 {/* Payment Info */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
@@ -506,8 +480,19 @@ function OrderDetailsSidebar({order, onClose}) {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.productName}</p>
-                                    <p className="text-xs text-gray-500">Qty: {item.quantity}{item.size && ` · Size: ${item.size}`}</p>
+                                    {item.productId ? (
+                                        <Link to={`/product/${item.productId}`}
+                                              className="block text-sm font-medium text-gray-900 dark:text-white truncate hover:text-purple-600">
+                                            {item.productName}
+                                        </Link>
+                                    ) : (
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{item.productName}</p>
+                                    )}
+                                    <p className="text-xs text-gray-500">
+                                        Qty: {item.quantity}
+                                        {item.size && ` · Size: ${item.size}`}
+                                        {item.color && ` · ${item.color}`}
+                                    </p>
                                 </div>
                                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                     ৳{(item.priceAtPurchase * item.quantity).toLocaleString()}
@@ -518,6 +503,66 @@ function OrderDetailsSidebar({order, onClose}) {
                 </div>
             </div>
         </div>
+    );
+}
+
+const TRACK_STEPS = [
+    {key: 'PLACED', label: 'Order placed'},
+    {key: 'CONFIRMED', label: 'Confirmed'},
+    {key: 'PROCESSING', label: 'Packing'},
+    {key: 'SHIPPED', label: 'On the way'},
+    {key: 'DELIVERED', label: 'Delivered'},
+];
+
+// How far the order has gone (index into TRACK_STEPS)
+const trackIndex = (status) => ({
+    PENDING: 0, CONFIRMED: 1, PAID: 1, PROCESSING: 2, SHIPPED: 3, DELIVERED: 4,
+}[status] ?? 0);
+
+const deliveryText = (order) => ({
+    PENDING: order.paymentMethod === 'COD' ? 'Not confirmed' : 'Awaiting payment',
+    CONFIRMED: 'Preparing', PAID: 'Preparing', PROCESSING: 'Packing',
+    SHIPPED: 'On the way', DELIVERED: 'Delivered', CANCELLED: 'Cancelled',
+}[order.status] || '—');
+
+function OrderTracker({order}) {
+    if (order.status === 'CANCELLED') {
+        return (
+            <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                <XCircle className="w-4 h-4"/> This order was cancelled.
+            </div>
+        );
+    }
+    if (order.status === 'PENDING') {
+        return (
+            <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                <Clock className="w-4 h-4 mt-0.5 shrink-0"/>
+                {order.paymentMethod === 'COD'
+                    ? 'Checkout was not finished, so this order is not confirmed yet.'
+                    : 'Card payment was not completed, so this order is not confirmed yet.'}
+            </div>
+        );
+    }
+    const current = trackIndex(order.status);
+    return (
+        <ol className="relative space-y-3">
+            {TRACK_STEPS.map((step, i) => {
+                const done = i <= current;
+                const label = step.key === 'CONFIRMED' && order.paymentMethod === 'CARD' ? 'Payment received' : step.label;
+                return (
+                    <li key={step.key} className="flex items-center gap-3">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                            done ? 'bg-emerald-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-400'
+                        } ${i === current ? 'ring-4 ring-emerald-500/20' : ''}`}>
+                            {done ? <Check className="w-3.5 h-3.5"/> : i + 1}
+                        </span>
+                        <span className={`text-sm ${done ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400'}`}>
+                            {label}
+                        </span>
+                    </li>
+                );
+            })}
+        </ol>
     );
 }
 
@@ -608,7 +653,7 @@ function OrderCard({order, expanded, onToggle, onCancel, cancelling, index, onVi
                         >
                             <Eye className="w-4 h-4"/> Details
                         </button>
-                        {order.status === 'PENDING' && (
+                        {canCustomerCancel(order) && (
                             <button
                                 onClick={(e) => onCancel(e, order.id)}
                                 disabled={cancelling}
@@ -634,8 +679,7 @@ function OrderCard({order, expanded, onToggle, onCancel, cancelling, index, onVi
                     {/* Quick stats row */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                         <QuickStat icon={MapPin} label="Shipping" value={order.shippingAddress?.city || 'N/A'}/>
-                        <QuickStat icon={Truck} label="Delivery"
-                                   value={order.status === 'DELIVERED' ? 'Delivered' : 'In Transit'}/>
+                        <QuickStat icon={Truck} label="Delivery" value={deliveryText(order)}/>
                         <QuickStat icon={CreditCard} label="Payment"
                                    value={paymentStatusLabel(order)}/>
                         <QuickStat icon={Calendar} label="Order Date" value={formattedDate}/>

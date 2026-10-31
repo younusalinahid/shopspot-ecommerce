@@ -4,6 +4,7 @@ import {orderApi, guestOrderStore} from '../../api/orderApi';
 import {isAuthenticated} from '../../api/authApi';
 import {CheckCircle2, Package, MapPin, Loader2, ShoppingBag} from 'lucide-react';
 import {imageSrc} from '../../utils/imageSrc';
+import {orderBreakdown} from '../../utils/orderTotals';
 
 const STATUS_STYLE = {
     PENDING: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
@@ -56,6 +57,7 @@ export default function OrderConfirmationPage() {
     );
 
     const addr = order.shippingAddress;
+    const breakdown = orderBreakdown(order);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -120,15 +122,32 @@ export default function OrderConfirmationPage() {
                                         </p>
                                     </div>
                                     <p className="font-semibold text-gray-900 dark:text-white">
-                                        ৳{(item.priceAtPurchase * item.quantity).toFixed(2)}
+                                        ৳{(item.priceAtPurchase * item.quantity).toLocaleString()}
                                     </p>
                                 </div>
                             ))}
                         </div>
-                        <div
-                            className="flex justify-between font-bold text-gray-900 dark:text-white pt-4 border-t border-gray-200 dark:border-gray-700 mt-2">
-                            <span>{order.paymentMethod === 'COD' && order.status !== 'PAID' ? 'Total (Pay on Delivery)' : 'Total Paid'}</span>
-                            <span>৳{order.totalAmount?.toFixed(2)}</span>
+                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-2 space-y-2 text-sm">
+                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                <span>Subtotal</span>
+                                <span>৳{breakdown.items.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                <span>Delivery charge</span>
+                                <span className={breakdown.delivery === 0 ? 'text-green-600 font-medium' : ''}>
+                                    {breakdown.delivery === 0 ? 'FREE' : `৳${breakdown.delivery.toLocaleString()}`}
+                                </span>
+                            </div>
+                            {breakdown.tax > 0 && (
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                    <span>Tax</span>
+                                    <span>৳{breakdown.tax.toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between font-bold text-base text-gray-900 dark:text-white pt-2">
+                                <span>{order.paymentMethod === 'COD' && !order.codCollected ? 'Total (Pay on Delivery)' : 'Total Paid'}</span>
+                                <span>৳{breakdown.total.toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
 

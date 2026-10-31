@@ -62,15 +62,8 @@ export const QUICK_FILTERS = {
     },
 };
 
-// Items / delivery / old-tax split of an order total (older orders stored no delivery charge)
-export const orderBreakdown = (order) => {
-    const items = (order.items || []).reduce(
-        (sum, i) => sum + (i.priceAtPurchase || 0) * (i.quantity || 0), 0);
-    const total = order.totalAmount || 0;
-    const delivery = order.shippingFee ?? Math.max(0, total - items - Math.round(items * 0.07));
-    const tax = Math.max(0, total - items - delivery);
-    return {items, delivery, tax, total};
-};
+// Items / delivery / old-tax split of an order total (shared with the customer pages)
+export {orderBreakdown} from '../../utils/orderTotals';
 
 // Same numbers as the backend SalesSummaryDTO, computed from the order list
 export const summarizeOrders = (orders) => {
