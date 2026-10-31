@@ -16,9 +16,9 @@ const MAIN_LINKS = [
     {to: '/shop', label: 'Shop'},
 ];
 
-const mainLinkClass = ({isActive}) => `px-6 sm:px-8 py-2 rounded-full text-base sm:text-lg font-semibold whitespace-nowrap transition-colors ${isActive
-    ? 'bg-white text-cyan-700 dark:bg-cyan-500 dark:text-white shadow'
-    : 'text-white/90 hover:text-white hover:bg-white/15'}`;
+const mainLinkClass = ({isActive}) => `px-6 sm:px-8 py-1.5 rounded-full text-[15px] sm:text-base font-semibold whitespace-nowrap transition-colors ${isActive
+    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow'
+    : 'text-gray-700 dark:text-gray-200 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-gray-800'}`;
 
 export default function Navbar() {
     const {storeName, logoUrl: siteLogoUrl} = useSiteContent();
@@ -256,17 +256,28 @@ export default function Navbar() {
 
     return (
         <>
+            {/* Main sections: thin strip above the blue navbar */}
+            <div className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+                <nav aria-label="Main" className="flex items-center justify-center gap-2 sm:gap-4 h-11 sm:h-12">
+                    {MAIN_LINKS.map(item => (
+                        <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </div>
+
             <nav
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 dark:from-gray-800 dark:to-gray-900 shadow-lg transition-colors duration-300 w-full">
                 <div className="w-full px-3 sm:px-4 lg:px-8">
                     {/* Desktop: 3 equal-sided columns so the search bar sits exactly in the middle */}
-                    <div className="flex items-center gap-3 lg:gap-6 h-16 sm:h-[76px] lg:h-24 lg:grid lg:grid-cols-[1fr_minmax(0,46rem)_1fr]">
+                    <div className="flex items-center gap-3 lg:gap-6 h-16 sm:h-[72px] lg:h-20 lg:grid lg:grid-cols-[1fr_minmax(0,42rem)_1fr]">
                         {/* Logo */}
                         <div className="flex items-center min-w-0 flex-shrink lg:justify-self-start">
                             <Link to="/" className="flex items-center min-w-0 gap-2 lg:gap-3">
                                 <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
-                                     className="h-10 sm:h-12 lg:h-16 w-auto max-w-[140px] object-contain flex-shrink-0"/>
-                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl lg:text-3xl leading-none truncate">
+                                     className="h-10 sm:h-12 lg:h-14 w-auto max-w-[140px] object-contain flex-shrink-0"/>
+                                <span className="text-white font-extrabold tracking-tight text-lg sm:text-2xl lg:text-[1.75rem] leading-none truncate">
                                     {storeName}
                                 </span>
                             </Link>
@@ -281,7 +292,7 @@ export default function Navbar() {
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
                                     placeholder="Search products, brands, and categories..."
-                                    className="w-full h-14 pl-6 pr-16 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-lg shadow-md transition-all duration-300"
+                                    className="w-full h-12 pl-5 pr-14 border-none rounded-full focus:outline-none focus:ring-4 focus:ring-white/40 bg-white text-gray-900 placeholder-gray-500 text-base shadow-md transition-all duration-300"
                                 />
                                 {renderSearchResults()}
 
@@ -407,15 +418,6 @@ export default function Navbar() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-
-                    {/* Main sections: centred under the search bar on every screen size */}
-                    <div className="flex items-center justify-center gap-2 sm:gap-3 pb-3 lg:pb-3 lg:pt-1">
-                        {MAIN_LINKS.map(item => (
-                            <NavLink key={item.to} to={item.to} end={item.end} className={mainLinkClass}>
-                                {item.label}
-                            </NavLink>
-                        ))}
                     </div>
                 </div>
             </nav>
