@@ -21,3 +21,25 @@ body {
 button, input, select, textarea {
     font-family: inherit;
 }
+
+/* Search bar: "Search by photo" hint blinks twice, stays a moment, then hides until the next round */
+@keyframes aiSearchTipBlink {
+    0%, 45%, 100% { opacity: 0; }
+    3%, 13%, 23%, 40% { opacity: 1; }
+    8%, 18% { opacity: 0.25; }
+}
+
+.ai-search-tip {
+    opacity: 0;
+    animation: aiSearchTipBlink 9s ease-in-out 2s infinite;
+}
+
+.ai-search-btn:hover .ai-search-tip,
+.ai-search-btn:focus-visible .ai-search-tip {
+    animation: none;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-search-tip { animation: none; }
+}

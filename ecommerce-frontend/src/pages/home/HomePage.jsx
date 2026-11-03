@@ -1,7 +1,6 @@
 import {useEffect, useState} from 'react';
 import {ArrowRight} from 'lucide-react';
 import {useNavigate, useSearchParams} from 'react-router-dom';
-import CategorySidebar from '../../components/category/CategorySidebar';
 import {getActiveBanners} from "../../api/bannerApi";
 import Banner from "../../components/banner/Banner";
 import {useCategories} from "../../hooks/useCategory";
@@ -18,8 +17,8 @@ const HomePage = () => {
     const {t} = useLanguage();
     const navigate = useNavigate();
     const {categories} = useCategories();
-    const {products: featuredProducts, loading: productsLoading, error: productsError} = useProducts(8);
-    const {categoryProducts, loading: categoryProductsLoading, error: categoryProductsError} = useCategoryProducts(4);
+    const {products: featuredProducts, loading: productsLoading, error: productsError} = useProducts(5);
+    const {categoryProducts, loading: categoryProductsLoading, error: categoryProductsError} = useCategoryProducts(5);
     const [banners, setBanners] = useState([]);
     const [isLoadingBanners, setIsLoadingBanners] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -64,11 +63,6 @@ const HomePage = () => {
         <div className="dark:bg-gray-900 transition-colors duration-300">
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
                 <div className="flex flex-col lg:flex-row min-h-screen">
-                    {/* Sidebar */}
-                    <div className="lg:w-80 flex-shrink-0">
-                        <CategorySidebar categories={categories}/>
-                    </div>
-
                     {/* Scrollable Main Content (min-w-0 stops wide images from stretching the page) */}
                     <div className="flex-1 min-w-0 flex flex-col">
                         {/* Main Content */}
@@ -94,7 +88,7 @@ const HomePage = () => {
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"/>
                                         </div>
                                     ) : recommendations.length === 0 ? null : (
-                                        <div className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        <div className="gap-3 sm:gap-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                             {recommendations.map(product => (
                                                 <ProductCard key={product.id} product={product}/>
                                             ))}
@@ -134,7 +128,7 @@ const HomePage = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                        className="gap-3 sm:gap-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                         {featuredProducts.map((product) => (
                                             <ProductCard
                                                 key={product.id}
@@ -193,7 +187,7 @@ const HomePage = () => {
                                                 </div>
 
                                                 <div
-                                                    className="gap-3 sm:gap-6 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                                    className="gap-3 sm:gap-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                                                     {categoryData.products.map((product) => (
                                                         <ProductCard
                                                             key={product.id}

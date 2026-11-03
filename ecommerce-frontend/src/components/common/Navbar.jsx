@@ -11,6 +11,7 @@ import {useCart} from "../../context/CartContext";
 import {useLanguage} from "../../context/LanguageContext";
 import {useSiteContent} from "../../hooks/useSiteContent";
 import SITE_CONTENT_DEFAULTS from "./siteContentDefaults";
+import CategoryMenu, {MobileCategoryMenu} from "../category/CategoryMenu";
 
 // Header links. "Deals" is the Shop page filtered to discounted products.
 const NAV_LINKS = [
@@ -46,6 +47,7 @@ export default function Navbar() {
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("user"));
     const [imageSearchLoading, setImageSearchLoading] = useState(false);
     const desktopImageInputRef = useRef(null);
@@ -296,26 +298,32 @@ export default function Navbar() {
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 onFocus={() => searchQuery.trim().length >= 2 && setIsDropdownOpen(true)}
-                placeholder={mobile ? t('nav.searchShort') : t('nav.search')}
+                placeholder={t('nav.searchShort')}
                 aria-label="Search products"
-                className="w-full h-11 pl-5 pr-28 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] dark:shadow-none focus:border-emerald-700 focus:shadow-[0_4px_16px_rgba(6,78,59,0.18)] focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
+                className="w-full h-11 pl-5 pr-24 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_14px_rgba(0,0,0,0.12)] dark:shadow-none focus:border-emerald-700 focus:shadow-[0_4px_16px_rgba(6,78,59,0.18)] focus:outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-[15px] transition-colors"
             />
             {renderSearchResults()}
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
-                {/* AI image search: highlighted so people notice it */}
+                {/* AI image search: tinted in the brand color so people notice it */}
                 <button
                     type="button"
                     onClick={() => (mobile ? mobileImageInputRef : desktopImageInputRef).current?.click()}
                     disabled={imageSearchLoading}
-                    className="group/ai relative flex items-center gap-1 h-8 pl-2 pr-2.5 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-xs font-bold shadow-md shadow-fuchsia-500/30 ring-2 ring-white dark:ring-gray-800 hover:scale-105 transition-transform disabled:opacity-70"
-                    title={t('nav.aiSearch')}
-                    aria-label="AI image search"
+                    className="ai-search-btn relative flex items-center justify-center w-9 h-9 rounded-full bg-emerald-50 text-emerald-800 hover:bg-emerald-800 hover:text-white dark:bg-emerald-900/40 dark:text-emerald-300 dark:hover:bg-emerald-700 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-1 transition-colors disabled:opacity-70"
+                    aria-label={t('nav.aiSearch')}
                 >
                     {imageSearchLoading
-                        ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                        : <Camera size={15}/>}
-                    <span>AI</span>
-                    <Sparkles size={11} className="absolute -top-1 -right-1 text-yellow-300 fill-yellow-300"/>
+                        ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"/>
+                        : <Camera size={18}/>}
+                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white dark:bg-gray-800 shadow-sm">
+                        <Sparkles size={10} className="text-amber-500 fill-amber-500"/>
+                    </span>
+                    {!isDropdownOpen && !isCategoryMenuOpen && (
+                        <span aria-hidden="true" className="ai-search-tip absolute top-full left-1/2 -translate-x-1/2 mt-2.5 z-50 px-2.5 py-1 rounded-md bg-emerald-900 text-white text-xs font-medium whitespace-nowrap shadow-lg pointer-events-none">
+                            <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-emerald-900"/>
+                            {t('nav.aiSearchHint')}
+                        </span>
+                    )}
                 </button>
                 <button type="submit" aria-label="Search"
                         className="p-2 text-gray-600 hover:text-emerald-700 dark:text-gray-300 dark:hover:text-emerald-300 transition-colors">
@@ -378,13 +386,13 @@ export default function Navbar() {
                 <div className="w-full px-3 sm:px-6 lg:px-10">
                     <div className="flex items-center gap-3 lg:gap-6 xl:gap-8 h-16 sm:h-20">
                         {/* Logo */}
-                        <Link to="/" className="flex items-center gap-2.5 min-w-0 flex-shrink-0">
+                        <Link to="/" className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-shrink lg:flex-shrink-0">
                             <span className="flex items-center justify-center rounded-xl p-1 sm:p-1.5 flex-shrink-0"
                                   style={{backgroundColor: pick('logoBgColor')}}>
                                 <img src={siteLogoUrl || logo} alt={`${storeName} logo`}
                                      className="h-8 sm:h-10 w-auto max-w-[110px] object-contain"/>
                             </span>
-                            <span className="dark:text-white font-extrabold tracking-tight text-xl sm:text-2xl lg:text-[1.7rem] leading-none truncate"
+                            <span className="lg:hidden min-[1400px]:inline dark:text-white font-extrabold tracking-tight text-lg sm:text-2xl min-[1400px]:text-[1.7rem] leading-none truncate"
                                   style={isDark ? undefined : {color: brandColor}}>
                                 {storeName}
                             </span>
@@ -392,6 +400,7 @@ export default function Navbar() {
 
                         {/* Desktop links */}
                         <div className="hidden lg:flex items-center gap-1">
+                            <CategoryMenu open={isCategoryMenuOpen} onOpenChange={setIsCategoryMenuOpen} getClassName={navLinkCls}/>
                             {NAV_LINKS.map(item => (
                                 <Link key={item.label} to={item.to} className={navLinkCls(item.isActive(location))}>
                                     {t(item.label)}
@@ -427,7 +436,7 @@ export default function Navbar() {
                                     className="hidden sm:flex items-center gap-2 h-11 px-3 rounded-full text-gray-800 dark:text-gray-100 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                 >
                                     <User size={21}/>
-                                    <span>{t('nav.account')}</span>
+                                    <span className="lg:hidden min-[1400px]:inline">{t('nav.account')}</span>
                                 </button>
                             )}
 
@@ -445,7 +454,7 @@ export default function Navbar() {
                                         </span>
                                     )}
                                 </span>
-                                <span className="hidden sm:inline">{t('nav.cart')}</span>
+                                <span className="hidden sm:inline lg:hidden min-[1400px]:inline">{t('nav.cart')}</span>
                             </button>
 
                             <button
@@ -471,14 +480,16 @@ export default function Navbar() {
                     <div className="px-4 py-5 space-y-4">
                         <div className="grid grid-cols-3 gap-2">
                             {NAV_LINKS.map(item => (
-                                <Link key={t(item.label)} to={item.to}
+                                <Link key={item.label} to={item.to}
                                       className={`text-center py-3 rounded-xl font-semibold ${item.isActive(location)
                                           ? 'bg-emerald-900 text-white'
                                           : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100'}`}>
-                                    {item.label}
+                                    {t(item.label)}
                                 </Link>
                             ))}
                         </div>
+
+                        <MobileCategoryMenu onNavigate={() => setIsMobileMenuOpen(false)}/>
 
                         <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
                             {!isLoggedIn && (

@@ -1,15 +1,17 @@
 // English UI text. Product names, categories and admin-written text come from the database.
 const en = {
     'nav.home': 'Home', 'nav.shop': 'Shop', 'nav.deals': 'Deals', 'nav.account': 'Account', 'nav.cart': 'Cart',
-    'nav.search': 'Search products, categories...', 'nav.searchShort': 'Search products...',
+    'nav.searchShort': 'Search products...',
+    'nav.categories': 'Categories', 'nav.viewAllCategory': 'View all {name}',
+    'nav.loadingCategories': 'Loading categories...', 'nav.noCategories': 'No categories yet',
+    'nav.aiSearchHint': 'Search by photo',
     'nav.aiSearch': 'AI image search: upload a photo to find similar products',
     'nav.lightMode': 'Light mode', 'nav.darkMode': 'Dark mode', 'nav.signIn': 'Sign In / Register',
     'nav.compare': 'Compare', 'nav.myOrders': 'My Orders', 'nav.language': 'Language',
     'user.profile': 'Profile', 'user.orders': 'My Orders', 'user.logout': 'Logout',
     'footer.shopping': 'Shopping', 'footer.services': 'Services', 'footer.contact': 'Contact Us',
 
-    'home.categories': 'Categories', 'home.discover': 'Discover {count} amazing categories',
-    'home.items': '{count} items', 'home.recommended': 'Recommended For You', 'home.featured': 'Featured Products',
+    'home.recommended': 'Recommended For You', 'home.featured': 'Featured Products',
     'home.viewAll': 'View All', 'home.seeAll': 'See All', 'home.noFeatured': 'No featured products available',
     'home.noProducts': 'No products available at the moment',
 

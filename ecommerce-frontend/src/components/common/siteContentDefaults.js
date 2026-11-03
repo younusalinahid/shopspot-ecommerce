@@ -16,7 +16,7 @@ const SITE_CONTENT_DEFAULTS = {
         "tiktokUrl": "",
         "copyrightText": "© 2026 ShopSpot. All rights reserved.",
         "brandColor": "#064e3b",
-        "logoBgColor": "#064e3b",
+        "logoBgColor": "#ffffff",
         "topBarColor": "#064e3b",
         "showTopBar": true,
         "announcementText": "Free delivery on orders over ৳2000",

@@ -1,15 +1,17 @@
 // বাংলা UI টেক্সট। পণ্যের নাম, ক্যাটাগরি ও অ্যাডমিনের লেখা ডাটাবেস থেকে আসে।
 const bn = {
     'nav.home': 'হোম', 'nav.shop': 'শপ', 'nav.deals': 'অফার', 'nav.account': 'অ্যাকাউন্ট', 'nav.cart': 'কার্ট',
-    'nav.search': 'পণ্য বা ক্যাটাগরি খুঁজুন...', 'nav.searchShort': 'পণ্য খুঁজুন...',
+    'nav.searchShort': 'পণ্য খুঁজুন...',
+    'nav.categories': 'ক্যাটাগরি', 'nav.viewAllCategory': '{name}: সব দেখুন',
+    'nav.loadingCategories': 'ক্যাটাগরি লোড হচ্ছে...', 'nav.noCategories': 'এখনো কোনো ক্যাটাগরি নেই',
+    'nav.aiSearchHint': 'ছবি দিয়ে খুঁজুন',
     'nav.aiSearch': 'AI ছবি দিয়ে খুঁজুন: ছবি দিন, একই রকম পণ্য পাবেন',
     'nav.lightMode': 'লাইট মোড', 'nav.darkMode': 'ডার্ক মোড', 'nav.signIn': 'সাইন ইন / রেজিস্টার',
     'nav.compare': 'তুলনা', 'nav.myOrders': 'আমার অর্ডার', 'nav.language': 'ভাষা',
     'user.profile': 'প্রোফাইল', 'user.orders': 'আমার অর্ডার', 'user.logout': 'লগ আউট',
     'footer.shopping': 'কেনাকাটা', 'footer.services': 'সেবা', 'footer.contact': 'যোগাযোগ',
 
-    'home.categories': 'ক্যাটাগরি', 'home.discover': '{count}টি চমৎকার ক্যাটাগরি দেখুন',
-    'home.items': '{count}টি আইটেম', 'home.recommended': 'আপনার জন্য প্রস্তাবিত', 'home.featured': 'বিশেষ পণ্য',
+    'home.recommended': 'আপনার জন্য প্রস্তাবিত', 'home.featured': 'বিশেষ পণ্য',
     'home.viewAll': 'সব দেখুন', 'home.seeAll': 'সব দেখুন', 'home.noFeatured': 'কোনো বিশেষ পণ্য নেই',
     'home.noProducts': 'এই মুহূর্তে কোনো পণ্য নেই',
 

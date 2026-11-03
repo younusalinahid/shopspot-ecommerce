@@ -1,14 +1,11 @@
 import {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
-import CategorySidebar from '../category/CategorySidebar';
 import ProductCard from './ProductCard';
 import {subCategoryApi} from "../../api/categoryApi";
 import {productService} from "../../api/productApi";
-import {useCategories} from "../../hooks/useCategory";
 
 const ProductList = () => {
     const {subCategoryId} = useParams();
-    const {categories, loading: categoriesLoading, error: categoriesError} = useCategories();
     const [products, setProducts] = useState([]);
     const [subCategory, setSubCategory] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -65,12 +62,6 @@ const ProductList = () => {
     return (
         <div className="dark:bg-gray-900 transition-colors duration-300">
             <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-                {/* On mobile the sidebar is an off-canvas drawer (opened from its floating button) */}
-                <div
-                    className="lg:w-80 flex-shrink-0 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto bg-white dark:bg-gray-800 lg:shadow-lg transition-colors duration-300">
-                    <CategorySidebar categories={categories}/>
-                </div>
-
                 <div className="flex-1 min-w-0 flex flex-col">
                     <div
                         className="flex-grow bg-gray-50 dark:bg-gray-900 overflow-y-auto px-3 sm:px-6 py-5 sm:py-8 pb-24 sm:pb-8 transition-colors duration-300">

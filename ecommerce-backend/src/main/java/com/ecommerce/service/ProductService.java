@@ -10,6 +10,7 @@ import com.ecommerce.model.SubCategory;
 import com.ecommerce.repository.CategoryRepository;
 import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.repository.SubCategoryRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -113,9 +114,10 @@ public class ProductService {
     }
 
     public List<ProductDTO> getRecentProducts(int limit) {
-        return productRepository.findTop8ByOrderByCreatedAtDesc()
+        // Public endpoint: keep the page size in a safe range
+        int size = Math.min(Math.max(limit, 1), 50);
+        return productRepository.findByActiveTrueOrderByCreatedAtDesc(PageRequest.of(0, size))
                 .stream()
-                .filter(Product::isActive)
                 .map(productMapper::convertToDTO)
                 .collect(Collectors.toList());
     }
