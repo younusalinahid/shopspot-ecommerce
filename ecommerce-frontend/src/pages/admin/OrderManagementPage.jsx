@@ -487,6 +487,12 @@ function OrderRow({ order, expanded, onToggle, onStatusUpdate, onMarkCODCollecte
                                 <span>Subtotal</span>
                                 <span>{taka(breakdown.items)}</span>
                             </div>
+                            {breakdown.discount > 0 && (
+                                <div className="flex justify-between text-green-600">
+                                    <span>Coupon ({order.couponCode})</span>
+                                    <span>-{taka(breakdown.discount)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-gray-600">
                                 <span>Delivery charge</span>
                                 <span className={breakdown.delivery === 0 ? 'text-green-600 font-medium' : ''}>

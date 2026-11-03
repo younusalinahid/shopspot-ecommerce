@@ -18,6 +18,7 @@ public class GuestCheckoutRequestDTO {
     private String district;
     private String postalCode;
     private String paymentMethod = "COD";
+    private String couponCode;
     private List<Item> items;
 
     @Getter

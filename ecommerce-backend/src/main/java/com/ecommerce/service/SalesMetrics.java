@@ -61,6 +61,11 @@ public final class SalesMetrics {
         return sum;
     }
 
+    /** Taka taken off by a coupon. */
+    public static long couponDiscount(Order order) {
+        return order.getDiscountAmount() != null ? order.getDiscountAmount() : 0;
+    }
+
     /** Delivery charge stored on the order (older orders did not store it). */
     public static long deliveryCharge(Order order) {
         if (order.getShippingFee() != null) return order.getShippingFee();
@@ -84,7 +89,7 @@ public final class SalesMetrics {
         ZonedDateTime today = startOfDay(now);
 
         long revenue = 0, thisMonth = 0, prevMonth = 0, todayRevenue = 0, count = 0;
-        long products = 0, delivery = 0, codAmount = 0, codOrders = 0;
+        long products = 0, delivery = 0, discounts = 0, codAmount = 0, codOrders = 0;
         long toProcess = 0, inTransit = 0, cancelled = 0, unpaid = 0;
 
         for (Order o : orders) {
@@ -98,7 +103,8 @@ public final class SalesMetrics {
             long total = amount(o);
             revenue += total;
             count++;
-            products += itemsSubtotal(o);
+            products += itemsSubtotal(o) - couponDiscount(o);
+            discounts += couponDiscount(o);
             delivery += deliveryCharge(o);
             if (isBetween(o.getCreatedAt(), monthStart, nextMonth)) thisMonth += total;
             if (isBetween(o.getCreatedAt(), lastMonth, monthStart)) prevMonth += total;
@@ -118,6 +124,7 @@ public final class SalesMetrics {
                 .averageOrderValue(count == 0 ? 0 : Math.round((double) revenue / count))
                 .productSales(products)
                 .deliveryCharges(delivery)
+                .couponDiscounts(discounts)
                 .otherCharges(Math.max(0, revenue - products - delivery))
                 .codPendingAmount(codAmount)
                 .codPendingOrders(codOrders)

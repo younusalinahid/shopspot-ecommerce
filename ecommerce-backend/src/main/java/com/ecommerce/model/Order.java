@@ -52,6 +52,16 @@ public class Order {
     /** Delivery charge included in totalAmount (null for orders placed before this was stored). */
     private Integer shippingFee;
 
+    /** Code of the coupon used, kept as text so the order stays correct if the coupon changes later. */
+    private String couponCode;
+
+    /** Taka taken off by the coupon, already subtracted from totalAmount (null = none). */
+    private Integer discountAmount;
+
+    /** True once this order counts towards the coupon's usage (given back on cancel). */
+    @Builder.Default
+    private Boolean couponRedeemed = false;
+
     /** True once this order's items were subtracted from product stock (restored on cancel). */
     @Builder.Default
     private Boolean stockDeducted = false;

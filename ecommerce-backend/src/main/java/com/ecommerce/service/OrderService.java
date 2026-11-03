@@ -46,6 +46,7 @@ public class OrderService {
     private final AddressRepository addressRepository;
     private final EmailService emailService;
     private final SiteContentService siteContentService;
+    private final CouponService couponService;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -121,7 +122,7 @@ public class OrderService {
                 .collect(Collectors.toList());
 
         Order order = buildOrder(user, null, shippingAddress, lines,
-                parsePaymentMethod(request.getPaymentMethod()));
+                parsePaymentMethod(request.getPaymentMethod()), request.getCouponCode());
 
         return toDTO(orderRepository.save(order));
     }
@@ -193,7 +194,7 @@ public class OrderService {
                 .build();
 
         Order order = buildOrder(null, email, shippingAddress, lines,
-                parsePaymentMethod(request.getPaymentMethod()));
+                parsePaymentMethod(request.getPaymentMethod()), request.getCouponCode());
         order.setGuestToken(generateGuestToken());
 
         Order saved = orderRepository.save(order);
@@ -240,7 +241,7 @@ public class OrderService {
     // ─────────────────────────────────────────────────────────────
 
     private Order buildOrder(User user, String guestEmail, ShippingAddress shippingAddress,
-                             List<OrderLine> lines, PaymentMethod paymentMethod) {
+                             List<OrderLine> lines, PaymentMethod paymentMethod, String couponCode) {
         int subtotal = 0;
         for (OrderLine line : lines) {
             if (line.product() == null || !line.product().isActive()) {
@@ -261,7 +262,21 @@ public class OrderService {
         boolean insideDhaka = shippingAddress != null
                 && SiteSettings.isDhaka(shippingAddress.getCity(), shippingAddress.getDistrict());
         int shippingFee = siteContentService.getSettings().deliveryChargeFor(subtotal, insideDhaka);
-        int totalAmount = subtotal + shippingFee;
+
+        // Minimum order and free delivery are judged on the subtotal before the coupon
+        Coupon coupon = null;
+        int discount = 0;
+        if (couponCode != null && !couponCode.isBlank()) {
+            coupon = couponService.requireApplicable(couponCode, subtotal,
+                    user != null ? user.getEmail() : guestEmail,
+                    shippingAddress != null ? shippingAddress.getPhone() : null);
+            discount = coupon.discountFor(subtotal);
+        }
+        int totalAmount = subtotal - discount + shippingFee;
+
+        if (paymentMethod == PaymentMethod.CARD && totalAmount <= 0) {
+            throw new RuntimeException("Nothing to pay by card for this order. Please choose Cash on Delivery.");
+        }
 
         Order order = Order.builder()
                 .user(user)
@@ -270,6 +285,8 @@ public class OrderService {
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
                 .shippingFee(shippingFee)
+                .couponCode(coupon != null ? coupon.getCode() : null)
+                .discountAmount(coupon != null ? discount : null)
                 .paymentMethod(paymentMethod)
                 .codCollected(false)
                 .build();
@@ -325,6 +342,8 @@ public class OrderService {
             ensureEnoughStock(item.getProduct(), item.getQuantity());
         }
 
+        couponService.redeemOrThrow(order);
+
         order.setPaymentMethod(PaymentMethod.COD);
         order.setStripePaymentIntentId(null);
         order.setStripeClientSecret(null);
@@ -366,6 +385,7 @@ public class OrderService {
             throw new RuntimeException("Payment has not been completed");
         }
 
+        couponService.redeemPaid(order);
         order.setStatus(OrderStatus.PAID);
         // The customer has already paid, so the order is kept even if stock ran short meanwhile
         deductStock(order);
@@ -517,6 +537,7 @@ public class OrderService {
         }
         if (status == OrderStatus.CANCELLED) {
             restoreStock(order);
+            couponService.release(order);
         }
         order.setStatus(status);
         return toDTO(orderRepository.save(order));
@@ -555,6 +576,7 @@ public class OrderService {
             throw new RuntimeException("This order can no longer be cancelled. Please contact us for help.");
 
         restoreStock(order);
+        couponService.release(order);
         order.setStatus(OrderStatus.CANCELLED);
         return toDTO(orderRepository.save(order));
     }
@@ -572,6 +594,8 @@ public class OrderService {
         dto.setStatus(order.getStatus());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setShippingFee(order.getShippingFee());
+        dto.setCouponCode(order.getCouponCode());
+        dto.setDiscountAmount(order.getDiscountAmount());
         dto.setStripeClientSecret(order.getStripeClientSecret());
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCodCollected(order.getCodCollected());

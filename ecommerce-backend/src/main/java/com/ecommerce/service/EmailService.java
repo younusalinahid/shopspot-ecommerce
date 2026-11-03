@@ -91,6 +91,13 @@ public class EmailService {
                     + "</div>";
         }
 
+        String couponRow = "";
+        if (order.getDiscountAmount() != null && order.getDiscountAmount() > 0) {
+            couponRow = "<tr><td colspan='2' style='padding:12px 10px 0;color:#166534'>Coupon " + order.getCouponCode() + "</td>"
+                    + "<td style='padding:12px 10px 0;text-align:right;color:#166534'>-"
+                    + String.format("৳%.2f", order.getDiscountAmount().doubleValue()) + "</td></tr>";
+        }
+
         String html = "<html><body style='margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif'>"
                 + "<div style='max-width:600px;margin:30px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.1)'>"
 
@@ -126,7 +133,7 @@ public class EmailService {
                 + "<th style='padding:10px;text-align:right;color:#6b7280;font-size:13px'>Price</th>"
                 + "</tr></thead>"
                 + "<tbody>" + items.toString() + "</tbody>"
-                + "<tfoot><tr>"
+                + "<tfoot>" + couponRow + "<tr>"
                 + "<td colspan='2' style='padding:12px 10px;font-weight:bold;color:#111827'>" + totalLabel + "</td>"
                 + "<td style='padding:12px 10px;text-align:right;font-weight:bold;font-size:18px;color:#2563eb'>"
                 + String.format("৳%.2f", order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : 0.0)

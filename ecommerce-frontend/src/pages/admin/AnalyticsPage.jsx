@@ -162,7 +162,7 @@ const AnalyticsPage = () => {
 
     // Revenue split into what it is made of
     const breakdown = [
-        {label: "Product sales", value: s.productSales, color: "bg-cyan-500"},
+        {label: s.couponDiscounts > 0 ? `Product sales (after ${taka(s.couponDiscounts)} coupons)` : "Product sales", value: s.productSales, color: "bg-cyan-500"},
         {label: "Delivery charges", value: s.deliveryCharges, color: "bg-indigo-500"},
         ...(s.otherCharges > 0 ? [{label: "Tax (old orders)", value: s.otherCharges, color: "bg-gray-400"}] : []),
     ];

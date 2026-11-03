@@ -16,7 +16,8 @@ public class SalesSummaryDTO {
     private long revenueToday;
     private long salesOrders;          // orders counted in revenue
     private long averageOrderValue;    // revenue / salesOrders
-    private long productSales;         // items only
+    private long productSales;         // items only, after coupon discounts
+    private long couponDiscounts;      // given away through coupons, already taken out of revenue
     private long deliveryCharges;      // delivery charge part of revenue
     private long otherCharges;         // tax on old orders (before tax was removed)
     private long codPendingAmount;     // COD orders whose cash is not collected yet

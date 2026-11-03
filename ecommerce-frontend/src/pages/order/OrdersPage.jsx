@@ -296,7 +296,7 @@ export default function OrdersPage() {
 // Order Details Sidebar Component
 function OrderDetailsSidebar({order, onClose}) {
     // Break the stored total into its parts (older orders include the old 7% tax)
-    const {items: itemsSubtotal, delivery: shippingAmount, tax: taxAmount} = orderBreakdown(order);
+    const {items: itemsSubtotal, discount: couponDiscount, delivery: shippingAmount, tax: taxAmount} = orderBreakdown(order);
     const estimate = deliveryEstimate(order);
     const addr = order.shippingAddress;
     const s = STATUS[order.status] || STATUS.PENDING;
@@ -439,6 +439,12 @@ function OrderDetailsSidebar({order, onClose}) {
                             <span
                                 className="text-gray-900 dark:text-white">৳{itemsSubtotal.toLocaleString()}</span>
                         </div>
+                        {couponDiscount > 0 && (
+                            <div className="flex justify-between text-emerald-600">
+                                <span>Coupon ({order.couponCode})</span>
+                                <span>-৳{couponDiscount.toLocaleString()}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">Shipping</span>
                             <span className={shippingAmount === 0 ? 'text-emerald-600' : 'text-gray-900 dark:text-white'}>

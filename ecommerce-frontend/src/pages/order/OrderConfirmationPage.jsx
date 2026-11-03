@@ -132,6 +132,12 @@ export default function OrderConfirmationPage() {
                                 <span>Subtotal</span>
                                 <span>৳{breakdown.items.toLocaleString()}</span>
                             </div>
+                            {breakdown.discount > 0 && (
+                                <div className="flex justify-between text-green-600 dark:text-green-400">
+                                    <span>Coupon ({order.couponCode})</span>
+                                    <span>-৳{breakdown.discount.toLocaleString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-gray-600 dark:text-gray-400">
                                 <span>Delivery charge</span>
                                 <span className={breakdown.delivery === 0 ? 'text-green-600 font-medium' : ''}>

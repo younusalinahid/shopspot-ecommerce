@@ -67,6 +67,8 @@ const bn = {
     'co.postal': 'পোস্ট কোড', 'co.saveAddress': 'পরের কেনাকাটার জন্য ঠিকানাটি সেভ করুন',
     'co.choosePayment': 'পেমেন্ট পদ্ধতি বাছাই করুন', 'co.card': 'ক্রেডিট / ডেবিট কার্ড', 'co.cardNote': 'Stripe এর মাধ্যমে নিরাপদ পেমেন্ট',
     'co.cod': 'ক্যাশ অন ডেলিভারি', 'co.codNote': 'পণ্য হাতে পেয়ে টাকা দিন', 'co.subtotal': 'সাবটোটাল',
+    'co.coupon': 'কুপন কোড', 'co.couponPlaceholder': 'কোড লিখুন', 'co.couponApply': 'প্রয়োগ করুন', 'co.couponRemove': 'সরান',
+    'co.couponApplied': 'কুপন {code} প্রয়োগ হয়েছে', 'co.couponDiscount': 'কুপন ({code})', 'co.couponLocked': 'পেমেন্টের চেষ্টার পর কুপন পরিবর্তন করা যায় না। পরিবর্তন করতে পেজটি রিফ্রেশ করুন।',
     'co.shipping': 'ডেলিভারি চার্জ', 'co.insideDhaka': 'ঢাকার ভেতরে', 'co.outsideDhaka': 'ঢাকার বাইরে', 'co.totalPayable': 'মোট পরিশোধযোগ্য',
     'co.next': 'পরবর্তী: পেমেন্ট পদ্ধতি বাছাই', 'co.secured': 'SSL সুরক্ষিত', 'co.fastDelivery': 'দ্রুত ডেলিভারি',
 

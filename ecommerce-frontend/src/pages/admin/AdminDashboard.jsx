@@ -13,10 +13,11 @@ import {dashboardApi} from "../../api/dashboardApi";
 import {useNavigate, useLocation} from 'react-router-dom';
 import {ToastContainer} from 'react-toastify';
 import {
-    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe, Truck
+    LayoutDashboard, Package, ShoppingBag, Users, BarChart3, FolderTree, ImageIcon, DollarSign, Sparkles, Globe, Truck, TicketPercent
 } from 'lucide-react';
 import SiteContentPage from './SiteContentPage';
 import DeliveryPage from './DeliveryPage';
+import CouponManagementPage from './CouponManagementPage';
 import InventoryAlerts from "./InventoryAlerts";
 import ActionCards from '../../components/admin/ActionCards';
 import {taka, ORDER_STATUS} from '../../components/admin/adminFormat';
@@ -88,6 +89,7 @@ export default function AdminDashboard() {
         {id: 'analytics', icon: BarChart3, label: 'Analytics'},
         {id: 'inventory-alerts', icon: Sparkles, label: 'AI Stock Alerts'},
         {id: 'delivery', icon: Truck, label: 'Delivery'},
+        {id: 'coupons', icon: TicketPercent, label: 'Coupons'},
         {id: 'site-content', icon: Globe, label: 'Site Content'}
     ];
 
@@ -297,6 +299,8 @@ export default function AdminDashboard() {
                 return <InventoryAlerts/>;
             case 'delivery':
                 return <DeliveryPage/>;
+            case 'coupons':
+                return <CouponManagementPage/>;
             case 'site-content':
                 return <SiteContentPage/>;
             default:

@@ -68,6 +68,8 @@ const en = {
     'co.choosePayment': 'Choose Payment Method', 'co.card': 'Credit / Debit Card', 'co.cardNote': 'Secure payment via Stripe',
     'co.cod': 'Cash on Delivery', 'co.codNote': 'Pay when you receive the product', 'co.subtotal': 'Subtotal',
     'co.shipping': 'Shipping Delivery', 'co.insideDhaka': 'Inside Dhaka', 'co.outsideDhaka': 'Outside Dhaka', 'co.totalPayable': 'Total Payable',
+    'co.coupon': 'Coupon code', 'co.couponPlaceholder': 'Enter code', 'co.couponApply': 'Apply', 'co.couponRemove': 'Remove',
+    'co.couponApplied': 'Coupon {code} applied', 'co.couponDiscount': 'Coupon ({code})', 'co.couponLocked': 'Coupon is locked after a payment attempt. Refresh the page to change it.',
     'co.next': 'Next: Choose Payment Method', 'co.secured': 'SSL Secured', 'co.fastDelivery': 'Fast Delivery',
 
     'chat.title': 'ShopSpot AI', 'chat.online': 'Online · AI powered', 'chat.listening': 'Listening… speak now',

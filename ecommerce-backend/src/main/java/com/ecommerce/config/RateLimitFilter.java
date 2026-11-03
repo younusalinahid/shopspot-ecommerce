@@ -35,7 +35,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             new Rule("POST", "/api/public/report", 3, 10 * 60_000),
             new Rule("POST", "/api/public/chat", 20, 60_000),
             new Rule("POST", "/api/public/search/image", 10, 60_000),
-            new Rule("POST", "/api/public/orders/guest/checkout", 10, 10 * 60_000)
+            new Rule("POST", "/api/public/orders/guest/checkout", 10, 10 * 60_000),
+            new Rule("POST", "/api/public/coupons/validate", 20, 60_000)
     );
 
     private record Window(long startedAt, AtomicInteger count) {

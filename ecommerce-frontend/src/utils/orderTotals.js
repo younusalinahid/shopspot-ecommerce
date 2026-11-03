@@ -1,14 +1,15 @@
 import {isDhaka} from './isDhaka';
 
-// Splits an order total into items / delivery / old tax.
+// Splits an order total into items / coupon discount / delivery / old tax.
 // Older orders stored no delivery charge and still include the 7% tax that was removed later.
 export const orderBreakdown = (order) => {
     const items = (order?.items || []).reduce(
         (sum, i) => sum + (i.priceAtPurchase || 0) * (i.quantity || 0), 0);
     const total = order?.totalAmount || 0;
     const delivery = order?.shippingFee ?? Math.max(0, total - items - Math.round(items * 0.07));
-    const tax = Math.max(0, total - items - delivery);
-    return {items, delivery, tax, total};
+    const discount = order?.discountAmount || 0;
+    const tax = Math.max(0, total - items + discount - delivery);
+    return {items, discount, delivery, tax, total};
 };
 
 // Orders that count as a real purchase (not unfinished, not cancelled)

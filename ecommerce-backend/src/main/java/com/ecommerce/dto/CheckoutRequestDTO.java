@@ -17,5 +17,6 @@ public class CheckoutRequestDTO {
     private String  postalCode;
     private Boolean saveAddress = false;
     private String paymentMethod = "CARD";
+    private String couponCode;
 
 }
